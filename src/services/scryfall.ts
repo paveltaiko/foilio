@@ -33,7 +33,7 @@ export async function fetchCardsForSet(setCode: SetCode): Promise<ScryfallCard[]
   return allCards;
 }
 
-export async function fetchAllSets(): Promise<Record<SetCode, ScryfallCard[]>> {
+export async function fetchAllSets(): Promise<Record<string, ScryfallCard[]>> {
   const sets: SetCode[] = ['spm', 'spe', 'mar'];
   const results: Record<string, ScryfallCard[]> = {};
 
@@ -44,7 +44,7 @@ export async function fetchAllSets(): Promise<Record<SetCode, ScryfallCard[]>> {
     }
   }
 
-  return results as Record<SetCode, ScryfallCard[]>;
+  return results;
 }
 
 export function getCardImage(card: ScryfallCard, size: 'small' | 'normal' | 'large' | 'png' = 'large'): string {

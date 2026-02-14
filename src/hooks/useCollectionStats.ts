@@ -15,7 +15,7 @@ export function useCollectionStats(
   setCode: SetCode
 ): CollectionStats {
   return useMemo(() => {
-    const setCards = cards.filter((c) => c.set === setCode);
+    const setCards = setCode === 'all' ? cards : cards.filter((c) => c.set === setCode);
     const totalCards = setCards.length;
     let ownedCount = 0;
     let totalValue = 0;

@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { Share2, Check } from 'lucide-react';
+import { Share2, Check, Layers, LayoutGrid } from 'lucide-react';
 import type { User } from 'firebase/auth';
 import { isFirebaseConfigured } from '../config/firebase';
 import { useOwnedCards } from '../hooks/useOwnedCards';
@@ -60,6 +60,7 @@ export function HomePage({ user, searchQuery }: HomePageProps) {
     sortOption, setSortOption,
     ownershipFilter, setOwnershipFilter,
     selectedCard, setSelectedCard,
+    groupBySet, setGroupBySet,
     currentCards, isCardsLoading,
     cardCounts, stats, sortedFilteredCards,
   } = useCardCollection({ ownedCards, searchQuery });
@@ -158,7 +159,7 @@ export function HomePage({ user, searchQuery }: HomePageProps) {
       <SetTabs activeSet={activeSet} onChange={setActiveSet} cardCounts={cardCounts} />
 
       {/* Stats + Share */}
-      <div className="py-4 space-y-2">
+      <div className="py-2 space-y-2">
         <CollectionSummary
           totalCards={stats.totalCards}
           ownedCount={stats.ownedCount}
@@ -173,7 +174,20 @@ export function HomePage({ user, searchQuery }: HomePageProps) {
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-2 sm:gap-3 pb-4">
         <OwnershipFilter value={ownershipFilter} onChange={setOwnershipFilter} />
-        <SortControl value={sortOption} onChange={setSortOption} />
+        <div className="flex items-center gap-4">
+          {activeSet === 'all' && (
+            <button
+              onClick={() => setGroupBySet(!groupBySet)}
+              className={`cursor-pointer transition-colors duration-150 ${
+                groupBySet ? 'text-primary-500' : 'text-neutral-400 hover:text-neutral-600'
+              }`}
+              title={groupBySet ? 'Zobrazit vše najednou' : 'Seskupit podle edice'}
+            >
+              {groupBySet ? <Layers className="w-5 h-5" /> : <LayoutGrid className="w-5 h-5" />}
+            </button>
+          )}
+          <SortControl value={sortOption} onChange={setSortOption} />
+        </div>
       </div>
 
       {/* Card grid */}
@@ -185,6 +199,7 @@ export function HomePage({ user, searchQuery }: HomePageProps) {
           ownedCards={ownedCards}
           onToggle={handleToggle}
           onCardClick={setSelectedCard}
+          groupBySet={activeSet === 'all' && groupBySet}
         />
       )}
 

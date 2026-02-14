@@ -10,31 +10,40 @@ interface UseCardCollectionOptions {
 }
 
 export function useCardCollection({ ownedCards, searchQuery = '' }: UseCardCollectionOptions) {
-  const [activeSet, setActiveSet] = useState<SetCode>('spm');
+  const [activeSet, setActiveSet] = useState<SetCode>('all');
   const [sortOption, setSortOption] = useState<SortOption>('number-asc');
   const [ownershipFilter, setOwnershipFilter] = useState<OwnershipFilter>('all');
   const [selectedCard, setSelectedCard] = useState<ScryfallCard | null>(null);
+  const [groupBySet, setGroupBySet] = useState(true);
 
   // Fetch cards from Scryfall
   const { data: spmCards = [], isLoading: spmLoading } = useScryfallCards('spm');
   const { data: speCards = [], isLoading: speLoading } = useScryfallCards('spe');
   const { data: marCards = [], isLoading: marLoading } = useScryfallCards('mar');
 
-  // Current set cards
-  const allCards: Record<SetCode, ScryfallCard[]> = useMemo(
-    () => ({ spm: spmCards, spe: speCards, mar: marCards }),
+  // All cards combined
+  const combinedCards = useMemo(
+    () => [...spmCards, ...speCards, ...marCards],
     [spmCards, speCards, marCards]
   );
+
+  // Current set cards
+  const allCards: Record<SetCode, ScryfallCard[]> = useMemo(
+    () => ({ all: combinedCards, spm: spmCards, spe: speCards, mar: marCards }),
+    [combinedCards, spmCards, speCards, marCards]
+  );
   const currentCards = allCards[activeSet];
-  const isCardsLoading = activeSet === 'spm' ? spmLoading : activeSet === 'spe' ? speLoading : marLoading;
+  const isCardsLoading = activeSet === 'all'
+    ? (spmLoading || speLoading || marLoading)
+    : activeSet === 'spm' ? spmLoading : activeSet === 'spe' ? speLoading : marLoading;
 
   // Stats
   const stats = useCollectionStats(currentCards, ownedCards, activeSet);
 
   // Card counts per set
   const cardCounts: Record<SetCode, number> = useMemo(
-    () => ({ spm: spmCards.length, spe: speCards.length, mar: marCards.length }),
-    [spmCards.length, speCards.length, marCards.length]
+    () => ({ all: combinedCards.length, spm: spmCards.length, spe: speCards.length, mar: marCards.length }),
+    [combinedCards.length, spmCards.length, speCards.length, marCards.length]
   );
 
   // Sort & filter
@@ -50,17 +59,20 @@ export function useCardCollection({ ownedCards, searchQuery = '' }: UseCardColle
       );
     }
 
-    // Ownership filter
-    if (ownershipFilter === 'owned') {
-      cards = cards.filter((c) => {
-        const o = ownedCards.get(c.id);
-        return o && (o.ownedNonFoil || o.ownedFoil);
-      });
-    } else if (ownershipFilter === 'missing') {
-      cards = cards.filter((c) => {
-        const o = ownedCards.get(c.id);
-        return !o || (!o.ownedNonFoil && !o.ownedFoil);
-      });
+    // Ownership filter (for number sorting - card-level)
+    const isPriceSorting = sortOption === 'price-asc' || sortOption === 'price-desc';
+    if (!isPriceSorting) {
+      if (ownershipFilter === 'owned') {
+        cards = cards.filter((c) => {
+          const o = ownedCards.get(c.id);
+          return o && (o.ownedNonFoil || o.ownedFoil);
+        });
+      } else if (ownershipFilter === 'missing') {
+        cards = cards.filter((c) => {
+          const o = ownedCards.get(c.id);
+          return !o || (!o.ownedNonFoil && !o.ownedFoil);
+        });
+      }
     }
 
     // Sort by number
@@ -88,13 +100,27 @@ export function useCardCollection({ ownedCards, searchQuery = '' }: UseCardColle
       }
     }
 
-    expanded.sort((a, b) => {
+    // Filter ownership per variant (not per card)
+    let filtered = expanded;
+    if (ownershipFilter === 'owned') {
+      filtered = expanded.filter(({ card, variant }) => {
+        const o = ownedCards.get(card.id);
+        return variant === 'nonfoil' ? o?.ownedNonFoil : o?.ownedFoil;
+      });
+    } else if (ownershipFilter === 'missing') {
+      filtered = expanded.filter(({ card, variant }) => {
+        const o = ownedCards.get(card.id);
+        return variant === 'nonfoil' ? !o?.ownedNonFoil : !o?.ownedFoil;
+      });
+    }
+
+    filtered.sort((a, b) => {
       const aPrice = a.sortPrice ?? 0;
       const bPrice = b.sortPrice ?? 0;
       return sortOption === 'price-asc' ? aPrice - bPrice : bPrice - aPrice;
     });
 
-    return expanded;
+    return filtered;
   }, [currentCards, ownershipFilter, sortOption, ownedCards, searchQuery]);
 
   return {
@@ -107,6 +133,8 @@ export function useCardCollection({ ownedCards, searchQuery = '' }: UseCardColle
     setOwnershipFilter,
     selectedCard,
     setSelectedCard,
+    groupBySet,
+    setGroupBySet,
 
     // Data
     currentCards,

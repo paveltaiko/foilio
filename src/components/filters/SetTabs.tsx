@@ -8,8 +8,9 @@ interface SetTabsProps {
 }
 
 const SET_NAMES: Record<SetCode, string> = {
-  spm: 'Spider-Man',
-  spe: 'Eternal',
+  all: 'Celá sbírka',
+  spm: "Marvel's Spider-Man",
+  spe: "Marvel's Spider-Man Eternal",
   mar: 'Marvel Universe',
 };
 

@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Layers, LayoutGrid } from 'lucide-react';
 import { useSharedCollection } from '../hooks/useSharedCollection';
 import { useCardCollection } from '../hooks/useCardCollection';
 import { SetTabs } from '../components/filters/SetTabs';
@@ -32,6 +32,7 @@ export function SharedCollectionPage({ currentUserId, searchQuery }: SharedColle
     sortOption, setSortOption,
     ownershipFilter, setOwnershipFilter,
     selectedCard, setSelectedCard,
+    groupBySet, setGroupBySet,
     isCardsLoading, cardCounts, stats, sortedFilteredCards,
   } = useCardCollection({ ownedCards, searchQuery });
 
@@ -96,7 +97,20 @@ export function SharedCollectionPage({ currentUserId, searchQuery }: SharedColle
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-2 sm:gap-3 pb-4">
         <OwnershipFilter value={ownershipFilter} onChange={setOwnershipFilter} />
-        <SortControl value={sortOption} onChange={setSortOption} />
+        <div className="flex items-center gap-4">
+          {activeSet === 'all' && (
+            <button
+              onClick={() => setGroupBySet(!groupBySet)}
+              className={`cursor-pointer transition-colors duration-150 ${
+                groupBySet ? 'text-primary-500' : 'text-neutral-400 hover:text-neutral-600'
+              }`}
+              title={groupBySet ? 'Zobrazit vše najednou' : 'Seskupit podle edice'}
+            >
+              {groupBySet ? <Layers className="w-5 h-5" /> : <LayoutGrid className="w-5 h-5" />}
+            </button>
+          )}
+          <SortControl value={sortOption} onChange={setSortOption} />
+        </div>
       </div>
 
       {/* Card grid */}
@@ -109,6 +123,7 @@ export function SharedCollectionPage({ currentUserId, searchQuery }: SharedColle
           onToggle={noop}
           onCardClick={setSelectedCard}
           readOnly
+          groupBySet={activeSet === 'all' && groupBySet}
         />
       )}
 

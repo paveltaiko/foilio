@@ -61,7 +61,7 @@ export interface CardWithOwnership extends ScryfallCard {
   customPriceFoil: number | null;
 }
 
-export type SetCode = 'spm' | 'spe' | 'mar';
+export type SetCode = 'all' | 'spm' | 'spe' | 'mar';
 
 export interface SetInfo {
   code: SetCode;

@@ -45,7 +45,7 @@ function MobileDropdown({ tabs, activeTab, onChange }: TabsProps) {
   }, [onChange]);
 
   return (
-    <div ref={dropdownRef} className="relative pt-3">
+    <div ref={dropdownRef} className="relative">
       {/* Trigger button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
