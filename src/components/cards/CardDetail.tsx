@@ -12,9 +12,10 @@ interface CardDetailProps {
   onQuantityChange?: (cardId: string, variant: 'nonfoil' | 'foil', quantity: number) => void;
   cards?: CardWithVariant[];
   onNavigate?: (card: ScryfallCard) => void;
+  readOnly?: boolean;
 }
 
-export function CardDetail({ card, owned, onClose, onToggle, onQuantityChange, cards, onNavigate }: CardDetailProps) {
+export function CardDetail({ card, owned, onClose, onToggle, onQuantityChange, cards, onNavigate, readOnly }: CardDetailProps) {
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const [touchStartY, setTouchStartY] = useState<number | null>(null);
   const [swipeOffset, setSwipeOffset] = useState(0);
@@ -259,94 +260,113 @@ export function CardDetail({ card, owned, onClose, onToggle, onQuantityChange, c
         )}
 
         {/* Ownership toggles with quantity */}
-        <div className={`grid gap-2 ${hasNonFoil && hasFoil ? 'grid-cols-2' : 'grid-cols-1'}`}>
-          {hasNonFoil && (
-            <div
-              onClick={() => !isOwnedNonFoil && onToggle(card.id, 'nonfoil')}
-              className={`
-                flex items-center justify-center px-3 rounded-lg border transition-all duration-200 h-11
-                ${isOwnedNonFoil
-                  ? 'bg-owned-bg border-owned-border'
-                  : 'bg-neutral-50 border-neutral-200 hover:border-neutral-300 hover:bg-neutral-100 cursor-pointer'
-                }
-              `}
-            >
-              {isOwnedNonFoil && onQuantityChange ? (
-                <div className="flex items-center gap-1">
+        {readOnly ? (
+          <div className={`grid gap-2 ${hasNonFoil && hasFoil ? 'grid-cols-2' : 'grid-cols-1'}`}>
+            {hasNonFoil && (
+              <div className={`flex items-center justify-center px-3 rounded-lg border h-11 ${isOwnedNonFoil ? 'bg-owned-bg border-owned-border' : 'bg-neutral-50 border-neutral-200'}`}>
+                <span className={`text-sm font-medium ${isOwnedNonFoil ? 'text-owned' : 'text-neutral-400'}`}>
+                  {isOwnedNonFoil ? `${owned?.quantityNonFoil || 1}x Non-Foil` : 'Non-Foil'}
+                </span>
+              </div>
+            )}
+            {hasFoil && (
+              <div className={`flex items-center justify-center px-3 rounded-lg border h-11 ${isOwnedFoil ? 'bg-foil-bg border-foil-border' : 'bg-neutral-50 border-neutral-200'}`}>
+                <span className={`text-sm font-medium ${isOwnedFoil ? 'text-foil-purple' : 'text-neutral-400'}`}>
+                  {isOwnedFoil ? `${owned?.quantityFoil || 1}x Foil` : 'Foil'}
+                </span>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className={`grid gap-2 ${hasNonFoil && hasFoil ? 'grid-cols-2' : 'grid-cols-1'}`}>
+            {hasNonFoil && (
+              <div
+                onClick={() => !isOwnedNonFoil && onToggle(card.id, 'nonfoil')}
+                className={`
+                  flex items-center justify-center px-3 rounded-lg border transition-all duration-200 h-11
+                  ${isOwnedNonFoil
+                    ? 'bg-owned-bg border-owned-border'
+                    : 'bg-neutral-50 border-neutral-200 hover:border-neutral-300 hover:bg-neutral-100 cursor-pointer'
+                  }
+                `}
+              >
+                {isOwnedNonFoil && onQuantityChange ? (
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onQuantityChange(card.id, 'nonfoil', Math.max(0, (owned?.quantityNonFoil || 1) - 1)); }}
+                      className="w-6 h-6 flex items-center justify-center rounded bg-emerald-500 text-white hover:bg-emerald-600 transition-colors cursor-pointer"
+                    >
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
+                      </svg>
+                    </button>
+                    <span className="w-5 text-center text-sm font-semibold text-owned">
+                      {owned?.quantityNonFoil || 1}
+                    </span>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onQuantityChange(card.id, 'nonfoil', (owned?.quantityNonFoil || 1) + 1); }}
+                      className="w-6 h-6 flex items-center justify-center rounded bg-emerald-500 text-white hover:bg-emerald-600 transition-colors cursor-pointer"
+                    >
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                      </svg>
+                    </button>
+                  </div>
+                ) : (
                   <button
-                    onClick={(e) => { e.stopPropagation(); onQuantityChange(card.id, 'nonfoil', Math.max(0, (owned?.quantityNonFoil || 1) - 1)); }}
-                    className="w-6 h-6 flex items-center justify-center rounded bg-emerald-500 text-white hover:bg-emerald-600 transition-colors cursor-pointer"
+                    onClick={(e) => { e.stopPropagation(); onToggle(card.id, 'nonfoil'); }}
+                    className="text-sm font-medium text-neutral-500 transition-colors cursor-pointer"
                   >
-                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
-                    </svg>
+                    Non-Foil
                   </button>
-                  <span className="w-5 text-center text-sm font-semibold text-owned">
-                    {owned?.quantityNonFoil || 1}
-                  </span>
+                )}
+              </div>
+            )}
+            {hasFoil && (
+              <div
+                onClick={() => !isOwnedFoil && onToggle(card.id, 'foil')}
+                className={`
+                  flex items-center justify-center px-3 rounded-lg border transition-all duration-200 h-11
+                  ${isOwnedFoil
+                    ? 'bg-foil-bg border-foil-border'
+                    : 'bg-neutral-50 border-neutral-200 hover:border-neutral-300 hover:bg-neutral-100 cursor-pointer'
+                  }
+                `}
+              >
+                {isOwnedFoil && onQuantityChange ? (
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onQuantityChange(card.id, 'foil', Math.max(0, (owned?.quantityFoil || 1) - 1)); }}
+                      className="w-6 h-6 flex items-center justify-center rounded bg-purple-400 text-white hover:bg-purple-500 transition-colors cursor-pointer"
+                    >
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
+                      </svg>
+                    </button>
+                    <span className="w-5 text-center text-sm font-semibold text-foil-purple">
+                      {owned?.quantityFoil || 1}
+                    </span>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onQuantityChange(card.id, 'foil', (owned?.quantityFoil || 1) + 1); }}
+                      className="w-6 h-6 flex items-center justify-center rounded bg-purple-400 text-white hover:bg-purple-500 transition-colors cursor-pointer"
+                    >
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                      </svg>
+                    </button>
+                  </div>
+                ) : (
                   <button
-                    onClick={(e) => { e.stopPropagation(); onQuantityChange(card.id, 'nonfoil', (owned?.quantityNonFoil || 1) + 1); }}
-                    className="w-6 h-6 flex items-center justify-center rounded bg-emerald-500 text-white hover:bg-emerald-600 transition-colors cursor-pointer"
+                    onClick={(e) => { e.stopPropagation(); onToggle(card.id, 'foil'); }}
+                    className="text-sm font-medium text-neutral-500 transition-colors cursor-pointer"
                   >
-                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                    </svg>
+                    Foil
                   </button>
-                </div>
-              ) : (
-                <button
-                  onClick={(e) => { e.stopPropagation(); onToggle(card.id, 'nonfoil'); }}
-                  className="text-sm font-medium text-neutral-500 transition-colors cursor-pointer"
-                >
-                  Non-Foil
-                </button>
-              )}
-            </div>
-          )}
-          {hasFoil && (
-            <div
-              onClick={() => !isOwnedFoil && onToggle(card.id, 'foil')}
-              className={`
-                flex items-center justify-center px-3 rounded-lg border transition-all duration-200 h-11
-                ${isOwnedFoil
-                  ? 'bg-foil-bg border-foil-border'
-                  : 'bg-neutral-50 border-neutral-200 hover:border-neutral-300 hover:bg-neutral-100 cursor-pointer'
-                }
-              `}
-            >
-              {isOwnedFoil && onQuantityChange ? (
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={(e) => { e.stopPropagation(); onQuantityChange(card.id, 'foil', Math.max(0, (owned?.quantityFoil || 1) - 1)); }}
-                    className="w-6 h-6 flex items-center justify-center rounded bg-purple-400 text-white hover:bg-purple-500 transition-colors cursor-pointer"
-                  >
-                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
-                    </svg>
-                  </button>
-                  <span className="w-5 text-center text-sm font-semibold text-foil-purple">
-                    {owned?.quantityFoil || 1}
-                  </span>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); onQuantityChange(card.id, 'foil', (owned?.quantityFoil || 1) + 1); }}
-                    className="w-6 h-6 flex items-center justify-center rounded bg-purple-400 text-white hover:bg-purple-500 transition-colors cursor-pointer"
-                  >
-                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                    </svg>
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={(e) => { e.stopPropagation(); onToggle(card.id, 'foil'); }}
-                  className="text-sm font-medium text-neutral-500 transition-colors cursor-pointer"
-                >
-                  Foil
-                </button>
-              )}
-            </div>
-          )}
-        </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Prices section */}
         <div className={`grid gap-2 -mt-3 ${hasNonFoil && hasFoil ? 'grid-cols-2' : 'grid-cols-1'}`}>

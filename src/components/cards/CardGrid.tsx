@@ -6,9 +6,10 @@ interface CardGridProps {
   ownedCards: Map<string, OwnedCard>;
   onToggle: (cardId: string, variant: 'nonfoil' | 'foil') => void;
   onCardClick: (card: ScryfallCard) => void;
+  readOnly?: boolean;
 }
 
-export function CardGrid({ cards, ownedCards, onToggle, onCardClick }: CardGridProps) {
+export function CardGrid({ cards, ownedCards, onToggle, onCardClick, readOnly }: CardGridProps) {
   if (cards.length === 0) {
     return (
       <div className="text-center py-16 text-neutral-400 text-sm">
@@ -27,6 +28,7 @@ export function CardGrid({ cards, ownedCards, onToggle, onCardClick }: CardGridP
           displayVariant={item.variant}
           onToggle={onToggle}
           onClick={onCardClick}
+          readOnly={readOnly}
         />
       ))}
     </div>

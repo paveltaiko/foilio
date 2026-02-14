@@ -10,9 +10,10 @@ interface CardItemProps {
   displayVariant?: CardVariant; // null = zobrazit obě, 'nonfoil'/'foil' = zobrazit jen jednu
   onToggle: (cardId: string, variant: 'nonfoil' | 'foil') => void;
   onClick: (card: ScryfallCard) => void;
+  readOnly?: boolean;
 }
 
-export function CardItem({ card, owned, displayVariant, onToggle, onClick }: CardItemProps) {
+export function CardItem({ card, owned, displayVariant, onToggle, onClick, readOnly }: CardItemProps) {
   const isOwnedNonFoil = owned?.ownedNonFoil ?? false;
   const isOwnedFoil = owned?.ownedFoil ?? false;
 
@@ -125,75 +126,106 @@ export function CardItem({ card, owned, displayVariant, onToggle, onClick }: Car
           </div>
 
           {/* Ownership toggle badges */}
-          <div className="flex gap-1 sm:gap-1.5 pt-0 sm:pt-0.5">
-            {/* Při zobrazení jedné varianty, zobrazit jen jedno tlačítko */}
-            {displayVariant === 'foil' ? (
-              <button
-                onClick={(e) => handleToggle(e, 'foil')}
-                className={`
-                  flex-1 py-1.5 sm:py-1 text-2xs font-medium tracking-wide uppercase rounded-sm border cursor-pointer
-                  transition-all duration-200 active:scale-95
-                  ${isOwnedFoil
-                    ? 'bg-foil-bg text-foil-purple border-foil-border hover:bg-purple-100'
-                    : 'bg-neutral-50 text-neutral-400 border-neutral-200 hover:border-neutral-300 hover:bg-neutral-100'
-                  }
-                `}
-              >
-                {isOwnedFoil && <Check className="inline w-3 h-3 mr-0.5" strokeWidth={3} />}
-                Foil
-              </button>
-            ) : displayVariant === 'nonfoil' ? (
-              <button
-                onClick={(e) => handleToggle(e, 'nonfoil')}
-                className={`
-                  flex-1 py-1.5 sm:py-1 text-2xs font-medium tracking-wide uppercase rounded-sm border cursor-pointer
-                  transition-all duration-200 active:scale-95
-                  ${isOwnedNonFoil
-                    ? 'bg-owned-bg text-owned border-owned-border hover:bg-green-100'
-                    : 'bg-neutral-50 text-neutral-400 border-neutral-200 hover:border-neutral-300 hover:bg-neutral-100'
-                  }
-                `}
-              >
-                {isOwnedNonFoil && <Check className="inline w-3 h-3 mr-0.5" strokeWidth={3} />}
-                Non-Foil
-              </button>
-            ) : (
-              <>
-                {hasNonFoil && (
-                  <button
-                    onClick={(e) => handleToggle(e, 'nonfoil')}
-                    className={`
-                      flex-1 py-1.5 sm:py-1 text-2xs font-medium tracking-wide uppercase rounded-sm border cursor-pointer
-                      transition-all duration-200 active:scale-95
-                      ${isOwnedNonFoil
-                        ? 'bg-owned-bg text-owned border-owned-border hover:bg-green-100'
-                        : 'bg-neutral-50 text-neutral-400 border-neutral-200 hover:border-neutral-300 hover:bg-neutral-100'
-                      }
-                    `}
-                  >
-                    {isOwnedNonFoil && <Check className="inline w-3 h-3 mr-0.5" strokeWidth={3} />}
-                    NF
-                  </button>
-                )}
-                {hasFoil && (
-                  <button
-                    onClick={(e) => handleToggle(e, 'foil')}
-                    className={`
-                      flex-1 py-1.5 sm:py-1 text-2xs font-medium tracking-wide uppercase rounded-sm border cursor-pointer
-                      transition-all duration-200 active:scale-95
-                      ${isOwnedFoil
-                        ? 'bg-foil-bg text-foil-purple border-foil-border hover:bg-purple-100'
-                        : 'bg-neutral-50 text-neutral-400 border-neutral-200 hover:border-neutral-300 hover:bg-neutral-100'
-                      }
-                    `}
-                  >
-                    {isOwnedFoil && <Check className="inline w-3 h-3 mr-0.5" strokeWidth={3} />}
-                    F
-                  </button>
-                )}
-              </>
-            )}
-          </div>
+          {readOnly ? (
+            <div className="flex gap-1 sm:gap-1.5 pt-0 sm:pt-0.5">
+              {displayVariant === 'foil' ? (
+                <div className={`flex-1 py-1.5 sm:py-1 text-2xs font-medium tracking-wide uppercase rounded-sm border text-center ${isOwnedFoil ? 'bg-foil-bg text-foil-purple border-foil-border' : 'bg-neutral-50 text-neutral-400 border-neutral-200'}`}>
+                  {isOwnedFoil && <Check className="inline w-3 h-3 mr-0.5" strokeWidth={3} />}
+                  Foil
+                </div>
+              ) : displayVariant === 'nonfoil' ? (
+                <div className={`flex-1 py-1.5 sm:py-1 text-2xs font-medium tracking-wide uppercase rounded-sm border text-center ${isOwnedNonFoil ? 'bg-owned-bg text-owned border-owned-border' : 'bg-neutral-50 text-neutral-400 border-neutral-200'}`}>
+                  {isOwnedNonFoil && <Check className="inline w-3 h-3 mr-0.5" strokeWidth={3} />}
+                  Non-Foil
+                </div>
+              ) : (
+                <>
+                  {hasNonFoil && (
+                    <div className={`flex-1 py-1.5 sm:py-1 text-2xs font-medium tracking-wide uppercase rounded-sm border text-center ${isOwnedNonFoil ? 'bg-owned-bg text-owned border-owned-border' : 'bg-neutral-50 text-neutral-400 border-neutral-200'}`}>
+                      {isOwnedNonFoil && <Check className="inline w-3 h-3 mr-0.5" strokeWidth={3} />}
+                      NF
+                    </div>
+                  )}
+                  {hasFoil && (
+                    <div className={`flex-1 py-1.5 sm:py-1 text-2xs font-medium tracking-wide uppercase rounded-sm border text-center ${isOwnedFoil ? 'bg-foil-bg text-foil-purple border-foil-border' : 'bg-neutral-50 text-neutral-400 border-neutral-200'}`}>
+                      {isOwnedFoil && <Check className="inline w-3 h-3 mr-0.5" strokeWidth={3} />}
+                      F
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          ) : (
+            <div className="flex gap-1 sm:gap-1.5 pt-0 sm:pt-0.5">
+              {/* Při zobrazení jedné varianty, zobrazit jen jedno tlačítko */}
+              {displayVariant === 'foil' ? (
+                <button
+                  onClick={(e) => handleToggle(e, 'foil')}
+                  className={`
+                    flex-1 py-1.5 sm:py-1 text-2xs font-medium tracking-wide uppercase rounded-sm border cursor-pointer
+                    transition-all duration-200 active:scale-95
+                    ${isOwnedFoil
+                      ? 'bg-foil-bg text-foil-purple border-foil-border hover:bg-purple-100'
+                      : 'bg-neutral-50 text-neutral-400 border-neutral-200 hover:border-neutral-300 hover:bg-neutral-100'
+                    }
+                  `}
+                >
+                  {isOwnedFoil && <Check className="inline w-3 h-3 mr-0.5" strokeWidth={3} />}
+                  Foil
+                </button>
+              ) : displayVariant === 'nonfoil' ? (
+                <button
+                  onClick={(e) => handleToggle(e, 'nonfoil')}
+                  className={`
+                    flex-1 py-1.5 sm:py-1 text-2xs font-medium tracking-wide uppercase rounded-sm border cursor-pointer
+                    transition-all duration-200 active:scale-95
+                    ${isOwnedNonFoil
+                      ? 'bg-owned-bg text-owned border-owned-border hover:bg-green-100'
+                      : 'bg-neutral-50 text-neutral-400 border-neutral-200 hover:border-neutral-300 hover:bg-neutral-100'
+                    }
+                  `}
+                >
+                  {isOwnedNonFoil && <Check className="inline w-3 h-3 mr-0.5" strokeWidth={3} />}
+                  Non-Foil
+                </button>
+              ) : (
+                <>
+                  {hasNonFoil && (
+                    <button
+                      onClick={(e) => handleToggle(e, 'nonfoil')}
+                      className={`
+                        flex-1 py-1.5 sm:py-1 text-2xs font-medium tracking-wide uppercase rounded-sm border cursor-pointer
+                        transition-all duration-200 active:scale-95
+                        ${isOwnedNonFoil
+                          ? 'bg-owned-bg text-owned border-owned-border hover:bg-green-100'
+                          : 'bg-neutral-50 text-neutral-400 border-neutral-200 hover:border-neutral-300 hover:bg-neutral-100'
+                        }
+                      `}
+                    >
+                      {isOwnedNonFoil && <Check className="inline w-3 h-3 mr-0.5" strokeWidth={3} />}
+                      NF
+                    </button>
+                  )}
+                  {hasFoil && (
+                    <button
+                      onClick={(e) => handleToggle(e, 'foil')}
+                      className={`
+                        flex-1 py-1.5 sm:py-1 text-2xs font-medium tracking-wide uppercase rounded-sm border cursor-pointer
+                        transition-all duration-200 active:scale-95
+                        ${isOwnedFoil
+                          ? 'bg-foil-bg text-foil-purple border-foil-border hover:bg-purple-100'
+                          : 'bg-neutral-50 text-neutral-400 border-neutral-200 hover:border-neutral-300 hover:bg-neutral-100'
+                        }
+                      `}
+                    >
+                      {isOwnedFoil && <Check className="inline w-3 h-3 mr-0.5" strokeWidth={3} />}
+                      F
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

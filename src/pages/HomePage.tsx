@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
+import { Share2, Check } from 'lucide-react';
 import type { User } from 'firebase/auth';
 import type { ScryfallCard, SetCode, SortOption, OwnershipFilter as OwnershipFilterType } from '../types/card';
 import { isFirebaseConfigured } from '../config/firebase';
@@ -17,6 +18,41 @@ import { CardDetail } from '../components/cards/CardDetail';
 interface HomePageProps {
   user: User;
   searchQuery: string;
+}
+
+function ShareButton({ userId }: { userId: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleShare = async () => {
+    const url = `${window.location.origin}/user/${userId}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Fallback for older browsers
+      prompt('Odkaz na sbírku:', url);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleShare}
+      className="flex items-center justify-center gap-2 w-full py-2 text-sm font-medium text-neutral-500 bg-surface-primary border border-surface-border rounded-lg hover:bg-neutral-50 transition-colors cursor-pointer"
+    >
+      {copied ? (
+        <>
+          <Check className="w-4 h-4 text-owned" />
+          <span className="text-owned">Odkaz zkopírován!</span>
+        </>
+      ) : (
+        <>
+          <Share2 className="w-4 h-4" />
+          <span>Sdílet sbírku</span>
+        </>
+      )}
+    </button>
+  );
 }
 
 export function HomePage({ user, searchQuery }: HomePageProps) {
@@ -210,14 +246,17 @@ export function HomePage({ user, searchQuery }: HomePageProps) {
       {/* Set tabs */}
       <SetTabs activeSet={activeSet} onChange={setActiveSet} cardCounts={cardCounts} />
 
-      {/* Stats */}
-      <div className="py-4">
+      {/* Stats + Share */}
+      <div className="py-4 space-y-2">
         <CollectionSummary
           totalCards={stats.totalCards}
           ownedCount={stats.ownedCount}
           totalValue={stats.totalValue}
           percentage={stats.percentage}
         />
+        {isFirebaseConfigured && (
+          <ShareButton userId={user.uid} />
+        )}
       </div>
 
       {/* Toolbar */}

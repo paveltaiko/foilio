@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { signInWithPopup, signOut, onAuthStateChanged, type User } from 'firebase/auth';
 import { auth, googleProvider, isFirebaseConfigured } from '../config/firebase';
+import { createUserProfileIfNeeded } from '../services/userProfile';
 
 interface AuthState {
   user: User | null;
@@ -17,6 +18,7 @@ export function useAuth() {
     loading: true,
     error: null,
   });
+  const profileCreatedRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!isFirebaseConfigured || !auth) {
@@ -31,6 +33,13 @@ export function useAuth() {
 
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setState({ user, loading: false, error: null });
+      // Create/update user profile in Firestore on login
+      if (user && profileCreatedRef.current !== user.uid) {
+        profileCreatedRef.current = user.uid;
+        createUserProfileIfNeeded(user).catch(() => {
+          // Profile creation is non-critical, silently ignore errors
+        });
+      }
     });
     return unsubscribe;
   }, []);
