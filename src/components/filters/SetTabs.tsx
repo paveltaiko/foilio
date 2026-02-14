@@ -14,10 +14,10 @@ const SET_NAMES: Record<SetCode, string> = {
 };
 
 export function SetTabs({ activeSet, onChange, cardCounts }: SetTabsProps) {
-  const tabs = (['spm', 'spe', 'mar'] as const).map((code) => ({
-    id: code,
-    label: SET_NAMES[code],
-    count: cardCounts?.[code],
+  const tabs = (Object.keys(SET_NAMES) as SetCode[]).map((setCode) => ({
+    id: setCode,
+    label: SET_NAMES[setCode],
+    count: cardCounts?.[setCode],
   }));
 
   return (
