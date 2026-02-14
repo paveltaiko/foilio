@@ -1,0 +1,313 @@
+@import "tailwindcss";
+
+/* ===== Design System: Custom Theme ===== */
+
+@theme {
+  /* Primary — Spider-Man Red */
+  --color-primary-50: #FEF2F2;
+  --color-primary-100: #FEE2E2;
+  --color-primary-200: #FECACA;
+  --color-primary-300: #F87171;
+  --color-primary-400: #EF4444;
+  --color-primary-500: #DC2626;
+  --color-primary-600: #B91C1C;
+  --color-primary-700: #991B1B;
+  --color-primary-800: #7F1D1D;
+  --color-primary-900: #450A0A;
+
+  /* Secondary — Spider-Man Blue */
+  --color-secondary-50: #EFF6FF;
+  --color-secondary-100: #DBEAFE;
+  --color-secondary-200: #BFDBFE;
+  --color-secondary-300: #93C5FD;
+  --color-secondary-400: #60A5FA;
+  --color-secondary-500: #2563EB;
+  --color-secondary-600: #1D4ED8;
+  --color-secondary-700: #1E40AF;
+
+  /* Semantic: Owned */
+  --color-owned: #22C55E;
+  --color-owned-bg: #F0FDF4;
+  --color-owned-border: #86EFAC;
+
+  /* Semantic: Foil */
+  --color-foil-purple: #A855F7;
+  --color-foil-pink: #EC4899;
+  --color-foil-blue: #3B82F6;
+  --color-foil-green: #10B981;
+  --color-foil-bg: #FAF5FF;
+  --color-foil-border: #E9D5FF;
+
+  /* Surface */
+  --color-surface-primary: #FFFFFF;
+  --color-surface-secondary: #FAFAFA;
+  --color-surface-elevated: #FFFFFF;
+  --color-surface-border: #EDEDED;
+
+  /* Fonts */
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", monospace;
+
+  /* Custom font size */
+  --text-2xs: 0.625rem;
+  --text-2xs--line-height: 0.875rem;
+
+  /* Custom aspect ratio */
+  --aspect-ratio-mtg-card: 488 / 680;
+
+  /* Custom border radius */
+  --radius-card: 8px;
+  --radius-card-sm: 14px;
+  --radius-lg: 8px;
+
+  /* Animations */
+  --animate-foil-shimmer: foil-shimmer 3s linear infinite;
+  --animate-scale-in: scale-in 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-slide-up: slide-up 300ms cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-fade-in: fade-in 200ms ease;
+
+  @keyframes foil-shimmer {
+    0% {
+      background-position: -200% center;
+    }
+
+    100% {
+      background-position: 200% center;
+    }
+  }
+
+  @keyframes scale-in {
+    0% {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes slide-up {
+    0% {
+      transform: translateY(100%);
+    }
+
+    100% {
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes fade-in {
+    0% {
+      opacity: 0;
+    }
+
+    100% {
+      opacity: 1;
+    }
+  }
+}
+
+/* ===== Base Styles ===== */
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Prevent overscroll bounce on iOS */
+  overscroll-behavior: none;
+}
+
+html,
+body {
+  /* Fix mobile viewport height */
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-surface-secondary);
+  color: #262626;
+  margin: 0;
+  /* Allow scrolling */
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Root container */
+#root {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===== Component Classes ===== */
+
+/* Foil image — boosted saturation & brightness */
+.foil-image {
+  filter: saturate(1.3) brightness(1.05) contrast(1.05);
+}
+
+/* Foil color overlay — rainbow gradient */
+.foil-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(160deg,
+      rgba(168, 85, 247, 0.60) 0%,
+      rgba(236, 72, 153, 0.50) 12%,
+      rgba(59, 130, 246, 0.55) 25%,
+      rgba(16, 185, 129, 0.45) 40%,
+      rgba(168, 85, 247, 0.35) 55%,
+      rgba(236, 72, 153, 0.25) 70%,
+      rgba(59, 130, 246, 0.18) 85%,
+      rgba(16, 185, 129, 0.14) 100%);
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+
+/* Foil gloss highlight — shiny reflection */
+.foil-overlay::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(145deg,
+      rgba(255, 255, 255, 0.50) 0%,
+      rgba(255, 255, 255, 0.15) 15%,
+      transparent 40%,
+      rgba(255, 255, 255, 0.10) 65%,
+      rgba(255, 255, 255, 0.30) 85%,
+      transparent 100%);
+  mix-blend-mode: overlay;
+}
+
+/* Card not-owned — subtle indicator, still looks good */
+.card-not-owned {
+  opacity: 0.85;
+}
+
+/* Card hover lift — desktop only */
+@media (hover: hover) {
+  .card-hover-lift {
+    transition: transform 150ms ease-out;
+  }
+
+  .card-hover-lift:hover {
+    transform: translateY(-2px);
+  }
+}
+
+/* Skeleton loading */
+.skeleton {
+  background-color: #E5E5E5;
+  border-radius: 6px;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Foil text shimmer */
+.text-foil {
+  background: linear-gradient(135deg, var(--color-foil-purple), var(--color-foil-pink), var(--color-foil-blue));
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: foil-shimmer 3s linear infinite;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #D4D4D4;
+  border-radius: 3px;
+}
+
+/* Hide scrollbar utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Show scrollbar utility (for desktop) */
+@media (min-width: 640px) {
+  .sm\:scrollbar-default {
+    -ms-overflow-style: auto;
+    scrollbar-width: thin;
+  }
+
+  .sm\:scrollbar-default::-webkit-scrollbar {
+    display: block;
+    width: 6px;
+  }
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Safe area insets for iOS */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+/* Prevent text selection on interactive elements */
+.no-select {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Touch action for better scroll performance */
+.touch-pan-y {
+  touch-action: pan-y;
+}
+
+.touch-pan-x {
+  touch-action: pan-x;
+}
+
+/* Overscroll behavior */
+.overscroll-contain {
+  overscroll-behavior: contain;
+}
+
+.overscroll-none {
+  overscroll-behavior: none;
+}
+
+/* iOS momentum scrolling */
+.scroll-smooth-ios {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent zoom on input focus (iOS) */
+@media screen and (max-width: 640px) {
+
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
