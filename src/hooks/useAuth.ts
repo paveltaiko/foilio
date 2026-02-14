@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { signInWithRedirect, signOut, onAuthStateChanged, type User } from 'firebase/auth';
+import { signInWithPopup, signOut, onAuthStateChanged, type User } from 'firebase/auth';
 import { auth, googleProvider, isFirebaseConfigured } from '../config/firebase';
 
 interface AuthState {
@@ -45,7 +45,7 @@ export function useAuth() {
     }
     try {
       setState((prev) => ({ ...prev, error: null }));
-      await signInWithRedirect(auth, googleProvider);
+      await signInWithPopup(auth, googleProvider);
     } catch (err) {
       setState((prev) => ({
         ...prev,
