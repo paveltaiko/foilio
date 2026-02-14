@@ -1,11 +1,7 @@
-import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { ArrowLeft } from 'lucide-react';
-import type { ScryfallCard, SetCode, SortOption, OwnershipFilter as OwnershipFilterType } from '../types/card';
-import { useScryfallCards } from '../hooks/useScryfallCards';
 import { useSharedCollection } from '../hooks/useSharedCollection';
-import { useCollectionStats } from '../hooks/useCollectionStats';
-import { parsePrice } from '../utils/formatPrice';
+import { useCardCollection } from '../hooks/useCardCollection';
 import { SetTabs } from '../components/filters/SetTabs';
 import { SortControl } from '../components/filters/SortControl';
 import { OwnershipFilter } from '../components/filters/OwnershipFilter';
@@ -15,16 +11,12 @@ import { CardDetail } from '../components/cards/CardDetail';
 
 interface SharedCollectionPageProps {
   currentUserId: string | null;
+  searchQuery?: string;
 }
 
-export function SharedCollectionPage({ currentUserId }: SharedCollectionPageProps) {
+export function SharedCollectionPage({ currentUserId, searchQuery }: SharedCollectionPageProps) {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
-
-  const [activeSet, setActiveSet] = useState<SetCode>('spm');
-  const [sortOption, setSortOption] = useState<SortOption>('number-asc');
-  const [ownershipFilter, setOwnershipFilter] = useState<OwnershipFilterType>('all');
-  const [selectedCard, setSelectedCard] = useState<ScryfallCard | null>(null);
 
   // Redirect to home if viewing own collection
   if (userId && currentUserId && userId === currentUserId) {
@@ -35,72 +27,15 @@ export function SharedCollectionPage({ currentUserId }: SharedCollectionPageProp
   // Fetch shared collection
   const { ownedCards, profile, loading: collectionLoading, error } = useSharedCollection(userId);
 
-  // Fetch cards from Scryfall
-  const { data: spmCards = [], isLoading: spmLoading } = useScryfallCards('spm');
-  const { data: speCards = [], isLoading: speLoading } = useScryfallCards('spe');
-  const { data: marCards = [], isLoading: marLoading } = useScryfallCards('mar');
+  const {
+    activeSet, setActiveSet,
+    sortOption, setSortOption,
+    ownershipFilter, setOwnershipFilter,
+    selectedCard, setSelectedCard,
+    isCardsLoading, cardCounts, stats, sortedFilteredCards,
+  } = useCardCollection({ ownedCards, searchQuery });
 
-  const allCards: Record<SetCode, ScryfallCard[]> = useMemo(
-    () => ({ spm: spmCards, spe: speCards, mar: marCards }),
-    [spmCards, speCards, marCards]
-  );
-  const currentCards = allCards[activeSet];
-  const isLoading = collectionLoading || (activeSet === 'spm' ? spmLoading : activeSet === 'spe' ? speLoading : marLoading);
-
-  const stats = useCollectionStats(currentCards, ownedCards, activeSet);
-
-  const cardCounts: Record<SetCode, number> = useMemo(
-    () => ({ spm: spmCards.length, spe: speCards.length, mar: marCards.length }),
-    [spmCards.length, speCards.length, marCards.length]
-  );
-
-  // Sort & filter (same logic as HomePage)
-  const sortedFilteredCards = useMemo(() => {
-    let cards = [...currentCards];
-
-    if (ownershipFilter === 'owned') {
-      cards = cards.filter((c) => {
-        const o = ownedCards.get(c.id);
-        return o && (o.ownedNonFoil || o.ownedFoil);
-      });
-    } else if (ownershipFilter === 'missing') {
-      cards = cards.filter((c) => {
-        const o = ownedCards.get(c.id);
-        return !o || (!o.ownedNonFoil && !o.ownedFoil);
-      });
-    }
-
-    if (sortOption === 'number-asc' || sortOption === 'number-desc') {
-      cards.sort((a, b) => {
-        const aNum = parseInt(a.collector_number) || 0;
-        const bNum = parseInt(b.collector_number) || 0;
-        return sortOption === 'number-asc' ? aNum - bNum : bNum - aNum;
-      });
-      return cards.map(card => ({ card, variant: null, sortPrice: null }));
-    } else {
-      const expanded: { card: typeof cards[0]; variant: 'nonfoil' | 'foil'; sortPrice: number | null }[] = [];
-
-      for (const card of cards) {
-        const hasNonFoil = card.finishes.includes('nonfoil');
-        const hasFoil = card.finishes.includes('foil');
-
-        if (hasNonFoil) {
-          expanded.push({ card, variant: 'nonfoil', sortPrice: parsePrice(card.prices.eur) });
-        }
-        if (hasFoil) {
-          expanded.push({ card, variant: 'foil', sortPrice: parsePrice(card.prices.eur_foil) });
-        }
-      }
-
-      expanded.sort((a, b) => {
-        const aPrice = a.sortPrice ?? 0;
-        const bPrice = b.sortPrice ?? 0;
-        return sortOption === 'price-asc' ? aPrice - bPrice : bPrice - aPrice;
-      });
-
-      return expanded;
-    }
-  }, [currentCards, ownershipFilter, sortOption, ownedCards]);
+  const isLoading = collectionLoading || isCardsLoading;
 
   // No-op toggle for read-only mode
   const noop = () => {};

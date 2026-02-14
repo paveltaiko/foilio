@@ -37,7 +37,7 @@ function AppContent() {
           />
           <Route
             path="/user/:userId"
-            element={<SharedCollectionPage currentUserId={user?.uid ?? null} />}
+            element={<SharedCollectionPage currentUserId={user?.uid ?? null} searchQuery={searchQuery} />}
           />
         </Routes>
         {error && (

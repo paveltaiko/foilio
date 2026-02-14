@@ -16,7 +16,7 @@ export function Footer() {
           {/* Social / Info */}
           <div className="flex items-center gap-3">
             <a
-              href="https://github.com/YOUR_USERNAME/mtg-spider-man" // TODO: Aktualizuj na skutečné URL repozitáře
+              href="https://github.com/paveltaiko/foilio"
               target="_blank"
               rel="noopener noreferrer"
               className="text-neutral-400 hover:text-neutral-600 transition-colors"
