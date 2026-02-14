@@ -55,8 +55,6 @@ export function useSharedCollection(userId: string | undefined) {
             ownedFoil: data.ownedFoil ?? false,
             quantityNonFoil: data.quantityNonFoil ?? (data.ownedNonFoil ? 1 : 0),
             quantityFoil: data.quantityFoil ?? (data.ownedFoil ? 1 : 0),
-            customPrice: data.customPrice ?? null,
-            customPriceFoil: data.customPriceFoil ?? null,
             addedAt: data.addedAt?.toDate?.() ?? new Date(),
             updatedAt: data.updatedAt?.toDate?.() ?? new Date(),
           });

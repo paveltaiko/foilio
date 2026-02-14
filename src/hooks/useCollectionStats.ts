@@ -29,14 +29,14 @@ export function useCollectionStats(
 
       // Non-foil value (multiplied by quantity)
       if (owned.ownedNonFoil) {
-        const price = owned.customPrice ?? parsePrice(card.prices.eur);
+        const price = parsePrice(card.prices.eur);
         const qty = owned.quantityNonFoil || 1;
         if (price !== null) totalValue += price * qty;
       }
 
       // Foil value (multiplied by quantity)
       if (owned.ownedFoil) {
-        const price = owned.customPriceFoil ?? parsePrice(card.prices.eur_foil);
+        const price = parsePrice(card.prices.eur_foil);
         const qty = owned.quantityFoil || 1;
         if (price !== null) totalValue += price * qty;
       }

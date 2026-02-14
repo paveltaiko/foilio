@@ -25,7 +25,7 @@ function AppContent() {
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
       />
-      <main className="flex-1 overflow-y-auto p-2">
+      <main className="flex-1 overflow-y-auto p-2 pb-8">
         <Routes>
           <Route
             path="/"

@@ -46,8 +46,6 @@ export interface OwnedCard {
   ownedFoil: boolean;
   quantityNonFoil: number;
   quantityFoil: number;
-  customPrice: number | null;
-  customPriceFoil: number | null;
   addedAt: Date;
   updatedAt: Date;
 }
@@ -57,8 +55,6 @@ export interface CardWithOwnership extends ScryfallCard {
   ownedFoil: boolean;
   quantityNonFoil: number;
   quantityFoil: number;
-  customPrice: number | null;
-  customPriceFoil: number | null;
 }
 
 export type SetCode = 'all' | 'spm' | 'spe' | 'mar';

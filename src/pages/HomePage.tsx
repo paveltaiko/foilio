@@ -103,8 +103,6 @@ export function HomePage({ user, searchQuery }: HomePageProps) {
               ownedFoil: newFoil,
               quantityNonFoil: newQtyNonFoil,
               quantityFoil: newQtyFoil,
-              customPrice: existing?.customPrice ?? null,
-              customPriceFoil: existing?.customPriceFoil ?? null,
               addedAt: existing?.addedAt ?? new Date(),
               updatedAt: new Date(),
             });

@@ -38,8 +38,6 @@ export function subscribeToOwnedCards(
         ownedFoil: data.ownedFoil ?? false,
         quantityNonFoil: data.quantityNonFoil ?? (data.ownedNonFoil ? 1 : 0),
         quantityFoil: data.quantityFoil ?? (data.ownedFoil ? 1 : 0),
-        customPrice: data.customPrice ?? null,
-        customPriceFoil: data.customPriceFoil ?? null,
         addedAt: data.addedAt?.toDate?.() ?? new Date(),
         updatedAt: data.updatedAt?.toDate?.() ?? new Date(),
       });
@@ -83,35 +81,9 @@ export async function toggleCardOwnership(
     ownedFoil: newFoil,
     quantityNonFoil: newQtyNonFoil,
     quantityFoil: newQtyFoil,
-    customPrice: currentOwned?.customPrice ?? null,
-    customPriceFoil: currentOwned?.customPriceFoil ?? null,
     addedAt: currentOwned ? currentOwned.addedAt : serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
-}
-
-export async function updateCustomPrice(
-  userId: string,
-  cardId: string,
-  variant: 'nonfoil' | 'foil',
-  price: number | null,
-  currentOwned: OwnedCard
-): Promise<void> {
-  const ref = doc(getDb(), 'users', userId, 'ownedCards', cardId);
-
-  await setDoc(ref, {
-    set: currentOwned.set,
-    collectorNumber: currentOwned.collectorNumber,
-    name: currentOwned.name,
-    ownedNonFoil: currentOwned.ownedNonFoil,
-    ownedFoil: currentOwned.ownedFoil,
-    quantityNonFoil: currentOwned.quantityNonFoil,
-    quantityFoil: currentOwned.quantityFoil,
-    customPrice: variant === 'nonfoil' ? price : currentOwned.customPrice,
-    customPriceFoil: variant === 'foil' ? price : currentOwned.customPriceFoil,
-    addedAt: currentOwned.addedAt,
-    updatedAt: serverTimestamp(),
-  }, { merge: true });
 }
 
 export async function updateCardQuantity(
@@ -141,8 +113,6 @@ export async function updateCardQuantity(
     ownedFoil: newOwnedFoil,
     quantityNonFoil: newQtyNonFoil,
     quantityFoil: newQtyFoil,
-    customPrice: currentOwned.customPrice,
-    customPriceFoil: currentOwned.customPriceFoil,
     addedAt: currentOwned.addedAt,
     updatedAt: serverTimestamp(),
   }, { merge: true });

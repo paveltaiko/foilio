@@ -24,8 +24,8 @@ export function CardItem({ card, owned, displayVariant, onToggle, onClick, readO
       ? isOwnedNonFoil
       : (isOwnedNonFoil || isOwnedFoil);
 
-  const effectivePrice = owned?.customPrice ?? parsePrice(card.prices.eur);
-  const effectivePriceFoil = owned?.customPriceFoil ?? parsePrice(card.prices.eur_foil);
+  const effectivePrice = parsePrice(card.prices.eur);
+  const effectivePriceFoil = parsePrice(card.prices.eur_foil);
 
   const imageUrl = getCardImage(card, 'large');
   const hasNonFoil = card.finishes.includes('nonfoil');
