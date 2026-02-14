@@ -31,6 +31,13 @@ export function CardItem({ card, owned, displayVariant, onToggle, onClick, readO
   const hasNonFoil = card.finishes.includes('nonfoil');
   const hasFoil = card.finishes.includes('foil');
 
+  // Quantity for badge display - based on displayed variant
+  const displayQuantity = displayVariant === 'foil'
+    ? (owned?.quantityFoil ?? 0)
+    : displayVariant === 'nonfoil'
+      ? (owned?.quantityNonFoil ?? 0)
+      : (owned?.quantityNonFoil ?? 0) + (owned?.quantityFoil ?? 0);
+
   // Zobrazit foil efekt na obrázku?
   const showFoilEffect = displayVariant === 'foil' || (displayVariant === null && isOwnedFoil);
 
@@ -76,6 +83,11 @@ export function CardItem({ card, owned, displayVariant, onToggle, onClick, readO
               />
             )}
             {showFoilEffect && <div className="foil-overlay" />}
+            {displayQuantity > 1 && (
+              <div className="absolute top-1 right-1 sm:top-1.5 sm:right-1.5 bg-black/70 text-white text-2xs sm:text-xs font-bold rounded-full h-5 sm:h-6 flex items-center justify-center px-2 sm:px-2.5 backdrop-blur-sm">
+                {displayQuantity}×
+              </div>
+            )}
           </div>
         </div>
 
