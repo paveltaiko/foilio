@@ -23,7 +23,7 @@ export function Header({ userName, userPhoto, onLogin, onLogout, isLoggedIn, sea
 
         {/* Search + User area */}
         <div className="flex items-center gap-10">
-          {isLoggedIn && onSearchChange && (
+          {onSearchChange && (
             <div className="w-56 hidden sm:block">
               <SearchInput value={searchQuery} onChange={onSearchChange} />
             </div>
