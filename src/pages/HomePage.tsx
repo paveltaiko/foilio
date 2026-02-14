@@ -242,7 +242,7 @@ export function HomePage({ user, searchQuery }: HomePageProps) {
   );
 
   return (
-    <div className="max-w-6xl mx-auto px-3 sm:px-6 pb-8 safe-bottom touch-pan-y">
+    <div className="max-w-6xl mx-auto safe-bottom touch-pan-y">
       {/* Set tabs */}
       <SetTabs activeSet={activeSet} onChange={setActiveSet} cardCounts={cardCounts} />
 

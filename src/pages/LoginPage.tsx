@@ -7,7 +7,7 @@ interface LoginPageProps {
 
 export function LoginPage({ onLogin, error }: LoginPageProps) {
   return (
-    <div className="flex flex-col items-center justify-center min-h-[80vh] px-4 text-center">
+    <div className="flex flex-col items-center justify-center min-h-[80vh] text-center">
       <h1 className="text-3xl font-bold text-neutral-800 tracking-tight mb-2">
         <span className="text-primary-500">MTG</span> Spider-Man
       </h1>

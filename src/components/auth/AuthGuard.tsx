@@ -19,7 +19,7 @@ export function AuthGuard({ user, loading, onLogin, children }: AuthGuardProps) 
 
   if (!user) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 sm:px-6 text-center">
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
         <h2 className="text-xl sm:text-2xl font-bold text-neutral-800 mb-2">
           MTG Spider-Man Collection
         </h2>

@@ -107,7 +107,7 @@ export function SharedCollectionPage({ currentUserId }: SharedCollectionPageProp
 
   if (error) {
     return (
-      <div className="max-w-6xl mx-auto px-3 sm:px-6 py-16 text-center">
+      <div className="max-w-6xl mx-auto py-16 text-center">
         <p className="text-neutral-500 text-sm">{error}</p>
         <button
           onClick={() => navigate('/')}
@@ -120,7 +120,7 @@ export function SharedCollectionPage({ currentUserId }: SharedCollectionPageProp
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-3 sm:px-6 pb-8 safe-bottom touch-pan-y">
+    <div className="max-w-6xl mx-auto safe-bottom touch-pan-y">
       {/* Owner banner */}
       <div className="flex items-center gap-3 py-4">
         <button
