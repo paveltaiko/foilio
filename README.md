@@ -1,53 +1,86 @@
-# React + TypeScript + Vite
+# 🕷️ MTG Spider-Man Collection Tracker
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Webová aplikace pro sledování sbírky karet z edice **Magic: The Gathering × Marvel Spider-Man**. Umožňuje přehledně zobrazit všechny karty z edice, označovat vlastněné karty a sledovat pokrok ve sbírce.
 
-Currently, two official plugins are available:
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-06B6D4?logo=tailwindcss)
+![Firebase](https://img.shields.io/badge/Firebase-12-FFCA28?logo=firebase)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## ✨ Funkce
 
-## React Compiler
+- 🔐 **Přihlášení přes Google** – bezpečná autentizace pomocí Firebase Auth
+- 🃏 **Prohlížení karet** – všechny karty z edice načtené ze Scryfall API
+- ✅ **Sledování vlastnictví** – označování karet, které vlastníte
+- 📊 **Statistiky sbírky** – přehled o pokroku a hodnotě sbírky
+- 🔍 **Vyhledávání a filtry** – rychlé hledání karet podle názvu
+- 📱 **Responzivní design** – funguje na mobilu i desktopu
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 🛠️ Technologie
 
-## Expanding the ESLint configuration
+- **Frontend:** React 19, TypeScript, Tailwind CSS 4
+- **State Management:** TanStack Query (React Query)
+- **Backend:** Firebase (Authentication, Firestore)
+- **Data:** Scryfall API
+- **Build:** Vite
+- **Icons:** Lucide React
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## 🚀 Instalace
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+1. **Naklonuj repozitář:**
+   ```bash
+   git clone https://github.com/YOUR_USERNAME/mtg-spider-man.git
+   cd mtg-spider-man
+   ```
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+2. **Nainstaluj závislosti:**
+   ```bash
+   npm install
+   ```
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+3. **Nastav Firebase:**
+   - Vytvoř projekt na [Firebase Console](https://console.firebase.google.com/)
+   - Povol Google Authentication
+   - Vytvoř Firestore databázi
+   - Zkopíruj `.env.example` do `.env` a doplň Firebase credentials:
+     ```env
+     VITE_FIREBASE_API_KEY=your_api_key
+     VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+     VITE_FIREBASE_PROJECT_ID=your_project_id
+     VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
+     VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+     VITE_FIREBASE_APP_ID=your_app_id
+     ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+4. **Spusť vývojový server:**
+   ```bash
+   npm run dev
+   ```
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
+## 📦 Skripty
+
+| Příkaz | Popis |
+|--------|-------|
+| `npm run dev` | Spustí vývojový server |
+| `npm run build` | Vytvoří produkční build |
+| `npm run preview` | Náhled produkčního buildu |
+| `npm run lint` | Spustí ESLint |
+
+## 🌐 Nasazení
+
+Aplikace je optimalizovaná pro nasazení na **Vercel**:
+
+1. Propoj GitHub repozitář s Vercel
+2. Přidej Environment Variables (Firebase config)
+3. Deploy! 🚀
+
+## 📄 Licence
+
+MIT
+
+---
+
+*Vytvořeno s ❤️ pro sběratele MTG karet*
 import reactDom from 'eslint-plugin-react-dom'
 
 export default defineConfig([
