@@ -22,7 +22,6 @@ export function Modal({ isOpen, onClose, children }: ModalProps) {
       document.body.style.left = '0';
       document.body.style.right = '0';
       document.body.style.overflow = 'hidden';
-      setDragY(0);
     } else {
       // Restore scroll position
       const scrollY = document.body.style.top;

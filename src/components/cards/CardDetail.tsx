@@ -37,11 +37,10 @@ export function CardDetail({ card, owned, onClose, onToggle, onQuantityChange, c
       // Card has changed, start enter animation
       pendingNavigationRef.current = null;
 
-      // Animate to center from off-screen position
-      setIsEntering(true);
-
       // Animate to center
       requestAnimationFrame(() => {
+        // Animate to center from off-screen position
+        setIsEntering(true);
         setSwipeOffset(0);
         setTimeout(() => {
           setIsEntering(false);
@@ -67,7 +66,7 @@ export function CardDetail({ card, owned, onClose, onToggle, onQuantityChange, c
         onNavigate(cards[currentIndex - 1].card);
       }, 200);
     }
-  }, [canGoPrev, cards, currentIndex, onNavigate, isAnimating, swipeOffset]);
+  }, [canGoPrev, cards, currentIndex, onNavigate, isAnimating]);
 
   const goToNext = useCallback(() => {
     if (canGoNext && cards && onNavigate && !isAnimating) {

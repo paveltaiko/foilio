@@ -28,27 +28,24 @@ function saveToLocalStorage(cards: Map<string, OwnedCard>) {
 }
 
 export function useOwnedCards(userId: string | null) {
-  const [ownedCards, setOwnedCards] = useState<Map<string, OwnedCard>>(new Map());
-  const [loading, setLoading] = useState(true);
+  const [ownedCards, setOwnedCards] = useState<Map<string, OwnedCard>>(() => {
+    if (!isFirebaseConfigured) {
+      return loadFromLocalStorage();
+    }
+    return new Map();
+  });
+  const [loading, setLoading] = useState(!!userId);
 
   useEffect(() => {
-    if (!userId) {
-      setOwnedCards(new Map());
-      setLoading(false);
-      return;
-    }
+    if (!userId) return;
 
     // Use Firestore when configured, localStorage otherwise
     if (isFirebaseConfigured) {
-      setLoading(true);
       const unsubscribe = subscribeToOwnedCards(userId, (cards) => {
         setOwnedCards(cards);
         setLoading(false);
       });
       return unsubscribe;
-    } else {
-      setOwnedCards(loadFromLocalStorage());
-      setLoading(false);
     }
   }, [userId]);
 
