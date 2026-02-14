@@ -41,7 +41,7 @@ export function Header({ userName, userPhoto, onLogin, onLogout, isLoggedIn, sea
                 />
               )}
               <span className="hidden sm:block text-sm text-neutral-600 max-w-[120px] truncate">{userName}</span>
-              <Button variant="ghost" size="sm" onClick={onLogout}>
+              <Button variant="danger-ghost" size="sm" onClick={onLogout}>
                 <span className="hidden sm:inline">Odhlásit</span>
                 <LogOut className="w-4 h-4 sm:hidden" />
               </Button>
