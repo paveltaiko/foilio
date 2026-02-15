@@ -40,24 +40,24 @@ export function Header({ userName, userPhoto, onLogin, onLogout, isLoggedIn, sea
                   referrerPolicy="no-referrer"
                 />
               )}
-              <span className="hidden sm:block text-sm text-neutral-600 max-w-[120px] truncate">{userName}</span>
+
               <button
                 onClick={onLogout}
                 className="sm:hidden w-7 h-7 flex items-center justify-center text-neutral-500 hover:text-red-500 transition-colors cursor-pointer"
-                aria-label="Odhlásit"
+                aria-label="Sign out"
               >
                 <LogOut className="w-5 h-5" />
               </button>
               <div className="hidden sm:block">
                 <Button variant="danger-ghost" size="sm" onClick={onLogout}>
-                  Odhlásit
+                  Sign out
                 </Button>
               </div>
             </div>
           ) : (
             <Button variant="primary" size="sm" onClick={onLogin}>
-              <span className="hidden sm:inline">Přihlásit se</span>
-              <span className="sm:hidden">Přihlásit</span>
+              <span className="hidden sm:inline">Sign in</span>
+              <span className="sm:hidden">Sign in</span>
             </Button>
           )}
         </div>

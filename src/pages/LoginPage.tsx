@@ -12,8 +12,8 @@ export function LoginPage({ onLogin, error }: LoginPageProps) {
         <span className="text-primary-500">MTG</span> Spider-Man
       </h1>
       <p className="text-neutral-500 mb-8 max-w-sm">
-        Sleduj svou sbírku karet ze Spider-Man edic.
-        Přihlás se pro synchronizaci napříč zařízeními.
+        Track your Spider-Man edition card collection.
+        Sign in to sync across devices.
       </p>
       <LoginButton onLogin={onLogin} />
       {error && (

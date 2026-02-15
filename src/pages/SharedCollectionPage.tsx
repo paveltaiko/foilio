@@ -49,7 +49,7 @@ export function SharedCollectionPage({ currentUserId, searchQuery }: SharedColle
           onClick={() => navigate('/')}
           className="mt-4 text-sm text-primary-500 hover:text-primary-600 transition-colors cursor-pointer"
         >
-          Zpět na hlavní stránku
+          Back to home
         </button>
       </div>
     );
@@ -75,9 +75,9 @@ export function SharedCollectionPage({ currentUserId, searchQuery }: SharedColle
         )}
         <div>
           <p className="text-sm font-semibold text-neutral-800">
-            {profile?.displayName ?? 'Načítání...'}
+            {profile?.displayName ?? 'Loading...'}
           </p>
-          <p className="text-xs text-neutral-400">Sdílená sbírka</p>
+          <p className="text-xs text-neutral-400">Shared collection</p>
         </div>
       </div>
 
@@ -104,7 +104,7 @@ export function SharedCollectionPage({ currentUserId, searchQuery }: SharedColle
               className={`cursor-pointer transition-colors duration-150 ${
                 groupBySet ? 'text-primary-500' : 'text-neutral-400 hover:text-neutral-600'
               }`}
-              title={groupBySet ? 'Zobrazit vše najednou' : 'Seskupit podle edice'}
+              title={groupBySet ? 'Show all at once' : 'Group by set'}
             >
               {groupBySet ? <Layers className="w-5 h-5" /> : <LayoutGrid className="w-5 h-5" />}
             </button>

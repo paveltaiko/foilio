@@ -22,7 +22,7 @@ export async function createUserProfileIfNeeded(user: {
 
   if (!snap.exists()) {
     await setDoc(ref, {
-      displayName: user.displayName ?? 'Uživatel',
+      displayName: user.displayName ?? 'User',
       photoURL: user.photoURL ?? null,
       createdAt: serverTimestamp(),
     });
@@ -31,7 +31,7 @@ export async function createUserProfileIfNeeded(user: {
     const data = snap.data();
     if (data.displayName !== user.displayName || data.photoURL !== user.photoURL) {
       await setDoc(ref, {
-        displayName: user.displayName ?? 'Uživatel',
+        displayName: user.displayName ?? 'User',
         photoURL: user.photoURL ?? null,
       }, { merge: true });
     }
@@ -47,7 +47,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
   const data = snap.data();
   return {
     userId,
-    displayName: data.displayName ?? 'Uživatel',
+    displayName: data.displayName ?? 'User',
     photoURL: data.photoURL ?? null,
     createdAt: data.createdAt?.toDate?.() ?? new Date(),
   };

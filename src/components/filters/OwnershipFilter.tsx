@@ -7,9 +7,9 @@ interface OwnershipFilterProps {
 }
 
 const TABS = [
-  { id: 'all', label: 'Všechny' },
-  { id: 'owned', label: 'Vlastněné' },
-  { id: 'missing', label: 'Chybějící' },
+  { id: 'all', label: 'All' },
+  { id: 'owned', label: 'Owned' },
+  { id: 'missing', label: 'Missing' },
 ];
 
 export function OwnershipFilter({ value, onChange }: OwnershipFilterProps) {

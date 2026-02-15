@@ -22,7 +22,7 @@ export function CollectionSummary({
             {ownedCount}
             <span className="text-xs sm:text-sm font-normal text-neutral-400">/{totalCards}</span>
           </span>
-          <span className="text-xs sm:text-sm text-neutral-500">karet</span>
+          <span className="text-xs sm:text-sm text-neutral-500">cards</span>
         </div>
         <div className="sm:text-right">
           <span className="text-base sm:text-lg font-bold text-neutral-800 font-mono">

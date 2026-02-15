@@ -24,7 +24,7 @@ export function useAuth() {
     if (!isFirebaseConfigured || !auth) {
       // No Firebase — run in offline/local mode immediately
       setState({
-        user: { uid: OFFLINE_USER_ID, displayName: 'Lokální uživatel', photoURL: null } as unknown as User,
+        user: { uid: OFFLINE_USER_ID, displayName: 'Local user', photoURL: null } as unknown as User,
         loading: false,
         error: null,
       });
@@ -48,7 +48,7 @@ export function useAuth() {
     if (!isFirebaseConfigured || !auth || !googleProvider) {
       setState((prev) => ({
         ...prev,
-        error: 'Firebase není nakonfigurován. Přidej API klíče do .env souboru.',
+        error: 'Firebase is not configured. Add API keys to .env file.',
       }));
       return;
     }
@@ -58,7 +58,7 @@ export function useAuth() {
     } catch (err) {
       setState((prev) => ({
         ...prev,
-        error: err instanceof Error ? err.message : 'Chyba při přihlášení',
+        error: err instanceof Error ? err.message : 'Sign in failed',
       }));
     }
   };
@@ -72,7 +72,7 @@ export function useAuth() {
     } catch (err) {
       setState((prev) => ({
         ...prev,
-        error: err instanceof Error ? err.message : 'Chyba při odhlášení',
+        error: err instanceof Error ? err.message : 'Sign out failed',
       }));
     }
   };

@@ -7,7 +7,7 @@ interface SearchInputProps {
   placeholder?: string;
 }
 
-export function SearchInput({ value, onChange, placeholder = 'Hledat kartu...' }: SearchInputProps) {
+export function SearchInput({ value, onChange, placeholder = 'Search card...' }: SearchInputProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleClear = () => {
@@ -46,7 +46,7 @@ export function SearchInput({ value, onChange, placeholder = 'Hledat kartu...' }
             text-neutral-400 hover:text-neutral-600
             transition-colors duration-150
           "
-          aria-label="Vymazat vyhledávání"
+          aria-label="Clear search"
         >
           <X className="w-4 h-4" />
         </button>

@@ -22,7 +22,7 @@ export function useSharedCollection(userId: string | undefined) {
 
   useEffect(() => {
     if (!userId || !isFirebaseConfigured || !db) {
-      setState((prev) => ({ ...prev, loading: false, error: 'Sbírka není dostupná.' }));
+      setState((prev) => ({ ...prev, loading: false, error: 'Collection is not available.' }));
       return;
     }
 
@@ -39,7 +39,7 @@ export function useSharedCollection(userId: string | undefined) {
         if (cancelled) return;
 
         if (!profile) {
-          setState({ ownedCards: new Map(), profile: null, loading: false, error: 'Uživatel nebyl nalezen.' });
+          setState({ ownedCards: new Map(), profile: null, loading: false, error: 'User not found.' });
           return;
         }
 
@@ -63,7 +63,7 @@ export function useSharedCollection(userId: string | undefined) {
         setState({ ownedCards: cards, profile, loading: false, error: null });
       } catch {
         if (!cancelled) {
-          setState({ ownedCards: new Map(), profile: null, loading: false, error: 'Nepodařilo se načíst sbírku.' });
+          setState({ ownedCards: new Map(), profile: null, loading: false, error: 'Failed to load collection.' });
         }
       }
     }

@@ -45,7 +45,7 @@ export function SortControl({ value, onChange }: SortControlProps) {
           }
         `}
       >
-        Číslo {isNumberActive && numberArrow}
+        Number {isNumberActive && numberArrow}
       </button>
       <button
         onClick={() => handleClick('price')}
@@ -57,7 +57,7 @@ export function SortControl({ value, onChange }: SortControlProps) {
           }
         `}
       >
-        Cena {isPriceActive && priceArrow}
+        Price {isPriceActive && priceArrow}
       </button>
     </div>
   );

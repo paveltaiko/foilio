@@ -53,7 +53,7 @@ export function CardGrid({ cards, ownedCards, onToggle, onCardClick, readOnly, g
   if (cards.length === 0) {
     return (
       <div className="text-center py-16 text-neutral-400 text-sm">
-        Žádné karty k zobrazení
+        No cards to display
       </div>
     );
   }

@@ -28,7 +28,7 @@ function ShareButton({ userId }: { userId: string }) {
       setTimeout(() => setCopied(false), 2000);
     } catch {
       // Fallback for older browsers
-      prompt('Odkaz na sbírku:', url);
+      prompt('Collection link:', url);
     }
   };
 
@@ -40,12 +40,12 @@ function ShareButton({ userId }: { userId: string }) {
       {copied ? (
         <>
           <Check className="w-4 h-4 text-owned" />
-          <span className="text-owned">Odkaz zkopírován!</span>
+          <span className="text-owned">Link copied!</span>
         </>
       ) : (
         <>
           <Share2 className="w-4 h-4" />
-          <span>Sdílet sbírku</span>
+          <span>Share collection</span>
         </>
       )}
     </button>
@@ -179,7 +179,7 @@ export function HomePage({ user, searchQuery }: HomePageProps) {
               className={`cursor-pointer transition-colors duration-150 ${
                 groupBySet ? 'text-primary-500' : 'text-neutral-400 hover:text-neutral-600'
               }`}
-              title={groupBySet ? 'Zobrazit vše najednou' : 'Seskupit podle edice'}
+              title={groupBySet ? 'Show all at once' : 'Group by set'}
             >
               {groupBySet ? <Layers className="w-5 h-5" /> : <LayoutGrid className="w-5 h-5" />}
             </button>
