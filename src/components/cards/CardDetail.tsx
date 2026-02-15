@@ -15,29 +15,22 @@ interface CardDetailProps {
   readOnly?: boolean;
 }
 
-const ANIM_DURATION = 300;
-
 export function CardDetail({ card, owned, onClose, onToggle, onQuantityChange, cards, onNavigate, readOnly }: CardDetailProps) {
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const [touchStartY, setTouchStartY] = useState<number | null>(null);
   const [swipeOffset, setSwipeOffset] = useState(0);
-  const [isAnimating, setIsAnimating] = useState(false);
-
-  // Exiting card state — shown simultaneously with the new card during transition
-  const [exitingCard, setExitingCard] = useState<ScryfallCard | null>(null);
-  const [exitingFoil, setExitingFoil] = useState(false);
-  const [exitDirection, setExitDirection] = useState<'left' | 'right'>('left');
-  const [enterDirection, setEnterDirection] = useState<'left' | 'right'>('right');
-  const [slidePhase, setSlidePhase] = useState<'idle' | 'sliding'>('idle');
-
+  const [isExiting, setIsExiting] = useState(false);
+  const [isEntering, setIsEntering] = useState(false);
   const imageContainerRef = useRef<HTMLDivElement>(null);
-  const animTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const pendingDirectionRef = useRef<'left' | 'right' | null>(null);
 
   // Navigation logic
   const currentIndex = cards?.findIndex(c => c.card.id === card?.id) ?? -1;
   const canGoPrev = currentIndex > 0;
   const canGoNext = currentIndex < (cards?.length ?? 0) - 1;
   const totalCards = cards?.length ?? 0;
+
+  const isAnimating = isExiting || isEntering;
 
   // Preload adjacent card images
   useEffect(() => {
@@ -53,48 +46,60 @@ export function CardDetail({ card, owned, onClose, onToggle, onQuantityChange, c
     }
   }, [cards, currentIndex]);
 
-  // Cleanup timer on unmount
+  // When card.id changes and we have a pending navigation, start enter animation
   useEffect(() => {
-    return () => {
-      if (animTimerRef.current) clearTimeout(animTimerRef.current);
-    };
-  }, []);
+    if (pendingDirectionRef.current) {
+      const dir = pendingDirectionRef.current;
+      pendingDirectionRef.current = null;
 
-  const navigate = useCallback((direction: 'prev' | 'next') => {
-    if (!cards || !onNavigate || isAnimating) return;
-    if (direction === 'prev' && !canGoPrev) return;
-    if (direction === 'next' && !canGoNext) return;
+      // New card starts off-screen on the opposite side
+      const enterFrom = dir === 'right' ? 350 : -350;
+      setSwipeOffset(enterFrom);
+      setIsEntering(true);
 
-    const nextIndex = direction === 'prev' ? currentIndex - 1 : currentIndex + 1;
-    const nextCard = cards[nextIndex].card;
+      // Next frame: animate to center
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setSwipeOffset(0);
+          setTimeout(() => {
+            setIsEntering(false);
+          }, 300);
+        });
+      });
+    }
+  }, [card?.id]);
 
-    // Capture current card as "exiting"
-    setExitingCard(card);
-    setExitingFoil(owned?.ownedFoil ?? false);
+  const goToPrev = useCallback(() => {
+    if (canGoPrev && cards && onNavigate && !isAnimating) {
+      setIsExiting(true);
 
-    // Directions: going next = current exits left, new enters from right
-    setExitDirection(direction === 'next' ? 'left' : 'right');
-    setEnterDirection(direction === 'next' ? 'right' : 'left');
+      // Current card slides out to the right
+      setSwipeOffset(350);
 
-    // Navigate immediately so new card renders
-    onNavigate(nextCard);
-    setIsAnimating(true);
+      // After exit animation, switch card and start enter
+      setTimeout(() => {
+        setIsExiting(false);
+        pendingDirectionRef.current = 'left';
+        onNavigate(cards[currentIndex - 1].card);
+      }, 250);
+    }
+  }, [canGoPrev, cards, currentIndex, onNavigate, isAnimating]);
 
-    // Start slide on next frame
-    requestAnimationFrame(() => {
-      setSlidePhase('sliding');
-    });
+  const goToNext = useCallback(() => {
+    if (canGoNext && cards && onNavigate && !isAnimating) {
+      setIsExiting(true);
 
-    // Clean up after animation completes
-    animTimerRef.current = setTimeout(() => {
-      setSlidePhase('idle');
-      setExitingCard(null);
-      setIsAnimating(false);
-    }, ANIM_DURATION);
-  }, [cards, onNavigate, isAnimating, canGoPrev, canGoNext, currentIndex, card, owned]);
+      // Current card slides out to the left
+      setSwipeOffset(-350);
 
-  const goToPrev = useCallback(() => navigate('prev'), [navigate]);
-  const goToNext = useCallback(() => navigate('next'), [navigate]);
+      // After exit animation, switch card and start enter
+      setTimeout(() => {
+        setIsExiting(false);
+        pendingDirectionRef.current = 'right';
+        onNavigate(cards[currentIndex + 1].card);
+      }, 250);
+    }
+  }, [canGoNext, cards, currentIndex, onNavigate, isAnimating]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -127,7 +132,9 @@ export function CardDetail({ card, owned, onClose, onToggle, onQuantityChange, c
     const deltaX = e.touches[0].clientX - touchStartX;
     const deltaY = e.touches[0].clientY - touchStartY;
 
+    // Only track horizontal swipe if it's more horizontal than vertical
     if (Math.abs(deltaX) > Math.abs(deltaY)) {
+      // Apply resistance at edges when can't navigate
       const resistance = 0.2;
       let offset = deltaX;
 
@@ -145,12 +152,11 @@ export function CardDetail({ card, owned, onClose, onToggle, onQuantityChange, c
     const threshold = 80;
 
     if (swipeOffset > threshold && canGoPrev) {
-      setSwipeOffset(0);
       goToPrev();
     } else if (swipeOffset < -threshold && canGoNext) {
-      setSwipeOffset(0);
       goToNext();
     } else {
+      // Snap back to center
       setSwipeOffset(0);
     }
 
@@ -168,21 +174,6 @@ export function CardDetail({ card, owned, onClose, onToggle, onQuantityChange, c
 
   const scryfallPriceEur = parsePrice(card.prices.eur);
   const scryfallPriceFoil = parsePrice(card.prices.eur_foil);
-
-  // Calculate positions for the dual-image carousel
-  const exitingImageUrl = exitingCard ? getCardImage(exitingCard, 'large') : null;
-
-  // Enter: starts off-screen, slides to center
-  const enterStartX = enterDirection === 'right' ? 400 : -400;
-  const currentTransformX = slidePhase === 'sliding' ? 0 : (exitingCard ? enterStartX : swipeOffset);
-
-  // Exit: starts at center, slides off-screen
-  const exitEndX = exitDirection === 'left' ? -400 : 400;
-  const exitingTransformX = slidePhase === 'sliding' ? exitEndX : 0;
-
-  const transitionStyle = slidePhase === 'sliding'
-    ? `transform ${ANIM_DURATION}ms ease-out, opacity ${ANIM_DURATION}ms ease-out`
-    : (swipeOffset === 0 ? 'transform 0.15s ease-out' : 'none');
 
   return (
     <Modal isOpen={!!card} onClose={onClose}>
@@ -211,9 +202,9 @@ export function CardDetail({ card, owned, onClose, onToggle, onQuantityChange, c
           {cards && cards.length > 1 && (
             <button
               onClick={goToPrev}
-              disabled={!canGoPrev || isAnimating}
+              disabled={!canGoPrev}
               className={`
-                hidden sm:flex absolute left-0 top-1/2 -translate-y-1/2 -translate-x-3 z-10
+                hidden sm:flex absolute left-0 top-1/2 -translate-y-1/2 -translate-x-3
                 w-9 h-9 items-center justify-center rounded-full
                 transition-all duration-200 cursor-pointer
                 ${canGoPrev
@@ -228,66 +219,37 @@ export function CardDetail({ card, owned, onClose, onToggle, onQuantityChange, c
             </button>
           )}
 
-          {/* Image carousel container */}
+          {/* Card image container with swipe */}
           <div
             ref={imageContainerRef}
             className="relative inline-block touch-pan-y overflow-visible"
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
+            style={{
+              transform: `translateX(${swipeOffset}px)`,
+              transition: isExiting || isEntering || swipeOffset === 0 ? 'transform 0.3s ease-out' : 'none',
+              willChange: isAnimating ? 'transform' : 'auto',
+            }}
           >
-            {/* Exiting card (old) — slides out simultaneously */}
-            {exitingCard && exitingImageUrl && (
-              <div
-                className="absolute inset-0 flex items-center justify-center"
-                style={{
-                  transform: `translateX(${exitingTransformX}px)`,
-                  opacity: slidePhase === 'sliding' ? 0 : 1,
-                  transition: slidePhase === 'sliding'
-                    ? `transform ${ANIM_DURATION}ms ease-out, opacity ${ANIM_DURATION * 0.8}ms ease-out`
-                    : 'none',
-                  willChange: 'transform, opacity',
-                }}
-              >
-                <img
-                  src={exitingImageUrl}
-                  alt=""
-                  className={`max-h-[280px] sm:max-h-[400px] rounded-lg select-none ${exitingFoil ? 'foil-image' : ''}`}
-                  draggable={false}
-                />
-                {exitingFoil && <div className="foil-overlay rounded-lg" />}
-              </div>
+            {imageUrl && (
+              <img
+                src={imageUrl}
+                alt={card.name}
+                className={`max-h-[280px] sm:max-h-[400px] rounded-lg select-none ${isOwnedFoil ? 'foil-image' : ''}`}
+                draggable={false}
+              />
             )}
-
-            {/* Current card (new / active) — slides in simultaneously */}
-            <div
-              style={{
-                transform: `translateX(${currentTransformX}px)`,
-                opacity: exitingCard && slidePhase !== 'sliding' ? 0 : 1,
-                transition: transitionStyle,
-                willChange: isAnimating ? 'transform, opacity' : 'auto',
-                position: 'relative',
-              }}
-            >
-              {imageUrl && (
-                <img
-                  src={imageUrl}
-                  alt={card.name}
-                  className={`max-h-[280px] sm:max-h-[400px] rounded-lg select-none ${isOwnedFoil ? 'foil-image' : ''}`}
-                  draggable={false}
-                />
-              )}
-              {isOwnedFoil && <div className="foil-overlay rounded-lg" />}
-            </div>
+            {isOwnedFoil && <div className="foil-overlay rounded-lg" />}
           </div>
 
           {/* Next button - desktop only */}
           {cards && cards.length > 1 && (
             <button
               onClick={goToNext}
-              disabled={!canGoNext || isAnimating}
+              disabled={!canGoNext}
               className={`
-                hidden sm:flex absolute right-0 top-1/2 -translate-y-1/2 translate-x-3 z-10
+                hidden sm:flex absolute right-0 top-1/2 -translate-y-1/2 translate-x-3
                 w-9 h-9 items-center justify-center rounded-full
                 transition-all duration-200 cursor-pointer
                 ${canGoNext
