@@ -18,7 +18,7 @@ export function Header({ userName, userPhoto, onLogin, onLogout, isLoggedIn, sea
       <div className="max-w-6xl mx-auto px-2 sm:px-0 h-12 sm:h-14 flex items-center justify-between relative">
         {/* Logo */}
         <div className="flex items-center shrink-0 absolute left-1/2 -translate-x-1/2 sm:static sm:translate-x-0">
-          <span className="text-xl sm:text-2xl text-neutral-900 tracking-tight" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900, fontStyle: 'italic' }}>Foilio</span>
+          <span className="text-xl sm:text-2xl text-neutral-900 tracking-tight" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 800, fontStyle: 'italic' }}>Foilio</span>
         </div>
 
         {/* Search + User area */}

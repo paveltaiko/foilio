@@ -7,7 +7,7 @@ export function Footer() {
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           {/* Logo & Copyright */}
           <div className="flex flex-col items-center sm:items-start gap-1">
-            <span className="text-xl text-neutral-900 tracking-tight" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900, fontStyle: 'italic' }}>Foilio</span>
+            <span className="text-xl text-neutral-900 tracking-tight" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 800, fontStyle: 'italic' }}>Foilio</span>
             <span className="text-xs text-neutral-500">
               © {currentYear} Foilio. All rights reserved.
             </span>

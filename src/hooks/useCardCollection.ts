@@ -77,7 +77,13 @@ export function useCardCollection({ ownedCards, searchQuery = '' }: UseCardColle
 
     // Sort by number
     if (sortOption === 'number-asc' || sortOption === 'number-desc') {
+      const setOrder = ['spm', 'spe', 'mar'];
       cards.sort((a, b) => {
+        // When grouped by set, sort by set first to match visual grid order
+        if (activeSet === 'all' && groupBySet) {
+          const setDiff = setOrder.indexOf(a.set) - setOrder.indexOf(b.set);
+          if (setDiff !== 0) return setDiff;
+        }
         const aNum = parseInt(a.collector_number) || 0;
         const bNum = parseInt(b.collector_number) || 0;
         return sortOption === 'number-asc' ? aNum - bNum : bNum - aNum;
@@ -121,7 +127,7 @@ export function useCardCollection({ ownedCards, searchQuery = '' }: UseCardColle
     });
 
     return filtered;
-  }, [currentCards, ownershipFilter, sortOption, ownedCards, searchQuery]);
+  }, [currentCards, ownershipFilter, sortOption, ownedCards, searchQuery, activeSet, groupBySet]);
 
   return {
     // State
