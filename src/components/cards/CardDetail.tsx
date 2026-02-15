@@ -19,8 +19,15 @@ export function CardDetail({ card, owned, onClose, onToggle, onQuantityChange, c
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const [touchStartY, setTouchStartY] = useState<number | null>(null);
   const [swipeOffset, setSwipeOffset] = useState(0);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const imageContainerRef = useRef<HTMLDivElement>(null);
+
+  // Animation state machine: 'idle' | 'exiting' | 'repositioning' | 'entering'
+  const [animPhase, setAnimPhase] = useState<'idle' | 'exiting' | 'repositioning' | 'entering'>('idle');
+  const [animDirection, setAnimDirection] = useState<'prev' | 'next'>('next');
+  const [lockedHeight, setLockedHeight] = useState<number | null>(null);
+  const pendingNavigate = useRef<ScryfallCard | null>(null);
+  const imageWrapperRef = useRef<HTMLDivElement>(null);
+
+  const isAnimating = animPhase !== 'idle';
 
   // Navigation logic
   const currentIndex = cards?.findIndex(c => c.card.id === card?.id) ?? -1;
@@ -42,53 +49,54 @@ export function CardDetail({ card, owned, onClose, onToggle, onQuantityChange, c
     }
   }, [cards, currentIndex]);
 
-  // Animate navigation using direct DOM manipulation for reliable timing
+  // State-driven animation
   const animateNavigation = useCallback((direction: 'prev' | 'next') => {
     if (!cards || !onNavigate || isAnimating) return;
     if (direction === 'prev' && !canGoPrev) return;
     if (direction === 'next' && !canGoNext) return;
 
-    const el = imageContainerRef.current;
-    if (!el) return;
-
     const nextIndex = direction === 'prev' ? currentIndex - 1 : currentIndex + 1;
-    const exitTo = direction === 'next' ? -400 : 400;
-    const enterFrom = direction === 'next' ? 400 : -400;
-
-    setIsAnimating(true);
-
-    // Phase 1: Slide current card out
-    el.style.transition = 'transform 0.28s ease-in';
-    el.style.transform = `translateX(${exitTo}px)`;
-
-    const onExitDone = () => {
-      el.removeEventListener('transitionend', onExitDone);
-
-      // Phase 2: Instantly position off-screen on opposite side (no transition)
-      el.style.transition = 'none';
-      el.style.transform = `translateX(${enterFrom}px)`;
-
-      // Switch to new card
-      onNavigate(cards[nextIndex].card);
-
-      // Phase 3: Slide new card in (need to wait for paint after card change)
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          el.style.transition = 'transform 0.28s ease-out';
-          el.style.transform = 'translateX(0px)';
-
-          const onEnterDone = () => {
-            el.removeEventListener('transitionend', onEnterDone);
-            el.style.transition = '';
-            el.style.transform = '';
-            setIsAnimating(false);
-          };
-          el.addEventListener('transitionend', onEnterDone, { once: true });
-        });
-      });
-    };
-    el.addEventListener('transitionend', onExitDone, { once: true });
+    pendingNavigate.current = cards[nextIndex].card;
+    // Lock container height to prevent vertical shift during card swap
+    if (imageWrapperRef.current) {
+      setLockedHeight(imageWrapperRef.current.getBoundingClientRect().height);
+    }
+    setAnimDirection(direction);
+    setAnimPhase('exiting');
   }, [cards, onNavigate, isAnimating, canGoPrev, canGoNext, currentIndex]);
+
+  // Handle transition end events — only for our container's own transform
+  const handleTransitionEnd = useCallback((e: React.TransitionEvent) => {
+    if (e.target !== e.currentTarget) return;
+    if (e.propertyName !== 'transform') return;
+    if (animPhase === 'exiting') {
+      // Card has slid out — switch card and reposition off-screen on opposite side
+      if (pendingNavigate.current && onNavigate) {
+        onNavigate(pendingNavigate.current);
+        pendingNavigate.current = null;
+      }
+      setAnimPhase('repositioning');
+    } else if (animPhase === 'entering') {
+      setLockedHeight(null);
+      setAnimPhase('idle');
+    }
+  }, [animPhase, onNavigate]);
+
+  // When repositioning, wait for paint then start entering
+  useEffect(() => {
+    if (animPhase !== 'repositioning') return;
+    let id2 = 0;
+    // Double rAF ensures the browser has painted the repositioned element
+    const id1 = requestAnimationFrame(() => {
+      id2 = requestAnimationFrame(() => {
+        setAnimPhase('entering');
+      });
+    });
+    return () => {
+      cancelAnimationFrame(id1);
+      cancelAnimationFrame(id2);
+    };
+  }, [animPhase]);
 
   const goToPrev = useCallback(() => animateNavigation('prev'), [animateNavigation]);
   const goToNext = useCallback(() => animateNavigation('next'), [animateNavigation]);
@@ -144,8 +152,10 @@ export function CardDetail({ card, owned, onClose, onToggle, onQuantityChange, c
     const threshold = 80;
 
     if (swipeOffset > threshold && canGoPrev) {
+      setSwipeOffset(0);
       goToPrev();
     } else if (swipeOffset < -threshold && canGoNext) {
+      setSwipeOffset(0);
       goToNext();
     } else {
       // Snap back to center
@@ -169,7 +179,11 @@ export function CardDetail({ card, owned, onClose, onToggle, onQuantityChange, c
 
   return (
     <Modal isOpen={!!card} onClose={onClose}>
-      <div className="space-y-5">
+      <div
+        ref={imageWrapperRef}
+        className="space-y-5"
+        style={{ minHeight: lockedHeight ?? undefined }}
+      >
         {/* Header */}
         <div className="flex items-start justify-between">
           <div>
@@ -213,15 +227,28 @@ export function CardDetail({ card, owned, onClose, onToggle, onQuantityChange, c
 
           {/* Card image container with swipe */}
           <div
-            ref={imageContainerRef}
             className="relative inline-block touch-pan-y overflow-visible"
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
+            onTransitionEnd={handleTransitionEnd}
             style={{
-              transform: isAnimating ? undefined : `translateX(${swipeOffset}px)`,
-              transition: !isAnimating && swipeOffset === 0 ? 'transform 0.15s ease-out' : (!isAnimating ? 'none' : undefined),
-              willChange: isAnimating || swipeOffset !== 0 ? 'transform' : 'auto',
+              transform: animPhase === 'exiting'
+                ? `translateX(${animDirection === 'next' ? -400 : 400}px)`
+                : animPhase === 'repositioning'
+                ? `translateX(${animDirection === 'next' ? 400 : -400}px)`
+                : swipeOffset !== 0
+                ? `translateX(${swipeOffset}px)`
+                : 'translateX(0px)',
+              transition: animPhase === 'exiting'
+                ? 'transform 0.28s ease-in'
+                : animPhase === 'repositioning'
+                ? 'none'
+                : animPhase === 'entering'
+                ? 'transform 0.28s ease-out'
+                : swipeOffset !== 0
+                ? 'none'
+                : 'none',
             }}
           >
             {imageUrl && (
