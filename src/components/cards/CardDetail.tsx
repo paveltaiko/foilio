@@ -31,7 +31,7 @@ export function CardDetail({ card, owned, onClose, onToggle, onQuantityChange, c
   const [slidePhase, setSlidePhase] = useState<'idle' | 'sliding'>('idle');
 
   const imageContainerRef = useRef<HTMLDivElement>(null);
-  const animTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const animTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   // Navigation logic
   const currentIndex = cards?.findIndex(c => c.card.id === card?.id) ?? -1;
