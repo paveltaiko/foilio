@@ -19,18 +19,14 @@ export function CardDetail({ card, owned, onClose, onToggle, onQuantityChange, c
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const [touchStartY, setTouchStartY] = useState<number | null>(null);
   const [swipeOffset, setSwipeOffset] = useState(0);
-  const [isExiting, setIsExiting] = useState(false);
-  const [isEntering, setIsEntering] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
   const imageContainerRef = useRef<HTMLDivElement>(null);
-  const pendingDirectionRef = useRef<'left' | 'right' | null>(null);
 
   // Navigation logic
   const currentIndex = cards?.findIndex(c => c.card.id === card?.id) ?? -1;
   const canGoPrev = currentIndex > 0;
   const canGoNext = currentIndex < (cards?.length ?? 0) - 1;
   const totalCards = cards?.length ?? 0;
-
-  const isAnimating = isExiting || isEntering;
 
   // Preload adjacent card images
   useEffect(() => {
@@ -46,60 +42,56 @@ export function CardDetail({ card, owned, onClose, onToggle, onQuantityChange, c
     }
   }, [cards, currentIndex]);
 
-  // When card.id changes and we have a pending navigation, start enter animation
-  useEffect(() => {
-    if (pendingDirectionRef.current) {
-      const dir = pendingDirectionRef.current;
-      pendingDirectionRef.current = null;
+  // Animate navigation using direct DOM manipulation for reliable timing
+  const animateNavigation = useCallback((direction: 'prev' | 'next') => {
+    if (!cards || !onNavigate || isAnimating) return;
+    if (direction === 'prev' && !canGoPrev) return;
+    if (direction === 'next' && !canGoNext) return;
 
-      // New card starts off-screen on the opposite side
-      const enterFrom = dir === 'right' ? 350 : -350;
-      setSwipeOffset(enterFrom);
-      setIsEntering(true);
+    const el = imageContainerRef.current;
+    if (!el) return;
 
-      // Next frame: animate to center
+    const nextIndex = direction === 'prev' ? currentIndex - 1 : currentIndex + 1;
+    const exitTo = direction === 'next' ? -400 : 400;
+    const enterFrom = direction === 'next' ? 400 : -400;
+
+    setIsAnimating(true);
+
+    // Phase 1: Slide current card out
+    el.style.transition = 'transform 0.28s ease-in';
+    el.style.transform = `translateX(${exitTo}px)`;
+
+    const onExitDone = () => {
+      el.removeEventListener('transitionend', onExitDone);
+
+      // Phase 2: Instantly position off-screen on opposite side (no transition)
+      el.style.transition = 'none';
+      el.style.transform = `translateX(${enterFrom}px)`;
+
+      // Switch to new card
+      onNavigate(cards[nextIndex].card);
+
+      // Phase 3: Slide new card in (need to wait for paint after card change)
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          setSwipeOffset(0);
-          setTimeout(() => {
-            setIsEntering(false);
-          }, 300);
+          el.style.transition = 'transform 0.28s ease-out';
+          el.style.transform = 'translateX(0px)';
+
+          const onEnterDone = () => {
+            el.removeEventListener('transitionend', onEnterDone);
+            el.style.transition = '';
+            el.style.transform = '';
+            setIsAnimating(false);
+          };
+          el.addEventListener('transitionend', onEnterDone, { once: true });
         });
       });
-    }
-  }, [card?.id]);
+    };
+    el.addEventListener('transitionend', onExitDone, { once: true });
+  }, [cards, onNavigate, isAnimating, canGoPrev, canGoNext, currentIndex]);
 
-  const goToPrev = useCallback(() => {
-    if (canGoPrev && cards && onNavigate && !isAnimating) {
-      setIsExiting(true);
-
-      // Current card slides out to the right
-      setSwipeOffset(350);
-
-      // After exit animation, switch card and start enter
-      setTimeout(() => {
-        setIsExiting(false);
-        pendingDirectionRef.current = 'left';
-        onNavigate(cards[currentIndex - 1].card);
-      }, 250);
-    }
-  }, [canGoPrev, cards, currentIndex, onNavigate, isAnimating]);
-
-  const goToNext = useCallback(() => {
-    if (canGoNext && cards && onNavigate && !isAnimating) {
-      setIsExiting(true);
-
-      // Current card slides out to the left
-      setSwipeOffset(-350);
-
-      // After exit animation, switch card and start enter
-      setTimeout(() => {
-        setIsExiting(false);
-        pendingDirectionRef.current = 'right';
-        onNavigate(cards[currentIndex + 1].card);
-      }, 250);
-    }
-  }, [canGoNext, cards, currentIndex, onNavigate, isAnimating]);
+  const goToPrev = useCallback(() => animateNavigation('prev'), [animateNavigation]);
+  const goToNext = useCallback(() => animateNavigation('next'), [animateNavigation]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -227,9 +219,9 @@ export function CardDetail({ card, owned, onClose, onToggle, onQuantityChange, c
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
             style={{
-              transform: `translateX(${swipeOffset}px)`,
-              transition: isExiting || isEntering || swipeOffset === 0 ? 'transform 0.3s ease-out' : 'none',
-              willChange: isAnimating ? 'transform' : 'auto',
+              transform: isAnimating ? undefined : `translateX(${swipeOffset}px)`,
+              transition: !isAnimating && swipeOffset === 0 ? 'transform 0.15s ease-out' : (!isAnimating ? 'none' : undefined),
+              willChange: isAnimating || swipeOffset !== 0 ? 'transform' : 'auto',
             }}
           >
             {imageUrl && (
