@@ -251,6 +251,11 @@ body {
   display: none;
 }
 
+/* Keep layout width stable when vertical scrollbar appears/disappears */
+.scrollbar-stable {
+  scrollbar-gutter: stable;
+}
+
 /* Show scrollbar utility (for desktop) */
 @media (min-width: 640px) {
   .sm\:scrollbar-default {

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { collection, doc, getDoc, getDocs } from 'firebase/firestore';
 import { db, isFirebaseConfigured } from '../config/firebase';
 import type { OwnedCard } from '../types/card';
@@ -14,6 +14,7 @@ interface SharedCollectionState {
 
 export function useSharedCollection(token: string | undefined) {
   const isAvailable = !!token && isFirebaseConfigured && !!db;
+  const [reloadKey, setReloadKey] = useState(0);
   const [state, setState] = useState<SharedCollectionState>({
     ownedCards: new Map(),
     profile: null,
@@ -108,7 +109,11 @@ export function useSharedCollection(token: string | undefined) {
 
     load();
     return () => { cancelled = true; };
-  }, [isAvailable, token]);
+  }, [isAvailable, token, reloadKey]);
 
-  return state;
+  const refresh = useCallback(() => {
+    setReloadKey((prev) => prev + 1);
+  }, []);
+
+  return { ...state, refresh };
 }

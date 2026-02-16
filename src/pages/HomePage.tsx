@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Share2, Check, Layers, LayoutGrid } from 'lucide-react';
 import type { User } from 'firebase/auth';
+import { useQueryClient } from '@tanstack/react-query';
 import { isFirebaseConfigured } from '../config/firebase';
 import { useOwnedCards } from '../hooks/useOwnedCards';
 import { useCardCollection } from '../hooks/useCardCollection';
@@ -13,6 +14,7 @@ import { SearchInput } from '../components/filters/SearchInput';
 import { CollectionSummary } from '../components/stats/CollectionSummary';
 import { CardGrid, CardGridSkeleton } from '../components/cards/CardGrid';
 import { CardDetail } from '../components/cards/CardDetail';
+import { PullToRefresh } from '../components/ui/PullToRefresh';
 
 interface HomePageProps {
   user: User;
@@ -108,6 +110,7 @@ function ShareButton({ user, onTokenReady }: { user: User; onTokenReady: (token:
 }
 
 export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [shareToken, setShareToken] = useState<string | null>(null);
   const { ownedCards, updateLocal } = useOwnedCards(user.uid);
@@ -225,74 +228,83 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
     [user.uid, currentCards, ownedCards, shareToken, updateLocal]
   );
 
+  const handleRefresh = useCallback(async () => {
+    await queryClient.refetchQueries({
+      queryKey: ['scryfall-cards'],
+      type: 'active',
+    });
+  }, [queryClient]);
+
   return (
-    <div className="max-w-6xl mx-auto safe-bottom touch-pan-y">
-      {/* Set tabs */}
-      <SetTabs activeSet={activeSet} onChange={setActiveSet} cardCounts={cardCounts} />
+    <PullToRefresh onRefresh={handleRefresh} disabled={isSearchOpen}>
+      <div className="max-w-6xl mx-auto safe-bottom touch-pan-y">
+        {/* Set tabs */}
+        <SetTabs activeSet={activeSet} onChange={setActiveSet} cardCounts={cardCounts} />
 
-      {/* Stats + Share */}
-      <div className="py-2 space-y-2">
-        <CollectionSummary
-          totalCards={stats.totalCards}
-          ownedCount={stats.ownedCount}
-          totalValue={stats.totalValue}
-          percentage={stats.percentage}
-        />
-        {isFirebaseConfigured && (
-          <ShareButton user={user} onTokenReady={setShareToken} />
-        )}
-      </div>
-
-      {/* Toolbar */}
-      <div className="flex items-center justify-between gap-2 sm:gap-3 pb-4">
-        <OwnershipFilter value={ownershipFilter} onChange={setOwnershipFilter} />
-        <div className="flex items-center gap-4">
-          {activeSet === 'all' && (
-            <button
-              onClick={() => setGroupBySet(!groupBySet)}
-              className={`cursor-pointer transition-colors duration-150 ${
-                groupBySet ? 'text-primary-500' : 'text-neutral-400 hover:text-neutral-600'
-              }`}
-              title={groupBySet ? 'Show all at once' : 'Group by set'}
-            >
-              {groupBySet ? <Layers className="w-5 h-5" /> : <LayoutGrid className="w-5 h-5" />}
-            </button>
+        {/* Stats + Share */}
+        <div className="py-2 space-y-2">
+          <CollectionSummary
+            totalCards={stats.totalCards}
+            ownedCount={stats.ownedCount}
+            totalValue={stats.totalValue}
+            percentage={stats.percentage}
+          />
+          {isFirebaseConfigured && (
+            <ShareButton user={user} onTokenReady={setShareToken} />
           )}
-          <SortControl value={sortOption} onChange={setSortOption} />
         </div>
-      </div>
 
-      {/* Card grid */}
-      {isCardsLoading ? (
-        <CardGridSkeleton />
-      ) : (
-        <CardGrid
-          cards={sortedFilteredCards}
-          ownedCards={ownedCards}
+        {/* Toolbar */}
+        <div className="flex items-center justify-between gap-2 sm:gap-3 pb-4">
+          <OwnershipFilter value={ownershipFilter} onChange={setOwnershipFilter} />
+          <div className="flex items-center gap-4">
+            {activeSet === 'all' && (
+              <button
+                onClick={() => setGroupBySet(!groupBySet)}
+                className={`cursor-pointer transition-colors duration-150 ${
+                  groupBySet ? 'text-primary-500' : 'text-neutral-400 hover:text-neutral-600'
+                }`}
+                title={groupBySet ? 'Show all at once' : 'Group by set'}
+              >
+                {groupBySet ? <Layers className="w-5 h-5" /> : <LayoutGrid className="w-5 h-5" />}
+              </button>
+            )}
+            <SortControl value={sortOption} onChange={setSortOption} />
+          </div>
+        </div>
+
+        {/* Card grid */}
+        {isCardsLoading ? (
+          <CardGridSkeleton />
+        ) : (
+          <CardGrid
+            cards={sortedFilteredCards}
+            ownedCards={ownedCards}
+            onToggle={handleToggle}
+            onCardClick={setSelectedCard}
+            groupBySet={activeSet === 'all' && groupBySet}
+          />
+        )}
+
+        {/* Card detail modal */}
+        <CardDetail
+          card={selectedCard}
+          owned={selectedCard ? ownedCards.get(selectedCard.id) : undefined}
+          onClose={() => setSelectedCard(null)}
           onToggle={handleToggle}
-          onCardClick={setSelectedCard}
-          groupBySet={activeSet === 'all' && groupBySet}
+          onQuantityChange={handleQuantityChange}
+          cards={sortedFilteredCards}
+          onNavigate={setSelectedCard}
         />
-      )}
 
-      {/* Card detail modal */}
-      <CardDetail
-        card={selectedCard}
-        owned={selectedCard ? ownedCards.get(selectedCard.id) : undefined}
-        onClose={() => setSelectedCard(null)}
-        onToggle={handleToggle}
-        onQuantityChange={handleQuantityChange}
-        cards={sortedFilteredCards}
-        onNavigate={setSelectedCard}
-      />
-
-      {/* Search overlay */}
-      <SearchInput
-        value={searchQuery}
-        onChange={setSearchQuery}
-        isOpen={isSearchOpen}
-        onClose={onSearchClose}
-      />
-    </div>
+        {/* Search overlay */}
+        <SearchInput
+          value={searchQuery}
+          onChange={setSearchQuery}
+          isOpen={isSearchOpen}
+          onClose={onSearchClose}
+        />
+      </div>
+    </PullToRefresh>
   );
 }
