@@ -3,6 +3,7 @@ import { Check } from 'lucide-react';
 import type { ScryfallCard, OwnedCard, CardVariant } from '../../types/card';
 import { getCardImage } from '../../services/scryfall';
 import { formatPrice, parsePrice } from '../../utils/formatPrice';
+import { getRarityInfo } from '../../utils/rarity';
 
 interface CardItemProps {
   card: ScryfallCard;
@@ -98,10 +99,10 @@ export function CardItem({ card, owned, displayVariant, onToggle, onClick, readO
             {card.name}
           </p>
 
-          {/* Number & price row */}
+          {/* Number, rarity & price row */}
           <div className="flex items-center justify-between">
             <span className="text-2xs sm:text-xs font-mono text-neutral-400">
-              #{card.collector_number}
+              #{card.collector_number} · <span className={`${getRarityInfo(card.rarity).colorClass}`}>{getRarityInfo(card.rarity).short}</span>
             </span>
             <div className="flex items-baseline gap-0.5 sm:gap-1">
               {/* Zobrazit pouze relevantní cenu podle varianty */}

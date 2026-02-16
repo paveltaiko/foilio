@@ -3,6 +3,7 @@ import { Modal } from '../ui/Modal';
 import type { ScryfallCard, OwnedCard, CardWithVariant } from '../../types/card';
 import { getCardImage } from '../../services/scryfall';
 import { formatPrice, parsePrice } from '../../utils/formatPrice';
+import { getRarityInfo } from '../../utils/rarity';
 
 interface CardDetailProps {
   card: ScryfallCard | null;
@@ -189,7 +190,7 @@ export function CardDetail({ card, owned, onClose, onToggle, onQuantityChange, c
           <div>
             <h2 className="text-lg font-semibold text-neutral-800">{card.name}</h2>
             <p className="text-xs font-mono text-neutral-500">
-              #{card.collector_number} · {card.set_name}
+              #{card.collector_number} · {card.set_name} · <span className={`font-semibold ${getRarityInfo(card.rarity).colorClass}`}>{getRarityInfo(card.rarity).label}</span>
             </p>
           </div>
           <button
