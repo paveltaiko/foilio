@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { ArrowLeft, Layers, LayoutGrid } from 'lucide-react';
 import { useSharedCollection } from '../hooks/useSharedCollection';
@@ -5,16 +6,19 @@ import { useCardCollection } from '../hooks/useCardCollection';
 import { SetTabs } from '../components/filters/SetTabs';
 import { SortControl } from '../components/filters/SortControl';
 import { OwnershipFilter } from '../components/filters/OwnershipFilter';
+import { SearchInput } from '../components/filters/SearchInput';
 import { CollectionSummary } from '../components/stats/CollectionSummary';
 import { CardGrid, CardGridSkeleton } from '../components/cards/CardGrid';
 import { CardDetail } from '../components/cards/CardDetail';
 
 interface SharedCollectionPageProps {
   currentUserId: string | null;
-  searchQuery?: string;
+  isSearchOpen: boolean;
+  onSearchClose: () => void;
 }
 
-export function SharedCollectionPage({ currentUserId, searchQuery }: SharedCollectionPageProps) {
+export function SharedCollectionPage({ currentUserId, isSearchOpen, onSearchClose }: SharedCollectionPageProps) {
+  const [searchQuery, setSearchQuery] = useState('');
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
 
@@ -136,6 +140,14 @@ export function SharedCollectionPage({ currentUserId, searchQuery }: SharedColle
         cards={sortedFilteredCards}
         onNavigate={setSelectedCard}
         readOnly
+      />
+
+      {/* Search overlay */}
+      <SearchInput
+        value={searchQuery}
+        onChange={setSearchQuery}
+        isOpen={isSearchOpen}
+        onClose={onSearchClose}
       />
     </div>
   );

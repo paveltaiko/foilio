@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Routes, Route } from 'react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuth } from './hooks/useAuth';
@@ -12,7 +12,15 @@ const queryClient = new QueryClient();
 
 function AppContent() {
   const { user, loading, error, login, logout } = useAuth();
-  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+
+  const handleSearchClick = useCallback(() => {
+    setIsSearchOpen(true);
+  }, []);
+
+  const handleSearchClose = useCallback(() => {
+    setIsSearchOpen(false);
+  }, []);
 
   return (
     <div className="min-h-svh bg-surface-secondary flex flex-col overflow-x-hidden">
@@ -22,8 +30,7 @@ function AppContent() {
         onLogin={login}
         onLogout={logout}
         isLoggedIn={!!user}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
+        onSearchClick={handleSearchClick}
       />
       <main className="flex-1 overflow-y-auto p-2 pb-8">
         <Routes>
@@ -31,13 +38,13 @@ function AppContent() {
             path="/"
             element={
               <AuthGuard user={user} loading={loading} onLogin={login}>
-                {user && <HomePage user={user} searchQuery={searchQuery} />}
+                {user && <HomePage user={user} isSearchOpen={isSearchOpen} onSearchClose={handleSearchClose} />}
               </AuthGuard>
             }
           />
           <Route
             path="/user/:userId"
-            element={<SharedCollectionPage currentUserId={user?.uid ?? null} searchQuery={searchQuery} />}
+            element={<SharedCollectionPage currentUserId={user?.uid ?? null} isSearchOpen={isSearchOpen} onSearchClose={handleSearchClose} />}
           />
         </Routes>
         {error && (

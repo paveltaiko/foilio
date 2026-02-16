@@ -1,56 +1,66 @@
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import { Search, X } from 'lucide-react';
 
 interface SearchInputProps {
   value: string;
   onChange: (value: string) => void;
+  isOpen: boolean;
+  onClose: () => void;
   placeholder?: string;
 }
 
-export function SearchInput({ value, onChange, placeholder = 'Search card...' }: SearchInputProps) {
+export function SearchInput({ value, onChange, isOpen, onClose, placeholder = 'Search card...' }: SearchInputProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Auto-focus when opening
+  useEffect(() => {
+    if (isOpen && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isOpen]);
 
   const handleClear = () => {
     onChange('');
-    inputRef.current?.focus();
+    onClose();
   };
 
-  return (
-    <div className="relative flex-1 min-w-0">
-      {/* Search icon */}
-      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 pointer-events-none" />
+  const handleBlur = () => {
+    if (!value) {
+      onClose();
+    }
+  };
 
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-x-0 top-0 z-50 flex items-center bg-white px-3 py-2 shadow-md animate-fade-in">
+      <Search className="w-4 h-4 text-neutral-400 shrink-0 mr-2" />
       <input
         ref={inputRef}
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        onBlur={handleBlur}
         placeholder={placeholder}
         className="
-          w-full h-9 pl-9 pr-8 text-sm
-          bg-white border border-neutral-200 rounded-lg
-          transition-colors duration-150
-          focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100
+          flex-1 h-9 text-sm bg-transparent
+          focus:outline-none
           placeholder:text-neutral-400
         "
       />
-
-      {/* Clear button */}
-      {value && (
-        <button
-          type="button"
-          onClick={handleClear}
-          className="
-            absolute right-2 top-1/2 -translate-y-1/2
-            w-5 h-5 flex items-center justify-center
-            text-neutral-400 hover:text-neutral-600
-            transition-colors duration-150
-          "
-          aria-label="Clear search"
-        >
-          <X className="w-4 h-4" />
-        </button>
-      )}
+      <button
+        type="button"
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={handleClear}
+        className="
+          w-8 h-8 flex items-center justify-center shrink-0
+          text-neutral-400 hover:text-neutral-600
+          transition-colors duration-150
+        "
+        aria-label="Close search"
+      >
+        <X className="w-5 h-5" />
+      </button>
     </div>
   );
 }

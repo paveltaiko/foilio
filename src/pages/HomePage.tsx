@@ -8,13 +8,15 @@ import { toggleCardOwnership, updateCardQuantity } from '../services/firestore';
 import { SetTabs } from '../components/filters/SetTabs';
 import { SortControl } from '../components/filters/SortControl';
 import { OwnershipFilter } from '../components/filters/OwnershipFilter';
+import { SearchInput } from '../components/filters/SearchInput';
 import { CollectionSummary } from '../components/stats/CollectionSummary';
 import { CardGrid, CardGridSkeleton } from '../components/cards/CardGrid';
 import { CardDetail } from '../components/cards/CardDetail';
 
 interface HomePageProps {
   user: User;
-  searchQuery: string;
+  isSearchOpen: boolean;
+  onSearchClose: () => void;
 }
 
 function ShareButton({ userId }: { userId: string }) {
@@ -52,7 +54,8 @@ function ShareButton({ userId }: { userId: string }) {
   );
 }
 
-export function HomePage({ user, searchQuery }: HomePageProps) {
+export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
+  const [searchQuery, setSearchQuery] = useState('');
   const { ownedCards, updateLocal } = useOwnedCards(user.uid);
 
   const {
@@ -210,6 +213,14 @@ export function HomePage({ user, searchQuery }: HomePageProps) {
         onQuantityChange={handleQuantityChange}
         cards={sortedFilteredCards}
         onNavigate={setSelectedCard}
+      />
+
+      {/* Search overlay */}
+      <SearchInput
+        value={searchQuery}
+        onChange={setSearchQuery}
+        isOpen={isSearchOpen}
+        onClose={onSearchClose}
       />
     </div>
   );

@@ -1,6 +1,5 @@
-import { LogOut } from 'lucide-react';
+import { LogOut, Search } from 'lucide-react';
 import { Button } from '../ui/Button';
-import { SearchInput } from '../filters/SearchInput';
 
 interface HeaderProps {
   userName?: string | null;
@@ -8,11 +7,10 @@ interface HeaderProps {
   onLogin: () => void;
   onLogout: () => void;
   isLoggedIn: boolean;
-  searchQuery?: string;
-  onSearchChange?: (value: string) => void;
+  onSearchClick?: () => void;
 }
 
-export function Header({ userName, userPhoto, onLogin, onLogout, isLoggedIn, searchQuery = '', onSearchChange }: HeaderProps) {
+export function Header({ userName, userPhoto, onLogin, onLogout, isLoggedIn, onSearchClick }: HeaderProps) {
   return (
     <header className="bg-surface-primary border-b border-surface-border sticky top-0 z-40">
       <div className="max-w-6xl mx-auto px-2 sm:px-0 h-12 sm:h-14 flex items-center justify-between relative">
@@ -21,17 +19,19 @@ export function Header({ userName, userPhoto, onLogin, onLogout, isLoggedIn, sea
           <span className="text-xl sm:text-2xl text-neutral-900 tracking-tight" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 800, fontStyle: 'italic' }}>Foilio</span>
         </div>
 
-        {/* Search + User area */}
+        {/* User area */}
         <div className="flex items-center gap-10 ml-auto">
-          {onSearchChange && (
-            <div className="w-56 hidden sm:block">
-              <SearchInput value={searchQuery} onChange={onSearchChange} />
-            </div>
-          )}
-
-          {/* User area */}
           {isLoggedIn ? (
             <div className="flex items-center gap-2 sm:gap-3">
+              {onSearchClick && (
+                <button
+                  onClick={onSearchClick}
+                  className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-full bg-primary-100 text-primary-500 hover:bg-primary-200 transition-colors cursor-pointer"
+                  aria-label="Search"
+                >
+                  <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                </button>
+              )}
               {userPhoto && (
                 <img
                   src={userPhoto}
