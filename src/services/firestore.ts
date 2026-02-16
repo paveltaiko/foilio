@@ -9,6 +9,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import type { OwnedCard } from '../types/card';
+import { mirrorOwnedCardToShared, removeMirroredOwnedCard } from './sharing';
 
 function getDb() {
   if (!db) throw new Error('Firebase is not configured');
@@ -55,7 +56,8 @@ export async function toggleCardOwnership(
     name: string;
   },
   variant: 'nonfoil' | 'foil',
-  currentOwned: OwnedCard | undefined
+  currentOwned: OwnedCard | undefined,
+  shareToken?: string
 ): Promise<void> {
   const ref = doc(getDb(), 'users', userId, 'ownedCards', cardId);
 
@@ -70,6 +72,9 @@ export async function toggleCardOwnership(
 
   if (!newNonFoil && !newFoil) {
     await deleteDoc(ref);
+    if (shareToken) {
+      await removeMirroredOwnedCard(shareToken, cardId);
+    }
     return;
   }
 
@@ -84,6 +89,19 @@ export async function toggleCardOwnership(
     addedAt: currentOwned ? currentOwned.addedAt : serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
+
+  if (shareToken) {
+    await mirrorOwnedCardToShared(shareToken, cardId, {
+      set: cardData.set,
+      collectorNumber: cardData.collectorNumber,
+      name: cardData.name,
+      ownedNonFoil: newNonFoil,
+      ownedFoil: newFoil,
+      quantityNonFoil: newQtyNonFoil,
+      quantityFoil: newQtyFoil,
+      addedAt: currentOwned?.addedAt ?? serverTimestamp(),
+    });
+  }
 }
 
 export async function updateCardQuantity(
@@ -91,7 +109,8 @@ export async function updateCardQuantity(
   cardId: string,
   variant: 'nonfoil' | 'foil',
   quantity: number,
-  currentOwned: OwnedCard
+  currentOwned: OwnedCard,
+  shareToken?: string
 ): Promise<void> {
   const ref = doc(getDb(), 'users', userId, 'ownedCards', cardId);
 
@@ -102,6 +121,9 @@ export async function updateCardQuantity(
 
   if (!newOwnedNonFoil && !newOwnedFoil) {
     await deleteDoc(ref);
+    if (shareToken) {
+      await removeMirroredOwnedCard(shareToken, cardId);
+    }
     return;
   }
 
@@ -116,4 +138,17 @@ export async function updateCardQuantity(
     addedAt: currentOwned.addedAt,
     updatedAt: serverTimestamp(),
   }, { merge: true });
+
+  if (shareToken) {
+    await mirrorOwnedCardToShared(shareToken, cardId, {
+      set: currentOwned.set,
+      collectorNumber: currentOwned.collectorNumber,
+      name: currentOwned.name,
+      ownedNonFoil: newOwnedNonFoil,
+      ownedFoil: newOwnedFoil,
+      quantityNonFoil: newQtyNonFoil,
+      quantityFoil: newQtyFoil,
+      addedAt: currentOwned.addedAt,
+    });
+  }
 }

@@ -43,7 +43,7 @@ function AppContent() {
             }
           />
           <Route
-            path="/user/:userId"
+            path="/share/:token"
             element={<SharedCollectionPage currentUserId={user?.uid ?? null} isSearchOpen={isSearchOpen} onSearchClose={handleSearchClose} />}
           />
         </Routes>

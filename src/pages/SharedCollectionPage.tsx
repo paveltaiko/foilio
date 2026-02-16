@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { ArrowLeft, Layers, LayoutGrid } from 'lucide-react';
 import { useSharedCollection } from '../hooks/useSharedCollection';
@@ -19,17 +19,17 @@ interface SharedCollectionPageProps {
 
 export function SharedCollectionPage({ currentUserId, isSearchOpen, onSearchClose }: SharedCollectionPageProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const { userId } = useParams<{ userId: string }>();
+  const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
 
-  // Redirect to home if viewing own collection
-  if (userId && currentUserId && userId === currentUserId) {
-    navigate('/', { replace: true });
-    return null;
-  }
-
   // Fetch shared collection
-  const { ownedCards, profile, loading: collectionLoading, error } = useSharedCollection(userId);
+  const { ownedCards, ownerUserId, profile, loading: collectionLoading, error } = useSharedCollection(token);
+
+  useEffect(() => {
+    if (ownerUserId && currentUserId && ownerUserId === currentUserId) {
+      navigate('/', { replace: true });
+    }
+  }, [ownerUserId, currentUserId, navigate]);
 
   const {
     activeSet, setActiveSet,

@@ -1,10 +1,11 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Share2, Check, Layers, LayoutGrid } from 'lucide-react';
 import type { User } from 'firebase/auth';
 import { isFirebaseConfigured } from '../config/firebase';
 import { useOwnedCards } from '../hooks/useOwnedCards';
 import { useCardCollection } from '../hooks/useCardCollection';
 import { toggleCardOwnership, updateCardQuantity } from '../services/firestore';
+import { getExistingShareToken, getOrCreateShareToken } from '../services/sharing';
 import { SetTabs } from '../components/filters/SetTabs';
 import { SortControl } from '../components/filters/SortControl';
 import { OwnershipFilter } from '../components/filters/OwnershipFilter';
@@ -19,44 +20,114 @@ interface HomePageProps {
   onSearchClose: () => void;
 }
 
-function ShareButton({ userId }: { userId: string }) {
+function ShareButton({ user, onTokenReady }: { user: User; onTokenReady: (token: string) => void }) {
   const [copied, setCopied] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const copyText = async (text: string): Promise<boolean> => {
+    // Modern clipboard API
+    if (navigator.clipboard && window.isSecureContext) {
+      try {
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch {
+        // fallback below
+      }
+    }
+
+    // Legacy fallback
+    try {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      const ok = document.execCommand('copy');
+      document.body.removeChild(textarea);
+      return ok;
+    } catch {
+      return false;
+    }
+  };
 
   const handleShare = async () => {
-    const url = `${window.location.origin}/user/${userId}`;
+    if (loading) return;
     try {
-      await navigator.clipboard.writeText(url);
+      setLoading(true);
+      setError(null);
+      const token = await getOrCreateShareToken({
+        uid: user.uid,
+        displayName: user.displayName ?? null,
+        photoURL: user.photoURL ?? null,
+      });
+      onTokenReady(token);
+      const url = `${window.location.origin}/share/${token}`;
+      const copiedOk = await copyText(url);
+      if (!copiedOk) {
+        window.prompt('Copy this link:', url);
+      }
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // Fallback for older browsers
-      prompt('Collection link:', url);
+    } catch (err) {
+      setCopied(false);
+      void err;
+      setError('Could not create share link. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <button
-      onClick={handleShare}
-      className="flex items-center justify-center gap-2 w-full py-2 text-sm font-medium text-neutral-500 bg-surface-primary border border-surface-border rounded-lg hover:bg-neutral-50 transition-colors cursor-pointer"
-    >
-      {copied ? (
-        <>
-          <Check className="w-4 h-4 text-owned" />
-          <span className="text-owned">Link copied!</span>
-        </>
-      ) : (
-        <>
-          <Share2 className="w-4 h-4" />
-          <span>Share collection</span>
-        </>
+    <>
+      <button
+        onClick={handleShare}
+        className="flex items-center justify-center gap-2 w-full py-2 text-sm font-medium text-neutral-500 bg-surface-primary border border-surface-border rounded-lg hover:bg-neutral-50 transition-colors cursor-pointer"
+      >
+        {loading ? (
+          <span>Preparing link...</span>
+        ) : copied ? (
+          <>
+            <Check className="w-4 h-4 text-owned" />
+            <span className="text-owned">Link copied!</span>
+          </>
+        ) : (
+          <>
+            <Share2 className="w-4 h-4" />
+            <span>Share collection</span>
+          </>
+        )}
+      </button>
+      {error && (
+        <p className="text-xs text-red-500 text-center mt-1">{error}</p>
       )}
-    </button>
+    </>
   );
 }
 
 export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [shareToken, setShareToken] = useState<string | null>(null);
   const { ownedCards, updateLocal } = useOwnedCards(user.uid);
+
+  useEffect(() => {
+    if (!isFirebaseConfigured) return;
+    let cancelled = false;
+    getExistingShareToken(user.uid)
+      .then((token) => {
+        if (!cancelled) {
+          setShareToken(token);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setShareToken(null);
+        }
+      });
+    return () => { cancelled = true; };
+  }, [user.uid]);
 
   const {
     activeSet, setActiveSet,
@@ -75,11 +146,11 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
       if (!card) return;
 
       if (isFirebaseConfigured) {
-        toggleCardOwnership(user.uid, cardId, {
+        void toggleCardOwnership(user.uid, cardId, {
           set: card.set,
           collectorNumber: card.collector_number,
           name: card.name,
-        }, variant, ownedCards.get(cardId));
+        }, variant, ownedCards.get(cardId), shareToken ?? undefined);
       } else {
         // localStorage mode
         updateLocal((prev) => {
@@ -114,7 +185,7 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
         });
       }
     },
-    [user.uid, currentCards, ownedCards, updateLocal]
+    [user.uid, currentCards, ownedCards, shareToken, updateLocal]
   );
 
   // Handler for quantity change
@@ -125,7 +196,7 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
       if (!card || !existing) return;
 
       if (isFirebaseConfigured) {
-        updateCardQuantity(user.uid, cardId, variant, quantity, existing);
+        void updateCardQuantity(user.uid, cardId, variant, quantity, existing, shareToken ?? undefined);
       } else {
         // localStorage mode
         updateLocal((prev) => {
@@ -151,7 +222,7 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
         });
       }
     },
-    [user.uid, currentCards, ownedCards, updateLocal]
+    [user.uid, currentCards, ownedCards, shareToken, updateLocal]
   );
 
   return (
@@ -168,7 +239,7 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
           percentage={stats.percentage}
         />
         {isFirebaseConfigured && (
-          <ShareButton userId={user.uid} />
+          <ShareButton user={user} onTokenReady={setShareToken} />
         )}
       </div>
 
