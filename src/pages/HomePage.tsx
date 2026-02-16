@@ -236,75 +236,77 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
   }, [queryClient]);
 
   return (
-    <PullToRefresh onRefresh={handleRefresh} disabled={isSearchOpen}>
-      <div className="max-w-6xl mx-auto safe-bottom touch-pan-y">
-        {/* Set tabs */}
-        <SetTabs activeSet={activeSet} onChange={setActiveSet} cardCounts={cardCounts} />
+    <>
+      <PullToRefresh onRefresh={handleRefresh} disabled={isSearchOpen || !!selectedCard}>
+        <div className="max-w-6xl mx-auto safe-bottom touch-pan-y">
+          {/* Set tabs */}
+          <SetTabs activeSet={activeSet} onChange={setActiveSet} cardCounts={cardCounts} />
 
-        {/* Stats + Share */}
-        <div className="py-2 space-y-2">
-          <CollectionSummary
-            totalCards={stats.totalCards}
-            ownedCount={stats.ownedCount}
-            totalValue={stats.totalValue}
-            percentage={stats.percentage}
-          />
-          {isFirebaseConfigured && (
-            <ShareButton user={user} onTokenReady={setShareToken} />
+          {/* Stats + Share */}
+          <div className="py-2 space-y-2">
+            <CollectionSummary
+              totalCards={stats.totalCards}
+              ownedCount={stats.ownedCount}
+              totalValue={stats.totalValue}
+              percentage={stats.percentage}
+            />
+            {isFirebaseConfigured && (
+              <ShareButton user={user} onTokenReady={setShareToken} />
+            )}
+          </div>
+
+          {/* Toolbar */}
+          <div className="flex items-center justify-between gap-2 sm:gap-3 pb-4">
+            <OwnershipFilter value={ownershipFilter} onChange={setOwnershipFilter} />
+            <div className="flex items-center gap-4">
+              {activeSet === 'all' && (
+                <button
+                  onClick={() => setGroupBySet(!groupBySet)}
+                  className={`cursor-pointer transition-colors duration-150 ${
+                    groupBySet ? 'text-primary-500' : 'text-neutral-400 hover:text-neutral-600'
+                  }`}
+                  title={groupBySet ? 'Show all at once' : 'Group by set'}
+                >
+                  {groupBySet ? <Layers className="w-5 h-5" /> : <LayoutGrid className="w-5 h-5" />}
+                </button>
+              )}
+              <SortControl value={sortOption} onChange={setSortOption} />
+            </div>
+          </div>
+
+          {/* Card grid */}
+          {isCardsLoading ? (
+            <CardGridSkeleton />
+          ) : (
+            <CardGrid
+              cards={sortedFilteredCards}
+              ownedCards={ownedCards}
+              onToggle={handleToggle}
+              onCardClick={setSelectedCard}
+              groupBySet={activeSet === 'all' && groupBySet}
+            />
           )}
         </div>
+      </PullToRefresh>
 
-        {/* Toolbar */}
-        <div className="flex items-center justify-between gap-2 sm:gap-3 pb-4">
-          <OwnershipFilter value={ownershipFilter} onChange={setOwnershipFilter} />
-          <div className="flex items-center gap-4">
-            {activeSet === 'all' && (
-              <button
-                onClick={() => setGroupBySet(!groupBySet)}
-                className={`cursor-pointer transition-colors duration-150 ${
-                  groupBySet ? 'text-primary-500' : 'text-neutral-400 hover:text-neutral-600'
-                }`}
-                title={groupBySet ? 'Show all at once' : 'Group by set'}
-              >
-                {groupBySet ? <Layers className="w-5 h-5" /> : <LayoutGrid className="w-5 h-5" />}
-              </button>
-            )}
-            <SortControl value={sortOption} onChange={setSortOption} />
-          </div>
-        </div>
+      {/* Card detail modal */}
+      <CardDetail
+        card={selectedCard}
+        owned={selectedCard ? ownedCards.get(selectedCard.id) : undefined}
+        onClose={() => setSelectedCard(null)}
+        onToggle={handleToggle}
+        onQuantityChange={handleQuantityChange}
+        cards={sortedFilteredCards}
+        onNavigate={setSelectedCard}
+      />
 
-        {/* Card grid */}
-        {isCardsLoading ? (
-          <CardGridSkeleton />
-        ) : (
-          <CardGrid
-            cards={sortedFilteredCards}
-            ownedCards={ownedCards}
-            onToggle={handleToggle}
-            onCardClick={setSelectedCard}
-            groupBySet={activeSet === 'all' && groupBySet}
-          />
-        )}
-
-        {/* Card detail modal */}
-        <CardDetail
-          card={selectedCard}
-          owned={selectedCard ? ownedCards.get(selectedCard.id) : undefined}
-          onClose={() => setSelectedCard(null)}
-          onToggle={handleToggle}
-          onQuantityChange={handleQuantityChange}
-          cards={sortedFilteredCards}
-          onNavigate={setSelectedCard}
-        />
-
-        {/* Search overlay */}
-        <SearchInput
-          value={searchQuery}
-          onChange={setSearchQuery}
-          isOpen={isSearchOpen}
-          onClose={onSearchClose}
-        />
-      </div>
-    </PullToRefresh>
+      {/* Search overlay */}
+      <SearchInput
+        value={searchQuery}
+        onChange={setSearchQuery}
+        isOpen={isSearchOpen}
+        onClose={onSearchClose}
+      />
+    </>
   );
 }

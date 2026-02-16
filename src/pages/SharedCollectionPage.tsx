@@ -70,97 +70,99 @@ export function SharedCollectionPage({ currentUserId, isSearchOpen, onSearchClos
   }
 
   return (
-    <PullToRefresh onRefresh={handleRefresh} disabled={isSearchOpen}>
-      <div className="max-w-6xl mx-auto safe-bottom touch-pan-y">
-        {/* Owner banner */}
-        <div className="flex items-center gap-3 py-4">
-          <button
-            onClick={() => navigate('/')}
-            className="text-neutral-400 hover:text-neutral-600 transition-colors cursor-pointer"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          {profile?.photoURL && (
-            <img
-              src={profile.photoURL}
-              alt={profile.displayName}
-              className="w-8 h-8 rounded-full"
-              referrerPolicy="no-referrer"
+    <>
+      <PullToRefresh onRefresh={handleRefresh} disabled={isSearchOpen || !!selectedCard}>
+        <div className="max-w-6xl mx-auto safe-bottom touch-pan-y">
+          {/* Owner banner */}
+          <div className="flex items-center gap-3 py-4">
+            <button
+              onClick={() => navigate('/')}
+              className="text-neutral-400 hover:text-neutral-600 transition-colors cursor-pointer"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            {profile?.photoURL && (
+              <img
+                src={profile.photoURL}
+                alt={profile.displayName}
+                className="w-8 h-8 rounded-full"
+                referrerPolicy="no-referrer"
+              />
+            )}
+            <div>
+              <p className="text-sm font-semibold text-neutral-800">
+                {profile?.displayName ?? 'Loading...'}
+              </p>
+              <p className="text-xs text-neutral-400">Shared collection</p>
+            </div>
+          </div>
+
+          {/* Set tabs */}
+          <SetTabs activeSet={activeSet} onChange={setActiveSet} cardCounts={cardCounts} />
+
+          {/* Stats */}
+          <div className="py-4">
+            <CollectionSummary
+              totalCards={stats.totalCards}
+              ownedCount={stats.ownedCount}
+              totalValue={stats.totalValue}
+              percentage={stats.percentage}
+            />
+          </div>
+
+          {/* Toolbar */}
+          <div className="flex items-center justify-between gap-2 sm:gap-3 pb-4">
+            <OwnershipFilter value={ownershipFilter} onChange={setOwnershipFilter} />
+            <div className="flex items-center gap-4">
+              {activeSet === 'all' && (
+                <button
+                  onClick={() => setGroupBySet(!groupBySet)}
+                  className={`cursor-pointer transition-colors duration-150 ${
+                    groupBySet ? 'text-primary-500' : 'text-neutral-400 hover:text-neutral-600'
+                  }`}
+                  title={groupBySet ? 'Show all at once' : 'Group by set'}
+                >
+                  {groupBySet ? <Layers className="w-5 h-5" /> : <LayoutGrid className="w-5 h-5" />}
+                </button>
+              )}
+              <SortControl value={sortOption} onChange={setSortOption} />
+            </div>
+          </div>
+
+          {/* Card grid */}
+          {isLoading ? (
+            <CardGridSkeleton />
+          ) : (
+            <CardGrid
+              cards={sortedFilteredCards}
+              ownedCards={ownedCards}
+              onToggle={noop}
+              onCardClick={setSelectedCard}
+              readOnly
+              groupBySet={activeSet === 'all' && groupBySet}
             />
           )}
-          <div>
-            <p className="text-sm font-semibold text-neutral-800">
-              {profile?.displayName ?? 'Loading...'}
-            </p>
-            <p className="text-xs text-neutral-400">Shared collection</p>
-          </div>
         </div>
+      </PullToRefresh>
 
-        {/* Set tabs */}
-        <SetTabs activeSet={activeSet} onChange={setActiveSet} cardCounts={cardCounts} />
+      {/* Card detail modal */}
+      <CardDetail
+        card={selectedCard}
+        owned={selectedCard ? ownedCards.get(selectedCard.id) : undefined}
+        onClose={() => setSelectedCard(null)}
+        onToggle={noop}
+        cards={sortedFilteredCards}
+        onNavigate={setSelectedCard}
+        readOnly
+      />
 
-        {/* Stats */}
-        <div className="py-4">
-          <CollectionSummary
-            totalCards={stats.totalCards}
-            ownedCount={stats.ownedCount}
-            totalValue={stats.totalValue}
-            percentage={stats.percentage}
-          />
-        </div>
-
-        {/* Toolbar */}
-        <div className="flex items-center justify-between gap-2 sm:gap-3 pb-4">
-          <OwnershipFilter value={ownershipFilter} onChange={setOwnershipFilter} />
-          <div className="flex items-center gap-4">
-            {activeSet === 'all' && (
-              <button
-                onClick={() => setGroupBySet(!groupBySet)}
-                className={`cursor-pointer transition-colors duration-150 ${
-                  groupBySet ? 'text-primary-500' : 'text-neutral-400 hover:text-neutral-600'
-                }`}
-                title={groupBySet ? 'Show all at once' : 'Group by set'}
-              >
-                {groupBySet ? <Layers className="w-5 h-5" /> : <LayoutGrid className="w-5 h-5" />}
-              </button>
-            )}
-            <SortControl value={sortOption} onChange={setSortOption} />
-          </div>
-        </div>
-
-        {/* Card grid */}
-        {isLoading ? (
-          <CardGridSkeleton />
-        ) : (
-          <CardGrid
-            cards={sortedFilteredCards}
-            ownedCards={ownedCards}
-            onToggle={noop}
-            onCardClick={setSelectedCard}
-            readOnly
-            groupBySet={activeSet === 'all' && groupBySet}
-          />
-        )}
-
-        {/* Card detail modal */}
-        <CardDetail
-          card={selectedCard}
-          owned={selectedCard ? ownedCards.get(selectedCard.id) : undefined}
-          onClose={() => setSelectedCard(null)}
-          onToggle={noop}
-          cards={sortedFilteredCards}
-          onNavigate={setSelectedCard}
-          readOnly
-        />
-
-        {/* Search overlay */}
-        <SearchInput
-          value={searchQuery}
-          onChange={setSearchQuery}
-          isOpen={isSearchOpen}
-          onClose={onSearchClose}
-        />
-      </div>
-    </PullToRefresh>
+      {/* Search overlay */}
+      <SearchInput
+        value={searchQuery}
+        onChange={setSearchQuery}
+        isOpen={isSearchOpen}
+        onClose={onSearchClose}
+      />
+    </>
   );
 }
