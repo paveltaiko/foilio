@@ -16,7 +16,7 @@ export function CollectionSummary({
 }: CollectionSummaryProps) {
   return (
     <div className="bg-surface-primary border border-surface-border rounded-lg p-3 sm:p-4">
-      <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 sm:gap-0 mb-3">
+      <div className="flex items-baseline justify-between gap-2 mb-3">
         <div className="flex items-baseline gap-2 sm:gap-3">
           <span className="text-xl sm:text-2xl font-bold text-neutral-800 font-mono tracking-tight">
             {ownedCount}
