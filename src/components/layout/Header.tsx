@@ -26,7 +26,7 @@ export function Header({ userName, userPhoto, onLogin, onLogout, isLoggedIn, onS
               {onSearchClick && (
                 <button
                   onClick={onSearchClick}
-                  className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-full bg-primary-100 text-primary-500 hover:bg-primary-200 transition-colors cursor-pointer"
+                  className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-full bg-primary-100 text-primary-500 sm:hover:bg-primary-500 sm:hover:text-white transition-colors duration-150 cursor-pointer"
                   aria-label="Search"
                 >
                   <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
