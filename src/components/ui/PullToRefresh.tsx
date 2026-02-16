@@ -91,6 +91,7 @@ export function PullToRefresh({ onRefresh, children, disabled }: PullToRefreshPr
   const indicatorY = -12 + reveal * 28;
   const spokeCount = 12;
   const activeSpokes = Math.max(1, Math.round(reveal * spokeCount));
+  const shouldSpin = isRefreshing || (isPulling && indicatorVisible);
 
   return (
     <div
@@ -119,13 +120,13 @@ export function PullToRefresh({ onRefresh, children, disabled }: PullToRefreshPr
           }}
         >
           <div
-            className={isRefreshing ? 'animate-spin' : ''}
+            className={shouldSpin ? 'animate-spin' : ''}
             style={{
               width: 30,
               height: 30,
-              transform: isRefreshing ? undefined : `rotate(${reveal * 120}deg)`,
-              transition: isPulling ? 'none' : 'transform 260ms ease',
-              animationDuration: isRefreshing ? '1.35s' : undefined,
+              transform: shouldSpin ? undefined : `rotate(${reveal * 120}deg)`,
+              transition: shouldSpin ? 'none' : 'transform 260ms ease',
+              animationDuration: shouldSpin ? '1.25s' : undefined,
             }}
           >
             {Array.from({ length: spokeCount }).map((_, i) => {
