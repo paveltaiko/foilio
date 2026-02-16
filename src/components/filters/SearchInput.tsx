@@ -1,4 +1,5 @@
 import { useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Search, X } from 'lucide-react';
 
 interface SearchInputProps {
@@ -32,8 +33,8 @@ export function SearchInput({ value, onChange, isOpen, onClose, placeholder = 'S
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-x-0 top-0 z-50 flex items-center bg-white px-3 py-2 shadow-md animate-fade-in">
+  return createPortal(
+    <div className="fixed inset-x-0 top-0 z-[100] flex items-center bg-white px-3 py-2 shadow-md animate-fade-in">
       <Search className="w-4 h-4 text-neutral-400 shrink-0 mr-2" />
       <input
         ref={inputRef}
@@ -61,6 +62,7 @@ export function SearchInput({ value, onChange, isOpen, onClose, placeholder = 'S
       >
         <X className="w-5 h-5" />
       </button>
-    </div>
+    </div>,
+    document.body
   );
 }
