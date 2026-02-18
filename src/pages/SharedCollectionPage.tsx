@@ -57,7 +57,7 @@ export function SharedCollectionPage({ currentUserId, isSearchOpen, onSearchClos
 
   if (error) {
     return (
-      <div className="max-w-6xl mx-auto py-16 text-center">
+      <div className="app-container py-16 text-center">
         <p className="text-neutral-500 text-sm">{error}</p>
         <button
           onClick={() => navigate('/')}
@@ -72,7 +72,7 @@ export function SharedCollectionPage({ currentUserId, isSearchOpen, onSearchClos
   return (
     <>
       <PullToRefresh onRefresh={handleRefresh} disabled={isSearchOpen || !!selectedCard}>
-        <div className="max-w-6xl mx-auto safe-bottom touch-pan-y">
+        <div className="app-container-padded safe-bottom touch-pan-y">
           {/* Owner banner */}
           <div className="flex items-center gap-3 py-4">
             <button

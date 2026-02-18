@@ -35,7 +35,7 @@ export function SearchInput({ value, onChange, isOpen, onClose, placeholder = 'S
 
   return createPortal(
     <div className="fixed inset-x-0 top-0 z-[100] flex items-center bg-white px-3 py-2 shadow-md animate-fade-in">
-      <Search className="w-4 h-4 text-neutral-400 shrink-0 mr-2" />
+      <Search className="w-4 h-4 text-neutral-400 shrink-0 mr-2" strokeWidth={2.5} />
       <input
         ref={inputRef}
         type="text"
@@ -54,7 +54,7 @@ export function SearchInput({ value, onChange, isOpen, onClose, placeholder = 'S
         onMouseDown={(e) => e.preventDefault()}
         onClick={handleClear}
         className="
-          w-8 h-8 flex items-center justify-center shrink-0
+          w-8 h-8 flex items-center justify-center shrink-0 cursor-pointer
           text-neutral-400 hover:text-neutral-600
           transition-colors duration-150
         "

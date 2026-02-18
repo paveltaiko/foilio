@@ -238,7 +238,7 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
   return (
     <>
       <PullToRefresh onRefresh={handleRefresh} disabled={isSearchOpen || !!selectedCard}>
-        <div className="max-w-6xl mx-auto safe-bottom touch-pan-y">
+        <div className="app-container-padded safe-bottom touch-pan-y">
           {/* Set tabs */}
           <SetTabs activeSet={activeSet} onChange={setActiveSet} cardCounts={cardCounts} />
 

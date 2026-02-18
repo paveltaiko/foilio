@@ -144,6 +144,23 @@ body {
 
 /* ===== Component Classes ===== */
 
+.app-container {
+  max-width: 72rem;
+  margin-inline: auto;
+}
+
+.app-container-padded {
+  max-width: 72rem;
+  margin-inline: auto;
+  padding-inline: 0.75rem;
+}
+
+@media (min-width: 1280px) {
+  .app-container-padded {
+    padding-inline: 0;
+  }
+}
+
 /* Foil image — boosted saturation & brightness */
 .foil-image {
   filter: saturate(1.3) brightness(1.05) contrast(1.05);
@@ -251,11 +268,6 @@ body {
   display: none;
 }
 
-/* Keep layout width stable when vertical scrollbar appears/disappears */
-.scrollbar-stable {
-  scrollbar-gutter: stable;
-}
-
 /* Show scrollbar utility (for desktop) */
 @media (min-width: 640px) {
   .sm\:scrollbar-default {
@@ -269,19 +281,9 @@ body {
   }
 }
 
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
-
 /* Safe area insets for iOS */
 .safe-bottom {
   padding-bottom: env(safe-area-inset-bottom, 0);
-}
-
-/* Prevent text selection on interactive elements */
-.no-select {
-  -webkit-user-select: none;
-  user-select: none;
 }
 
 /* Touch action for better scroll performance */
@@ -296,15 +298,6 @@ body {
 /* Overscroll behavior */
 .overscroll-contain {
   overscroll-behavior: contain;
-}
-
-.overscroll-none {
-  overscroll-behavior: none;
-}
-
-/* iOS momentum scrolling */
-.scroll-smooth-ios {
-  -webkit-overflow-scrolling: touch;
 }
 
 /* Prevent zoom on input focus (iOS) */
