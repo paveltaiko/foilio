@@ -31,6 +31,8 @@ export function CardDetail({ card, selectedVariant = null, owned, onClose, onTog
   const [lockedHeight, setLockedHeight] = useState<number | null>(null);
   const pendingNavigate = useRef<{ card: ScryfallCard; variant: CardVariant } | null>(null);
   const imageWrapperRef = useRef<HTMLDivElement>(null);
+  const swipeViewportRef = useRef<HTMLDivElement>(null);
+  const swipeTrackRef = useRef<HTMLDivElement>(null);
 
   const isAnimating = animPhase !== 'idle';
 
@@ -195,22 +197,27 @@ export function CardDetail({ card, selectedVariant = null, owned, onClose, onTog
 
   const scryfallPriceEur = parsePrice(card.prices.eur);
   const scryfallPriceFoil = parsePrice(card.prices.eur_foil);
+  const viewportWidth = swipeViewportRef.current?.getBoundingClientRect().width ?? 400;
+  const trackWidth = swipeTrackRef.current?.getBoundingClientRect().width ?? 300;
+  const exitDistancePx = Math.ceil((viewportWidth + trackWidth) / 2 + 24);
 
   return (
     <Modal isOpen={!!card} onClose={onClose}>
       <div
         ref={imageWrapperRef}
         className="space-y-5"
-        style={{ minHeight: lockedHeight ?? undefined }}
+        style={{ height: lockedHeight ?? undefined }}
       >
         {/* Header */}
         <div className="flex items-start justify-between">
           <div>
             <h2 className="text-lg font-semibold text-neutral-800">{card.name}</h2>
-            <p className="text-xs font-mono text-neutral-500 flex items-center gap-1 flex-wrap">
-              #{card.collector_number} · {card.set_name} · <span className={`font-semibold ${getRarityInfo(card.rarity).colorClass}`}>{getRarityInfo(card.rarity).label}</span>
+            <div className="mt-0.5 flex items-center gap-2 flex-wrap">
+              <p className="text-xs font-mono text-neutral-500">
+                #{card.collector_number} · {card.set_name} · <span className={`font-semibold ${getRarityInfo(card.rarity).colorClass}`}>{getRarityInfo(card.rarity).label}</span>
+              </p>
               <CardProductsTooltip setCode={card.set} collectorNumber={card.collector_number} />
-            </p>
+            </div>
           </div>
           <button
             onClick={onClose}
@@ -230,7 +237,7 @@ export function CardDetail({ card, selectedVariant = null, owned, onClose, onTog
               onClick={goToPrev}
               disabled={!canGoPrev}
               className={`
-                hidden sm:flex absolute left-0 top-1/2 -translate-y-1/2 -translate-x-3
+                hidden sm:flex absolute left-0 top-1/2 -translate-y-1/2 -translate-x-3 z-20
                 w-9 h-9 items-center justify-center rounded-full
                 transition-all duration-200 cursor-pointer
                 ${canGoPrev
@@ -247,48 +254,54 @@ export function CardDetail({ card, selectedVariant = null, owned, onClose, onTog
 
           {/* Card image container with swipe */}
           <div
-            className="relative inline-block touch-pan-y overflow-visible"
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-            onTransitionEnd={handleTransitionEnd}
-            style={{
-              transform: animPhase === 'exiting'
-                ? `translateX(${animDirection === 'next' ? -400 : 400}px)`
-                : animPhase === 'repositioning'
-                ? `translateX(${animDirection === 'next' ? 400 : -400}px)`
-                : swipeOffset !== 0
-                ? `translateX(${swipeOffset}px)`
-                : 'translateX(0px)',
-              transition: animPhase === 'exiting'
-                ? 'transform 0.28s ease-in'
-                : animPhase === 'repositioning'
-                ? 'none'
-                : animPhase === 'entering'
-                ? 'transform 0.28s ease-out'
-                : swipeOffset !== 0
-                ? 'none'
-                : 'none',
-            }}
+            ref={swipeViewportRef}
+            className="w-[calc(100%+2rem)] sm:w-[calc(100%+3rem)] -mx-4 sm:-mx-6 overflow-x-hidden flex justify-center z-10"
           >
-            {imageUrl && (
-              <div className="relative overflow-hidden rounded-lg">
-                <button
-                  type="button"
-                  onClick={() => setIsImageZoomed(true)}
-                  className="block cursor-zoom-in leading-none"
-                  aria-label={`Open enlarged image for ${card.name}`}
-                >
-                  <img
-                    src={imageUrl}
-                    alt={card.name}
-                    className={`block max-h-[280px] sm:max-h-[400px] select-none ${showFoilEffect ? 'foil-image' : ''}`}
-                    draggable={false}
-                  />
-                </button>
-                {showFoilEffect && <div className="foil-overlay" />}
-              </div>
-            )}
+            <div
+              ref={swipeTrackRef}
+              className="relative inline-block touch-pan-y overflow-visible"
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              onTransitionEnd={handleTransitionEnd}
+              style={{
+                transform: animPhase === 'exiting'
+                  ? `translateX(${animDirection === 'next' ? -exitDistancePx : exitDistancePx}px)`
+                  : animPhase === 'repositioning'
+                  ? `translateX(${animDirection === 'next' ? exitDistancePx : -exitDistancePx}px)`
+                  : swipeOffset !== 0
+                  ? `translateX(${swipeOffset}px)`
+                  : 'translateX(0px)',
+                transition: animPhase === 'exiting'
+                  ? 'transform 0.28s ease-in'
+                  : animPhase === 'repositioning'
+                  ? 'none'
+                  : animPhase === 'entering'
+                  ? 'transform 0.28s ease-out'
+                  : swipeOffset !== 0
+                  ? 'none'
+                  : 'none',
+              }}
+            >
+              {imageUrl && (
+                <div className="relative overflow-hidden rounded-lg">
+                  <button
+                    type="button"
+                    onClick={() => setIsImageZoomed(true)}
+                    className="block cursor-zoom-in leading-none"
+                    aria-label={`Open enlarged image for ${card.name}`}
+                  >
+                    <img
+                      src={imageUrl}
+                      alt={card.name}
+                      className={`block h-[280px] sm:h-[400px] w-auto object-contain select-none ${showFoilEffect ? 'foil-image' : ''}`}
+                      draggable={false}
+                    />
+                  </button>
+                  {showFoilEffect && <div className="foil-overlay" />}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Next button - desktop only */}
@@ -297,7 +310,7 @@ export function CardDetail({ card, selectedVariant = null, owned, onClose, onTog
               onClick={goToNext}
               disabled={!canGoNext}
               className={`
-                hidden sm:flex absolute right-0 top-1/2 -translate-y-1/2 translate-x-3
+                hidden sm:flex absolute right-0 top-1/2 -translate-y-1/2 translate-x-3 z-20
                 w-9 h-9 items-center justify-center rounded-full
                 transition-all duration-200 cursor-pointer
                 ${canGoNext

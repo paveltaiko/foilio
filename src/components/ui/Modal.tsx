@@ -117,7 +117,10 @@ export function Modal({ isOpen, onClose, children }: ModalProps) {
             <div className="w-9 h-1 bg-neutral-300 rounded-full" />
           </div>
           {/* Scrollable content */}
-          <div className="flex-1 overflow-y-auto overscroll-contain touch-pan-y scrollbar-hide sm:scrollbar-default">
+          <div
+            className="flex-1 overflow-y-auto overscroll-contain touch-pan-y scrollbar-hide sm:scrollbar-default"
+            style={{ scrollbarGutter: 'stable', overflowAnchor: 'none' }}
+          >
             <div className="p-4 pb-10 sm:p-6 sm:pt-4">
               {children}
             </div>

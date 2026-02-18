@@ -80,6 +80,8 @@ export function CardProductsTooltip({ setCode, collectorNumber }: CardProductsTo
   const tooltipRef = useRef<HTMLDivElement>(null);
 
   const { data: products, isLoading } = useCardProducts(setCode, collectorNumber);
+  const hasProducts = !!products && products.length > 0;
+  const isDisabled = !isLoading && !hasProducts;
 
   // Recalculate position whenever tooltip opens or viewport resizes
   useEffect(() => {
@@ -107,17 +109,22 @@ export function CardProductsTooltip({ setCode, collectorNumber }: CardProductsTo
     return () => document.removeEventListener('mousedown', handleClick);
   }, [isOpen]);
 
-  // Don't render anything if no products and not loading
-  if (!isLoading && (!products || products.length === 0)) return null;
-
   return (
-    <span className="inline-flex items-center">
+    <span className="inline-flex items-center min-w-[82px]">
       <button
         ref={buttonRef}
         type="button"
-        onClick={() => setIsOpen((v) => !v)}
-        className="inline-flex items-center gap-0.5 text-xs font-medium ml-3 px-1.5 py-0.5 rounded border border-neutral-300 text-neutral-500 hover:border-neutral-400 hover:text-neutral-700 transition-colors cursor-pointer"
+        onClick={() => {
+          if (isDisabled) return;
+          setIsOpen((v) => !v);
+        }}
+        className={`inline-flex items-center gap-0.5 text-xs font-medium px-1.5 py-0.5 rounded border transition-colors ${
+          isDisabled
+            ? 'border-neutral-200 text-neutral-300 cursor-default'
+            : 'border-neutral-300 text-neutral-500 hover:border-neutral-400 hover:text-neutral-700 cursor-pointer'
+        }`}
         aria-label="Available in products"
+        disabled={isDisabled}
       >
         {isLoading ? (
           <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none">
@@ -127,12 +134,12 @@ export function CardProductsTooltip({ setCode, collectorNumber }: CardProductsTo
         ) : (
           <>
             Products
-            <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isOpen ? 'rotate-180' : 'rotate-0'}`} strokeWidth={3} />
+            {hasProducts && <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isOpen ? 'rotate-180' : 'rotate-0'}`} strokeWidth={3} />}
           </>
         )}
       </button>
 
-      {isOpen && products && products.length > 0 && createPortal(
+      {isOpen && hasProducts && createPortal(
         <div
           ref={tooltipRef}
           className="z-[9999] w-72 bg-white border border-neutral-200 rounded-lg shadow-lg p-2"
