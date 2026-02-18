@@ -14,10 +14,12 @@ const TABS = [
 
 export function OwnershipFilter({ value, onChange }: OwnershipFilterProps) {
   return (
-    <Tabs
-      tabs={TABS}
-      activeTab={value}
-      onChange={(id) => onChange(id as OwnershipFilterType)}
-    />
+    <div className="w-36 md:w-auto">
+      <Tabs
+        tabs={TABS}
+        activeTab={value}
+        onChange={(id) => onChange(id as OwnershipFilterType)}
+      />
+    </div>
   );
 }
