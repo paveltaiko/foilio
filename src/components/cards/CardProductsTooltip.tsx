@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, CSSProperties } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronDown } from 'lucide-react';
 import { useCardProducts } from '../../hooks/useCardProducts';
 import type { CardProduct } from '../../types/card';
@@ -48,13 +49,13 @@ function ProductRow({ product }: { product: CardProduct }) {
   );
 }
 
-function calcTooltipStyle(wrapperRef: React.RefObject<HTMLDivElement | null>): CSSProperties {
-  if (!wrapperRef.current) return { left: '50%', transform: 'translateX(-50%)' };
+function calcPortalStyle(buttonRef: React.RefObject<HTMLElement | null>): CSSProperties {
+  if (!buttonRef.current) return { position: 'fixed', top: 0, left: 0 };
 
-  const rect = wrapperRef.current.getBoundingClientRect();
+  const rect = buttonRef.current.getBoundingClientRect();
   const viewportWidth = window.innerWidth;
 
-  // Ideal: center tooltip on the button
+  // Ideal: center on button
   const idealLeft = rect.left + rect.width / 2 - TOOLTIP_WIDTH / 2;
 
   // Clamp within viewport
@@ -63,33 +64,41 @@ function calcTooltipStyle(wrapperRef: React.RefObject<HTMLDivElement | null>): C
     Math.min(idealLeft, viewportWidth - TOOLTIP_WIDTH - VIEWPORT_PADDING)
   );
 
-  // Convert back to position relative to the wrapper (which is position:relative)
-  const relativeLeft = clampedLeft - rect.left;
-
-  return { left: relativeLeft, transform: 'none' };
+  return {
+    position: 'fixed',
+    top: rect.bottom + 6,
+    left: clampedLeft,
+    width: TOOLTIP_WIDTH,
+  };
 }
 
 export function CardProductsTooltip({ setCode, collectorNumber }: CardProductsTooltipProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [tooltipStyle, setTooltipStyle] = useState<CSSProperties>({ left: '50%', transform: 'translateX(-50%)' });
-  const wrapperRef = useRef<HTMLDivElement>(null);
+  const [portalStyle, setPortalStyle] = useState<CSSProperties>({});
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   const { data: products, isLoading } = useCardProducts(setCode, collectorNumber);
 
   // Recalculate position whenever tooltip opens or viewport resizes
   useEffect(() => {
     if (!isOpen) return;
-    const update = () => setTooltipStyle(calcTooltipStyle(wrapperRef));
+    const update = () => setPortalStyle(calcPortalStyle(buttonRef));
     update();
     window.addEventListener('resize', update);
-    return () => window.removeEventListener('resize', update);
+    window.addEventListener('scroll', update, true);
+    return () => {
+      window.removeEventListener('resize', update);
+      window.removeEventListener('scroll', update, true);
+    };
   }, [isOpen]);
 
   // Close on click outside
   useEffect(() => {
     if (!isOpen) return;
     const handleClick = (e: MouseEvent) => {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      // Check if click is outside the button
+      if (buttonRef.current && !buttonRef.current.contains(target)) {
         setIsOpen(false);
       }
     };
@@ -101,8 +110,9 @@ export function CardProductsTooltip({ setCode, collectorNumber }: CardProductsTo
   if (!isLoading && (!products || products.length === 0)) return null;
 
   return (
-    <div ref={wrapperRef} className="relative inline-flex items-center">
+    <span className="inline-flex items-center">
       <button
+        ref={buttonRef}
         type="button"
         onClick={() => setIsOpen((v) => !v)}
         className="inline-flex items-center gap-0.5 text-xs font-medium ml-3 px-1.5 py-0.5 rounded border border-neutral-300 text-neutral-500 hover:border-neutral-400 hover:text-neutral-700 transition-colors cursor-pointer"
@@ -121,10 +131,10 @@ export function CardProductsTooltip({ setCode, collectorNumber }: CardProductsTo
         )}
       </button>
 
-      {isOpen && products && products.length > 0 && (
+      {isOpen && products && products.length > 0 && createPortal(
         <div
-          className="absolute top-full mt-1.5 z-50 w-80 bg-white border border-neutral-200 rounded-lg shadow-lg p-2"
-          style={tooltipStyle}
+          className="z-[9999] bg-white border border-neutral-200 rounded-lg shadow-lg p-2"
+          style={portalStyle}
         >
           <p className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wide mb-1 px-1">
             Available in products
@@ -134,8 +144,9 @@ export function CardProductsTooltip({ setCode, collectorNumber }: CardProductsTo
               <ProductRow key={product.uuid} product={product} />
             ))}
           </ul>
-        </div>
+        </div>,
+        document.body
       )}
-    </div>
+    </span>
   );
 }
