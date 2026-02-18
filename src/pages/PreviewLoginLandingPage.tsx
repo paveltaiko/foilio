@@ -65,7 +65,7 @@ const FAQ_ITEMS = [
 ] as const;
 
 export function PreviewLoginLandingPage({ onLogin, isLoggedIn }: PreviewLoginLandingPageProps) {
-  const pageContainerClass = 'app-container-padded pt-3 pb-8 sm:pb-12 space-y-8 sm:space-y-12';
+  const pageContainerClass = 'app-container-padded pb-8 sm:pb-12 space-y-8 sm:space-y-12';
   const navigate = useNavigate();
   const [selectedCard, setSelectedCard] = useState<ScryfallCard | null>(null);
   const { data: spmCards = [], isLoading: spmLoading } = useScryfallCards('spm');

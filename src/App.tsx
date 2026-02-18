@@ -32,7 +32,7 @@ function AppContent() {
         isLoggedIn={!!user}
         onSearchClick={handleSearchClick}
       />
-      <main className="flex-1 overflow-y-auto pb-8">
+      <main className="flex-1 overflow-y-auto pt-3 pb-8">
         <Routes>
           <Route
             path="/"
