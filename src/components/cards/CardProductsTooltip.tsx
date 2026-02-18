@@ -77,6 +77,7 @@ export function CardProductsTooltip({ setCode, collectorNumber }: CardProductsTo
   const [isOpen, setIsOpen] = useState(false);
   const [portalStyle, setPortalStyle] = useState<CSSProperties>({});
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const tooltipRef = useRef<HTMLDivElement>(null);
 
   const { data: products, isLoading } = useCardProducts(setCode, collectorNumber);
 
@@ -93,15 +94,14 @@ export function CardProductsTooltip({ setCode, collectorNumber }: CardProductsTo
     };
   }, [isOpen]);
 
-  // Close on click outside
+  // Close on click outside — ignore clicks inside the portal tooltip
   useEffect(() => {
     if (!isOpen) return;
     const handleClick = (e: MouseEvent) => {
       const target = e.target as Node;
-      // Check if click is outside the button
-      if (buttonRef.current && !buttonRef.current.contains(target)) {
-        setIsOpen(false);
-      }
+      if (buttonRef.current?.contains(target)) return;
+      if (tooltipRef.current?.contains(target)) return;
+      setIsOpen(false);
     };
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
@@ -134,6 +134,7 @@ export function CardProductsTooltip({ setCode, collectorNumber }: CardProductsTo
 
       {isOpen && products && products.length > 0 && createPortal(
         <div
+          ref={tooltipRef}
           className="z-[9999] bg-white border border-neutral-200 rounded-lg shadow-lg p-2"
           style={portalStyle}
         >
