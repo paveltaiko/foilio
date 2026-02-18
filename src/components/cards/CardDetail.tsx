@@ -1,37 +1,46 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Modal } from '../ui/Modal';
-import type { ScryfallCard, OwnedCard, CardWithVariant } from '../../types/card';
+import type { ScryfallCard, OwnedCard, CardWithVariant, CardVariant } from '../../types/card';
 import { getCardImage } from '../../services/scryfall';
 import { formatPrice, parsePrice } from '../../utils/formatPrice';
 import { getRarityInfo } from '../../utils/rarity';
 
 interface CardDetailProps {
   card: ScryfallCard | null;
+  selectedVariant?: CardVariant;
   owned?: OwnedCard;
   onClose: () => void;
   onToggle: (cardId: string, variant: 'nonfoil' | 'foil') => void;
   onQuantityChange?: (cardId: string, variant: 'nonfoil' | 'foil', quantity: number) => void;
   cards?: CardWithVariant[];
-  onNavigate?: (card: ScryfallCard) => void;
+  onNavigate?: (card: ScryfallCard, variant: CardVariant) => void;
   readOnly?: boolean;
 }
 
-export function CardDetail({ card, owned, onClose, onToggle, onQuantityChange, cards, onNavigate, readOnly }: CardDetailProps) {
+export function CardDetail({ card, selectedVariant = null, owned, onClose, onToggle, onQuantityChange, cards, onNavigate, readOnly }: CardDetailProps) {
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const [touchStartY, setTouchStartY] = useState<number | null>(null);
   const [swipeOffset, setSwipeOffset] = useState(0);
+  const [isImageZoomed, setIsImageZoomed] = useState(false);
 
   // Animation state machine: 'idle' | 'exiting' | 'repositioning' | 'entering'
   const [animPhase, setAnimPhase] = useState<'idle' | 'exiting' | 'repositioning' | 'entering'>('idle');
   const [animDirection, setAnimDirection] = useState<'prev' | 'next'>('next');
   const [lockedHeight, setLockedHeight] = useState<number | null>(null);
-  const pendingNavigate = useRef<ScryfallCard | null>(null);
+  const pendingNavigate = useRef<{ card: ScryfallCard; variant: CardVariant } | null>(null);
   const imageWrapperRef = useRef<HTMLDivElement>(null);
 
   const isAnimating = animPhase !== 'idle';
 
   // Navigation logic
-  const currentIndex = cards?.findIndex(c => c.card.id === card?.id) ?? -1;
+  let currentIndex = -1;
+  if (cards && card) {
+    currentIndex = cards.findIndex((c) => c.card.id === card.id && c.variant === selectedVariant);
+    if (currentIndex === -1) {
+      currentIndex = cards.findIndex((c) => c.card.id === card.id);
+    }
+  }
   const canGoPrev = currentIndex > 0;
   const canGoNext = currentIndex < (cards?.length ?? 0) - 1;
   const totalCards = cards?.length ?? 0;
@@ -57,7 +66,10 @@ export function CardDetail({ card, owned, onClose, onToggle, onQuantityChange, c
     if (direction === 'next' && !canGoNext) return;
 
     const nextIndex = direction === 'prev' ? currentIndex - 1 : currentIndex + 1;
-    pendingNavigate.current = cards[nextIndex].card;
+    pendingNavigate.current = {
+      card: cards[nextIndex].card,
+      variant: cards[nextIndex].variant,
+    };
     // Lock container height to prevent vertical shift during card swap
     if (imageWrapperRef.current) {
       setLockedHeight(imageWrapperRef.current.getBoundingClientRect().height);
@@ -73,7 +85,7 @@ export function CardDetail({ card, owned, onClose, onToggle, onQuantityChange, c
     if (animPhase === 'exiting') {
       // Card has slid out — switch card and reposition off-screen on opposite side
       if (pendingNavigate.current && onNavigate) {
-        onNavigate(pendingNavigate.current);
+        onNavigate(pendingNavigate.current.card, pendingNavigate.current.variant);
         pendingNavigate.current = null;
       }
       setAnimPhase('repositioning');
@@ -119,6 +131,10 @@ export function CardDetail({ card, owned, onClose, onToggle, onQuantityChange, c
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [card, goToPrev, goToNext]);
+
+  useEffect(() => {
+    setIsImageZoomed(false);
+  }, [card?.id, selectedVariant]);
 
   // Swipe handlers
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -172,6 +188,7 @@ export function CardDetail({ card, owned, onClose, onToggle, onQuantityChange, c
   const imageUrl = getCardImage(card, 'large');
   const isOwnedNonFoil = owned?.ownedNonFoil ?? false;
   const isOwnedFoil = owned?.ownedFoil ?? false;
+  const showFoilEffect = selectedVariant === 'foil' || (selectedVariant === null && isOwnedFoil);
   const hasNonFoil = card.finishes.includes('nonfoil');
   const hasFoil = card.finishes.includes('foil');
 
@@ -253,14 +270,23 @@ export function CardDetail({ card, owned, onClose, onToggle, onQuantityChange, c
             }}
           >
             {imageUrl && (
-              <img
-                src={imageUrl}
-                alt={card.name}
-                className={`max-h-[280px] sm:max-h-[400px] rounded-lg select-none ${isOwnedFoil ? 'foil-image' : ''}`}
-                draggable={false}
-              />
+              <div className="relative overflow-hidden rounded-lg">
+                <button
+                  type="button"
+                  onClick={() => setIsImageZoomed(true)}
+                  className="block cursor-zoom-in leading-none"
+                  aria-label={`Open enlarged image for ${card.name}`}
+                >
+                  <img
+                    src={imageUrl}
+                    alt={card.name}
+                    className={`block max-h-[280px] sm:max-h-[400px] select-none ${showFoilEffect ? 'foil-image' : ''}`}
+                    draggable={false}
+                  />
+                </button>
+                {showFoilEffect && <div className="foil-overlay" />}
+              </div>
             )}
-            {isOwnedFoil && <div className="foil-overlay rounded-lg" />}
           </div>
 
           {/* Next button - desktop only */}
@@ -439,6 +465,36 @@ export function CardDetail({ card, owned, onClose, onToggle, onQuantityChange, c
           </a>
         )}
       </div>
+      {isImageZoomed && imageUrl && createPortal(
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/85 p-3 sm:p-6" onClick={() => setIsImageZoomed(false)}>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsImageZoomed(false);
+            }}
+            className="absolute top-3 right-3 sm:top-5 sm:right-5 rounded-full bg-white/15 p-2 text-white hover:bg-white/25 transition-colors cursor-pointer"
+            aria-label="Close enlarged card image"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          <div
+            className="relative inline-block overflow-hidden rounded-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={imageUrl}
+              alt={card.name}
+              className={`block max-w-[95vw] max-h-[94vh] w-auto h-auto object-contain shadow-2xl select-none ${showFoilEffect ? 'foil-image' : ''}`}
+              draggable={false}
+            />
+            {showFoilEffect && <div className="foil-overlay" />}
+          </div>
+        </div>,
+        document.body
+      )}
     </Modal>
   );
 }

@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import type { ScryfallCard, OwnedCard, CardWithVariant } from '../../types/card';
+import type { ScryfallCard, OwnedCard, CardWithVariant, CardVariant } from '../../types/card';
 import { CardItem } from './CardItem';
 
 const SET_DISPLAY_NAMES: Record<string, string> = {
@@ -15,7 +15,7 @@ interface CardGridProps {
   cards: CardWithVariant[];
   ownedCards: Map<string, OwnedCard>;
   onToggle: (cardId: string, variant: 'nonfoil' | 'foil') => void;
-  onCardClick: (card: ScryfallCard) => void;
+  onCardClick: (card: ScryfallCard, variant: CardVariant) => void;
   readOnly?: boolean;
   groupBySet?: boolean;
 }

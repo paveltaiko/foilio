@@ -15,6 +15,7 @@ import { CollectionSummary } from '../components/stats/CollectionSummary';
 import { CardGrid, CardGridSkeleton } from '../components/cards/CardGrid';
 import { CardDetail } from '../components/cards/CardDetail';
 import { PullToRefresh } from '../components/ui/PullToRefresh';
+import type { CardVariant } from '../types/card';
 
 interface HomePageProps {
   user: User;
@@ -113,6 +114,7 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [shareToken, setShareToken] = useState<string | null>(null);
+  const [selectedVariant, setSelectedVariant] = useState<CardVariant>(null);
   const { ownedCards, updateLocal } = useOwnedCards(user.uid);
 
   useEffect(() => {
@@ -282,7 +284,10 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
               cards={sortedFilteredCards}
               ownedCards={ownedCards}
               onToggle={handleToggle}
-              onCardClick={setSelectedCard}
+              onCardClick={(card, variant) => {
+                setSelectedCard(card);
+                setSelectedVariant(variant);
+              }}
               groupBySet={activeSet === 'all' && groupBySet}
             />
           )}
@@ -292,12 +297,19 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
       {/* Card detail modal */}
       <CardDetail
         card={selectedCard}
+        selectedVariant={selectedVariant}
         owned={selectedCard ? ownedCards.get(selectedCard.id) : undefined}
-        onClose={() => setSelectedCard(null)}
+        onClose={() => {
+          setSelectedCard(null);
+          setSelectedVariant(null);
+        }}
         onToggle={handleToggle}
         onQuantityChange={handleQuantityChange}
         cards={sortedFilteredCards}
-        onNavigate={setSelectedCard}
+        onNavigate={(card, variant) => {
+          setSelectedCard(card);
+          setSelectedVariant(variant);
+        }}
       />
 
       {/* Search overlay */}

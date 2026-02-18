@@ -5,7 +5,7 @@ import { useScryfallCards } from '../hooks/useScryfallCards';
 import { CardGrid, CardGridSkeleton } from '../components/cards/CardGrid';
 import { CardDetail } from '../components/cards/CardDetail';
 import { FaqAccordion } from '../components/ui/FaqAccordion';
-import type { CardWithVariant, OwnedCard, ScryfallCard } from '../types/card';
+import type { CardWithVariant, OwnedCard, ScryfallCard, CardVariant } from '../types/card';
 
 interface PreviewLoginLandingPageProps {
   onLogin: () => void;
@@ -68,6 +68,7 @@ export function PreviewLoginLandingPage({ onLogin, isLoggedIn }: PreviewLoginLan
   const pageContainerClass = 'app-container-padded pb-8 sm:pb-12 space-y-8 sm:space-y-12';
   const navigate = useNavigate();
   const [selectedCard, setSelectedCard] = useState<ScryfallCard | null>(null);
+  const [selectedVariant, setSelectedVariant] = useState<CardVariant>(null);
   const { data: spmCards = [], isLoading: spmLoading } = useScryfallCards('spm');
   const { data: speCards = [], isLoading: speLoading } = useScryfallCards('spe');
   const { data: marCards = [], isLoading: marLoading } = useScryfallCards('mar');
@@ -158,7 +159,10 @@ export function PreviewLoginLandingPage({ onLogin, isLoggedIn }: PreviewLoginLan
             cards={topCardItems}
             ownedCards={previewOwnedCards}
             onToggle={noopToggle}
-            onCardClick={setSelectedCard}
+            onCardClick={(card, variant) => {
+              setSelectedCard(card);
+              setSelectedVariant(variant);
+            }}
             readOnly
           />
         )}
@@ -200,11 +204,18 @@ export function PreviewLoginLandingPage({ onLogin, isLoggedIn }: PreviewLoginLan
 
       <CardDetail
         card={selectedCard}
+        selectedVariant={selectedVariant}
         owned={selectedCard ? previewOwnedCards.get(selectedCard.id) : undefined}
-        onClose={() => setSelectedCard(null)}
+        onClose={() => {
+          setSelectedCard(null);
+          setSelectedVariant(null);
+        }}
         onToggle={noopToggle}
         cards={topCardItems}
-        onNavigate={setSelectedCard}
+        onNavigate={(card, variant) => {
+          setSelectedCard(card);
+          setSelectedVariant(variant);
+        }}
         readOnly
       />
     </div>

@@ -10,7 +10,7 @@ interface CardItemProps {
   owned?: OwnedCard;
   displayVariant?: CardVariant; // null = zobrazit obě, 'nonfoil'/'foil' = zobrazit jen jednu
   onToggle: (cardId: string, variant: 'nonfoil' | 'foil') => void;
-  onClick: (card: ScryfallCard) => void;
+  onClick: (card: ScryfallCard, variant: CardVariant) => void;
   readOnly?: boolean;
 }
 
@@ -71,7 +71,7 @@ export function CardItem({ card, owned, displayVariant, onToggle, onClick, readO
 
   return (
     <div>
-      <div className={cardClass} onClick={() => onClick(card)}>
+      <div className={cardClass} onClick={() => onClick(card, displayVariant ?? null)}>
         {/* Card image */}
         <div className="p-1.5 sm:p-2.5 pb-0 sm:pb-0">
           <div className="aspect-[488/680] overflow-hidden rounded-md sm:rounded-lg bg-neutral-100 relative">

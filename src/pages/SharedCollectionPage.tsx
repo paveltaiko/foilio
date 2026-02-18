@@ -12,6 +12,7 @@ import { CollectionSummary } from '../components/stats/CollectionSummary';
 import { CardGrid, CardGridSkeleton } from '../components/cards/CardGrid';
 import { CardDetail } from '../components/cards/CardDetail';
 import { PullToRefresh } from '../components/ui/PullToRefresh';
+import type { CardVariant } from '../types/card';
 
 interface SharedCollectionPageProps {
   currentUserId: string | null;
@@ -22,6 +23,7 @@ interface SharedCollectionPageProps {
 export function SharedCollectionPage({ currentUserId, isSearchOpen, onSearchClose }: SharedCollectionPageProps) {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedVariant, setSelectedVariant] = useState<CardVariant>(null);
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
 
@@ -137,7 +139,10 @@ export function SharedCollectionPage({ currentUserId, isSearchOpen, onSearchClos
               cards={sortedFilteredCards}
               ownedCards={ownedCards}
               onToggle={noop}
-              onCardClick={setSelectedCard}
+              onCardClick={(card, variant) => {
+                setSelectedCard(card);
+                setSelectedVariant(variant);
+              }}
               readOnly
               groupBySet={activeSet === 'all' && groupBySet}
             />
@@ -148,11 +153,18 @@ export function SharedCollectionPage({ currentUserId, isSearchOpen, onSearchClos
       {/* Card detail modal */}
       <CardDetail
         card={selectedCard}
+        selectedVariant={selectedVariant}
         owned={selectedCard ? ownedCards.get(selectedCard.id) : undefined}
-        onClose={() => setSelectedCard(null)}
+        onClose={() => {
+          setSelectedCard(null);
+          setSelectedVariant(null);
+        }}
         onToggle={noop}
         cards={sortedFilteredCards}
-        onNavigate={setSelectedCard}
+        onNavigate={(card, variant) => {
+          setSelectedCard(card);
+          setSelectedVariant(variant);
+        }}
         readOnly
       />
 
