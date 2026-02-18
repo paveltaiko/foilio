@@ -97,10 +97,14 @@ export function PreviewLoginLandingPage({ onLogin, isLoggedIn }: PreviewLoginLan
 
   return (
     <div className={pageContainerClass}>
-      <section className="relative overflow-hidden rounded-2xl border border-surface-border bg-gradient-to-br from-[#101631] via-[#26143f] to-[#251022] text-white p-6 sm:p-10">
-        <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(168,85,247,0.48)_0%,rgba(236,72,153,0.44)_24%,rgba(59,130,246,0.44)_54%,rgba(16,185,129,0.34)_78%,rgba(236,72,153,0.3)_100%)] mix-blend-screen" />
+      <section className="relative overflow-hidden rounded-2xl border border-surface-border bg-[#06133a] text-white p-6 sm:p-10">
+        <div
+          className="absolute inset-0 bg-no-repeat bg-[position:88%_36%] bg-[length:108%_auto] sm:bg-[position:100%_32%] sm:bg-[length:82%_auto]"
+          style={{ backgroundImage: "url('/hero-spiderman.png')" }}
+        />
+        <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(6,19,58,1)_0%,rgba(11,28,84,0.98)_22%,rgba(160,24,58,0.58)_44%,rgba(40,92,255,0.52)_63%,rgba(14,118,221,0.2)_82%,rgba(14,118,221,0)_100%)]" />
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.14)_0%,rgba(255,255,255,0)_58%)]" />
-        <div className="absolute inset-0 bg-black/14" />
+        <div className="absolute inset-0 bg-black/6" />
 
         <div className="relative space-y-4 sm:space-y-6 max-w-3xl">
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-tight">
