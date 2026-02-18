@@ -1,7 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, CSSProperties } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useCardProducts } from '../../hooks/useCardProducts';
 import type { CardProduct } from '../../types/card';
+
+const TOOLTIP_WIDTH = 320; // w-80 = 20rem = 320px
+const VIEWPORT_PADDING = 8; // min distance from viewport edge
 
 interface CardProductsTooltipProps {
   setCode: string;
@@ -45,11 +48,42 @@ function ProductRow({ product }: { product: CardProduct }) {
   );
 }
 
+function calcTooltipStyle(wrapperRef: React.RefObject<HTMLDivElement | null>): CSSProperties {
+  if (!wrapperRef.current) return { left: '50%', transform: 'translateX(-50%)' };
+
+  const rect = wrapperRef.current.getBoundingClientRect();
+  const viewportWidth = window.innerWidth;
+
+  // Ideal: center tooltip on the button
+  const idealLeft = rect.left + rect.width / 2 - TOOLTIP_WIDTH / 2;
+
+  // Clamp within viewport
+  const clampedLeft = Math.max(
+    VIEWPORT_PADDING,
+    Math.min(idealLeft, viewportWidth - TOOLTIP_WIDTH - VIEWPORT_PADDING)
+  );
+
+  // Convert back to position relative to the wrapper (which is position:relative)
+  const relativeLeft = clampedLeft - rect.left;
+
+  return { left: relativeLeft, transform: 'none' };
+}
+
 export function CardProductsTooltip({ setCode, collectorNumber }: CardProductsTooltipProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [tooltipStyle, setTooltipStyle] = useState<CSSProperties>({ left: '50%', transform: 'translateX(-50%)' });
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   const { data: products, isLoading } = useCardProducts(setCode, collectorNumber);
+
+  // Recalculate position whenever tooltip opens or viewport resizes
+  useEffect(() => {
+    if (!isOpen) return;
+    const update = () => setTooltipStyle(calcTooltipStyle(wrapperRef));
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, [isOpen]);
 
   // Close on click outside
   useEffect(() => {
@@ -89,7 +123,8 @@ export function CardProductsTooltip({ setCode, collectorNumber }: CardProductsTo
 
       {isOpen && products && products.length > 0 && (
         <div
-          className="absolute top-full left-1/2 -translate-x-1/2 mt-1.5 z-50 w-80 bg-white border border-neutral-200 rounded-lg shadow-lg p-2"
+          className="absolute top-full mt-1.5 z-50 w-80 bg-white border border-neutral-200 rounded-lg shadow-lg p-2"
+          style={tooltipStyle}
         >
           <p className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wide mb-1 px-1">
             Available in products
