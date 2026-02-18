@@ -5,7 +5,7 @@ import { ChevronDown } from 'lucide-react';
 import { useCardProducts } from '../../hooks/useCardProducts';
 import type { CardProduct } from '../../types/card';
 
-const TOOLTIP_WIDTH = 320; // w-80 = 20rem = 320px
+const TOOLTIP_WIDTH = 288; // w-72 = 18rem = 288px
 const VIEWPORT_PADDING = 8; // min distance from viewport edge
 
 interface CardProductsTooltipProps {
@@ -135,7 +135,7 @@ export function CardProductsTooltip({ setCode, collectorNumber }: CardProductsTo
       {isOpen && products && products.length > 0 && createPortal(
         <div
           ref={tooltipRef}
-          className="z-[9999] bg-white border border-neutral-200 rounded-lg shadow-lg p-2"
+          className="z-[9999] w-72 bg-white border border-neutral-200 rounded-lg shadow-lg p-2"
           style={portalStyle}
         >
           <p className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wide mb-1 px-1">
