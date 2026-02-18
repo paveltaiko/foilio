@@ -72,6 +72,15 @@ export type OwnershipFilter = 'all' | 'owned' | 'missing';
 
 export type CardVariant = 'nonfoil' | 'foil' | null;
 
+export interface CardProduct {
+  uuid: string;
+  name: string;
+  category: string;
+  subtype: string | null;
+  availableNonFoil: boolean;
+  availableFoil: boolean;
+}
+
 export interface CardWithVariant {
   card: ScryfallCard;
   variant: CardVariant; // null = zobrazit obě varianty, 'nonfoil'/'foil' = zobrazit jen jednu

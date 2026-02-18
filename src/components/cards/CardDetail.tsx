@@ -5,6 +5,7 @@ import type { ScryfallCard, OwnedCard, CardWithVariant, CardVariant } from '../.
 import { getCardImage } from '../../services/scryfall';
 import { formatPrice, parsePrice } from '../../utils/formatPrice';
 import { getRarityInfo } from '../../utils/rarity';
+import { CardProductsTooltip } from './CardProductsTooltip';
 
 interface CardDetailProps {
   card: ScryfallCard | null;
@@ -206,8 +207,9 @@ export function CardDetail({ card, selectedVariant = null, owned, onClose, onTog
         <div className="flex items-start justify-between">
           <div>
             <h2 className="text-lg font-semibold text-neutral-800">{card.name}</h2>
-            <p className="text-xs font-mono text-neutral-500">
+            <p className="text-xs font-mono text-neutral-500 flex items-center gap-1 flex-wrap">
               #{card.collector_number} · {card.set_name} · <span className={`font-semibold ${getRarityInfo(card.rarity).colorClass}`}>{getRarityInfo(card.rarity).label}</span>
+              <CardProductsTooltip setCode={card.set} collectorNumber={card.collector_number} />
             </p>
           </div>
           <button
