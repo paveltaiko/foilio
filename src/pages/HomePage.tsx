@@ -151,9 +151,9 @@ function ShareIconButton({
       {loading ? (
         <span className="w-4 h-4 border-2 border-neutral-300 border-t-neutral-500 rounded-full animate-spin" aria-hidden="true" />
       ) : succeeded ? (
-        <Check className="w-4 h-4 text-owned" />
+        <Check className="w-[18px] h-[18px] text-owned" />
       ) : (
-        <Share className="w-4 h-4" />
+        <Share className="w-[18px] h-[18px]" />
       )}
     </button>
   );
