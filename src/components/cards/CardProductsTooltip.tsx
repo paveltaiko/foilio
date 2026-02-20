@@ -118,7 +118,7 @@ export function CardProductsTooltip({ setCode, collectorNumber }: CardProductsTo
           if (isDisabled) return;
           setIsOpen((v) => !v);
         }}
-        className={`inline-flex items-center gap-0.5 text-xs font-medium px-1.5 py-0.5 rounded border transition-colors ${
+        className={`inline-flex items-center justify-center gap-0.5 text-xs font-medium px-1.5 py-0.5 rounded border transition-colors min-h-[22px] ${
           isDisabled
             ? 'border-neutral-200 text-neutral-300 cursor-default'
             : 'border-neutral-300 text-neutral-500 hover:border-neutral-400 hover:text-neutral-700 cursor-pointer'

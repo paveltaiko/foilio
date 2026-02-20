@@ -212,7 +212,7 @@ export function CardDetail({ card, selectedVariant = null, owned, onClose, onTog
         <div className="flex items-start justify-between">
           <div>
             <h2 className="text-lg font-semibold text-neutral-800">{card.name}</h2>
-            <div className="mt-0.5 flex items-center gap-2 flex-wrap">
+            <div className="mt-0.5 flex items-center gap-4 flex-wrap">
               <p className="text-xs font-mono text-neutral-500">
                 #{card.collector_number} · {card.set_name} · <span className={`font-semibold ${getRarityInfo(card.rarity).colorClass}`}>{getRarityInfo(card.rarity).label}</span>
               </p>
