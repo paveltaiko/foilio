@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { Share2, Check, Layers, LayoutGrid, SlidersHorizontal, RotateCcw } from 'lucide-react';
+import { Share, Check, Layers, LayoutGrid, SlidersHorizontal, RotateCcw } from 'lucide-react';
 import type { User } from 'firebase/auth';
 import { useQueryClient } from '@tanstack/react-query';
 import { isFirebaseConfigured } from '../config/firebase';
@@ -25,10 +25,44 @@ interface HomePageProps {
   onSearchClose: () => void;
 }
 
-function ShareButton({ user, onTokenReady }: { user: User; onTokenReady: (token: string) => void }) {
-  const [copied, setCopied] = useState(false);
+type ShareToastType = 'success' | 'error';
+
+interface ShareFeedbackToastProps {
+  message: string | null;
+  type: ShareToastType;
+}
+
+function ShareFeedbackToast({ message, type }: ShareFeedbackToastProps) {
+  if (!message) return null;
+
+  return (
+    <div className="fixed bottom-5 left-1/2 z-50 -translate-x-1/2 px-2">
+      <div
+        className={`rounded-lg px-3 py-2 text-xs font-medium shadow-md ${
+          type === 'success'
+            ? 'bg-neutral-900 text-white'
+            : 'bg-red-600 text-white'
+        }`}
+        role="status"
+        aria-live="polite"
+      >
+        {message}
+      </div>
+    </div>
+  );
+}
+
+function ShareIconButton({
+  user,
+  onTokenReady,
+  onFeedback,
+}: {
+  user: User;
+  onTokenReady: (token: string) => void;
+  onFeedback: (message: string, type: ShareToastType) => void;
+}) {
+  const [succeeded, setSucceeded] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const copyText = async (text: string): Promise<boolean> => {
     // Modern clipboard API
@@ -58,11 +92,16 @@ function ShareButton({ user, onTokenReady }: { user: User; onTokenReady: (token:
     }
   };
 
+  const isMobileDevice = () => {
+    const userAgent = navigator.userAgent ?? '';
+    const looksMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(userAgent);
+    return looksMobile || navigator.maxTouchPoints > 1;
+  };
+
   const handleShare = async () => {
     if (loading) return;
     try {
       setLoading(true);
-      setError(null);
       const token = await getOrCreateShareToken({
         uid: user.uid,
         displayName: user.displayName ?? null,
@@ -70,45 +109,53 @@ function ShareButton({ user, onTokenReady }: { user: User; onTokenReady: (token:
       });
       onTokenReady(token);
       const url = `${window.location.origin}/share/${token}`;
-      const copiedOk = await copyText(url);
-      if (!copiedOk) {
-        window.prompt('Copy this link:', url);
+
+      const shouldUseNativeShare = isMobileDevice() && typeof navigator.share === 'function';
+      if (shouldUseNativeShare) {
+        await navigator.share({
+          title: 'Foilio collection',
+          text: 'Check out my MTG collection',
+          url,
+        });
+        onFeedback('Shared', 'success');
+      } else {
+        const copiedOk = await copyText(url);
+        if (!copiedOk) {
+          window.prompt('Copy this link:', url);
+        }
+        onFeedback('Link copied', 'success');
       }
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      setSucceeded(true);
+      setTimeout(() => setSucceeded(false), 2000);
     } catch (err) {
-      setCopied(false);
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        return;
+      }
+      setSucceeded(false);
       void err;
-      setError('Could not create share link. Please try again.');
+      onFeedback('Could not create share link. Please try again.', 'error');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <>
-      <button
-        onClick={handleShare}
-        className="flex items-center justify-center gap-2 w-full py-2 text-sm font-medium text-neutral-500 bg-surface-primary border border-surface-border rounded-lg hover:bg-neutral-50 transition-colors cursor-pointer"
-      >
-        {loading ? (
-          <span>Preparing link...</span>
-        ) : copied ? (
-          <>
-            <Check className="w-4 h-4 text-owned" />
-            <span className="text-owned">Link copied!</span>
-          </>
-        ) : (
-          <>
-            <Share2 className="w-4 h-4" />
-            <span>Share collection</span>
-          </>
-        )}
-      </button>
-      {error && (
-        <p className="text-xs text-red-500 text-center mt-1">{error}</p>
+    <button
+      type="button"
+      onClick={handleShare}
+      disabled={loading}
+      aria-label="Share collection"
+      title="Share collection"
+      className="flex items-center justify-center h-[38px] w-[38px] cursor-pointer transition-colors duration-150 border rounded-lg bg-white text-neutral-500 border-surface-border hover:text-neutral-700 hover:bg-neutral-50 disabled:opacity-60 disabled:cursor-not-allowed"
+    >
+      {loading ? (
+        <span className="w-4 h-4 border-2 border-neutral-300 border-t-neutral-500 rounded-full animate-spin" aria-hidden="true" />
+      ) : succeeded ? (
+        <Check className="w-4 h-4 text-owned" />
+      ) : (
+        <Share className="w-4 h-4" />
       )}
-    </>
+    </button>
   );
 }
 
@@ -116,9 +163,19 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [shareToken, setShareToken] = useState<string | null>(null);
+  const [shareToastMessage, setShareToastMessage] = useState<string | null>(null);
+  const [shareToastType, setShareToastType] = useState<ShareToastType>('success');
   const [selectedVariant, setSelectedVariant] = useState<CardVariant>(null);
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
   const { ownedCards, updateLocal } = useOwnedCards(user.uid);
+
+  useEffect(() => {
+    if (!shareToastMessage) return;
+    const timeoutId = window.setTimeout(() => {
+      setShareToastMessage(null);
+    }, 2200);
+    return () => window.clearTimeout(timeoutId);
+  }, [shareToastMessage]);
 
   useEffect(() => {
     if (!isFirebaseConfigured) return;
@@ -258,17 +315,14 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
           {/* Set tabs */}
           <SetTabs activeSet={activeSet} onChange={setActiveSet} cardCounts={cardCounts} />
 
-          {/* Stats + Share */}
-          <div className="py-2 space-y-2">
+          {/* Stats */}
+          <div className="py-2">
             <CollectionSummary
               totalCards={stats.totalCards}
               ownedCount={stats.ownedCount}
               totalValue={stats.totalValue}
               percentage={stats.percentage}
             />
-            {isFirebaseConfigured && (
-              <ShareButton user={user} onTokenReady={setShareToken} />
-            )}
           </div>
 
           {/* Toolbar */}
@@ -300,22 +354,34 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
                   </button>
                 )}
               </div>
-              {activeSet === 'all' && (
-                <button
-                  onClick={() => setGroupBySet(!groupBySet)}
-                  title={groupBySet ? 'Show all at once' : 'Group by set'}
-                  className={`
-                    flex items-center justify-center h-[38px] w-[38px] cursor-pointer transition-colors duration-150
-                    border rounded-lg
-                    ${groupBySet
-                      ? 'bg-primary-500 text-white border-primary-500'
-                      : 'bg-white text-neutral-500 border-neutral-200 hover:text-neutral-700 hover:bg-neutral-50'
-                    }
-                  `}
-                >
-                  {groupBySet ? <Layers className="w-4 h-4" /> : <LayoutGrid className="w-4 h-4" />}
-                </button>
-              )}
+              <div className="flex items-center gap-2">
+                {activeSet === 'all' && (
+                  <button
+                    onClick={() => setGroupBySet(!groupBySet)}
+                    title={groupBySet ? 'Show all at once' : 'Group by set'}
+                    className={`
+                      flex items-center justify-center h-[38px] w-[38px] cursor-pointer transition-colors duration-150
+                      border rounded-lg
+                      ${groupBySet
+                        ? 'bg-primary-500 text-white border-primary-500'
+                        : 'bg-white text-neutral-500 border-neutral-200 hover:text-neutral-700 hover:bg-neutral-50'
+                      }
+                    `}
+                  >
+                    {groupBySet ? <Layers className="w-4 h-4" /> : <LayoutGrid className="w-4 h-4" />}
+                  </button>
+                )}
+                {isFirebaseConfigured && (
+                  <ShareIconButton
+                    user={user}
+                    onTokenReady={setShareToken}
+                    onFeedback={(message, type) => {
+                      setShareToastType(type);
+                      setShareToastMessage(message);
+                    }}
+                  />
+                )}
+              </div>
             </div>
 
             {/* Desktop toolbar: ownership + sort + booster + groupby + reset */}
@@ -352,6 +418,16 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
                 >
                   <RotateCcw className="w-4 h-4" />
                 </button>
+              )}
+              {isFirebaseConfigured && (
+                <ShareIconButton
+                  user={user}
+                  onTokenReady={setShareToken}
+                  onFeedback={(message, type) => {
+                    setShareToastType(type);
+                    setShareToastMessage(message);
+                  }}
+                />
               )}
             </div>
           </div>
@@ -414,6 +490,8 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
         isOpen={isSearchOpen}
         onClose={onSearchClose}
       />
+
+      <ShareFeedbackToast message={shareToastMessage} type={shareToastType} />
     </>
   );
 }
