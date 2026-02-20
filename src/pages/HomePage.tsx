@@ -275,19 +275,31 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
           <div className="pb-4 space-y-2">
             {/* Mobile toolbar: filter button + sort */}
             <div className="flex items-center justify-between gap-2 md:hidden">
-              <button
-                type="button"
-                onClick={() => setIsFilterDrawerOpen(true)}
-                className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-neutral-600 bg-white border border-surface-border rounded-lg hover:bg-neutral-50 transition-colors cursor-pointer"
-              >
-                <SlidersHorizontal className="w-4 h-4" />
-                <span>Filters</span>
-                {activeFilterCount > 0 && (
-                  <span className="flex items-center justify-center w-5 h-5 text-[11px] font-bold bg-primary-500 text-white rounded-full">
-                    {activeFilterCount}
-                  </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsFilterDrawerOpen(true)}
+                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-neutral-600 bg-white border border-surface-border rounded-lg hover:bg-neutral-50 transition-colors cursor-pointer"
+                >
+                  <SlidersHorizontal className="w-4 h-4" />
+                  <span>Filters</span>
+                  {activeFilterCount > 0 && (
+                    <span className="flex items-center justify-center w-5 h-5 text-[11px] font-bold bg-primary-500 text-white rounded-full">
+                      {activeFilterCount}
+                    </span>
+                  )}
+                </button>
+                {hasActiveFilters && (
+                  <button
+                    type="button"
+                    onClick={handleResetFilters}
+                    title="Reset filters"
+                    className="p-2 cursor-pointer transition-colors duration-150 border rounded-lg text-sm font-medium bg-white text-neutral-500 border-neutral-200 hover:text-neutral-700 hover:bg-neutral-50"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                  </button>
                 )}
-              </button>
+              </div>
               {activeSet === 'all' && (
                 <button
                   onClick={() => setGroupBySet(!groupBySet)}
