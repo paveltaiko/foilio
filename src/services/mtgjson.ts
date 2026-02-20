@@ -61,6 +61,63 @@ function formatProductName(raw: string): string {
     .trim();
 }
 
+export interface BoosterEntry {
+  play: Set<'foil' | 'nonfoil'>;
+  collector: Set<'foil' | 'nonfoil'>;
+}
+export type BoosterMap = Map<string, BoosterEntry>;
+
+export async function fetchBoosterMap(): Promise<BoosterMap> {
+  const [spmData, speData, marData] = await Promise.all([
+    fetchMtgjsonSet('spm'),
+    fetchMtgjsonSet('spe'),
+    fetchMtgjsonSet('mar'),
+  ]);
+
+  // SPM.json holds all sealedProduct definitions for the whole set family
+  const sealedProducts = spmData.sealedProduct ?? [];
+  const productMap = new Map(sealedProducts.map((p) => [p.uuid, p]));
+
+  const boosterMap: BoosterMap = new Map();
+
+  const processCards = (cards: MtgjsonCard[], setCode: string) => {
+    for (const card of cards) {
+      if (!card.sourceProducts) continue;
+
+      const foilUuids = card.sourceProducts.foil ?? [];
+      const nonfoilUuids = card.sourceProducts.nonfoil ?? [];
+
+      const entry: BoosterEntry = {
+        play: new Set(),
+        collector: new Set(),
+      };
+
+      for (const uuid of foilUuids) {
+        const product = productMap.get(uuid);
+        if (!product || product.category !== 'booster_pack') continue;
+        if (product.subtype === 'play') entry.play.add('foil');
+        if (product.subtype === 'collector') entry.collector.add('foil');
+      }
+      for (const uuid of nonfoilUuids) {
+        const product = productMap.get(uuid);
+        if (!product || product.category !== 'booster_pack') continue;
+        if (product.subtype === 'play') entry.play.add('nonfoil');
+        if (product.subtype === 'collector') entry.collector.add('nonfoil');
+      }
+
+      if (entry.play.size > 0 || entry.collector.size > 0) {
+        boosterMap.set(`${setCode}:${card.number}`, entry);
+      }
+    }
+  };
+
+  processCards(spmData.cards, 'spm');
+  processCards(speData.cards, 'spe');
+  processCards(marData.cards, 'mar');
+
+  return boosterMap;
+}
+
 export async function fetchCardProducts(
   setCode: string,
   collectorNumber: string

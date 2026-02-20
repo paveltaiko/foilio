@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react';
-import type { ScryfallCard, SetCode, SortOption, OwnershipFilter, OwnedCard, CardWithVariant } from '../types/card';
+import type { ScryfallCard, SetCode, SortOption, OwnershipFilter, BoosterFilter, OwnedCard, CardWithVariant } from '../types/card';
 import { useScryfallCards } from './useScryfallCards';
 import { useCollectionStats } from './useCollectionStats';
+import { useBoosterMap } from './useBoosterMap';
 import { parsePrice } from '../utils/formatPrice';
 
 interface UseCardCollectionOptions {
@@ -13,8 +14,11 @@ export function useCardCollection({ ownedCards, searchQuery = '' }: UseCardColle
   const [activeSet, setActiveSet] = useState<SetCode>('all');
   const [sortOption, setSortOption] = useState<SortOption>('number-asc');
   const [ownershipFilter, setOwnershipFilter] = useState<OwnershipFilter>('all');
+  const [boosterFilter, setBoosterFilter] = useState<BoosterFilter>('all');
   const [selectedCard, setSelectedCard] = useState<ScryfallCard | null>(null);
   const [groupBySet, setGroupBySet] = useState(true);
+
+  const { data: boosterMap, isLoading: boosterMapLoading } = useBoosterMap();
 
   // Fetch cards from Scryfall
   const { data: spmCards = [], isLoading: spmLoading } = useScryfallCards('spm');
@@ -59,6 +63,20 @@ export function useCardCollection({ ownedCards, searchQuery = '' }: UseCardColle
       );
     }
 
+    // Booster filter — filter cards and restrict which variants to show
+    const getBoosterVariants = boosterFilter !== 'all' && boosterMap
+      ? (c: import('../types/card').ScryfallCard): Set<'foil' | 'nonfoil'> | null => {
+          const entry = boosterMap.get(`${c.set}:${c.collector_number}`);
+          if (!entry) return null;
+          const bucket = boosterFilter === 'play' ? entry.play : entry.collector;
+          return bucket.size > 0 ? bucket : null;
+        }
+      : null;
+
+    if (getBoosterVariants) {
+      cards = cards.filter((c) => getBoosterVariants(c) !== null);
+    }
+
     // Ownership filter (for number sorting - card-level)
     const isPriceSorting = sortOption === 'price-asc' || sortOption === 'price-desc';
     if (!isPriceSorting) {
@@ -88,20 +106,35 @@ export function useCardCollection({ ownedCards, searchQuery = '' }: UseCardColle
         const bNum = parseInt(b.collector_number) || 0;
         return sortOption === 'number-asc' ? aNum - bNum : bNum - aNum;
       });
+      if (getBoosterVariants) {
+        // Expand to show only the variants available in the selected booster
+        const result: CardWithVariant[] = [];
+        for (const card of cards) {
+          const variants = getBoosterVariants(card)!;
+          if (variants.has('nonfoil') && card.finishes.includes('nonfoil')) {
+            result.push({ card, variant: 'nonfoil', sortPrice: null });
+          }
+          if (variants.has('foil') && card.finishes.includes('foil')) {
+            result.push({ card, variant: 'foil', sortPrice: null });
+          }
+        }
+        return result;
+      }
       return cards.map(card => ({ card, variant: null, sortPrice: null }));
     }
 
-    // Sort by price - expand variants
+    // Sort by price - expand variants, restricted by booster filter if active
     const expanded: CardWithVariant[] = [];
 
     for (const card of cards) {
-      const hasNonFoil = card.finishes.includes('nonfoil');
-      const hasFoil = card.finishes.includes('foil');
+      const boosterVariants = getBoosterVariants ? getBoosterVariants(card) : null;
+      const showNonFoil = card.finishes.includes('nonfoil') && (!boosterVariants || boosterVariants.has('nonfoil'));
+      const showFoil = card.finishes.includes('foil') && (!boosterVariants || boosterVariants.has('foil'));
 
-      if (hasNonFoil) {
+      if (showNonFoil) {
         expanded.push({ card, variant: 'nonfoil', sortPrice: parsePrice(card.prices.eur) });
       }
-      if (hasFoil) {
+      if (showFoil) {
         expanded.push({ card, variant: 'foil', sortPrice: parsePrice(card.prices.eur_foil) });
       }
     }
@@ -127,7 +160,7 @@ export function useCardCollection({ ownedCards, searchQuery = '' }: UseCardColle
     });
 
     return filtered;
-  }, [currentCards, ownershipFilter, sortOption, ownedCards, searchQuery, activeSet, groupBySet]);
+  }, [currentCards, ownershipFilter, boosterFilter, boosterMap, sortOption, ownedCards, searchQuery, activeSet, groupBySet]);
 
   return {
     // State
@@ -137,6 +170,9 @@ export function useCardCollection({ ownedCards, searchQuery = '' }: UseCardColle
     setSortOption,
     ownershipFilter,
     setOwnershipFilter,
+    boosterFilter,
+    setBoosterFilter,
+    boosterMapLoading,
     selectedCard,
     setSelectedCard,
     groupBySet,

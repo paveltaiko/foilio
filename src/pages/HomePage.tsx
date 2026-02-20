@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { Share2, Check, Layers, LayoutGrid } from 'lucide-react';
+import { Share2, Check, Layers, LayoutGrid, SlidersHorizontal, RotateCcw } from 'lucide-react';
 import type { User } from 'firebase/auth';
 import { useQueryClient } from '@tanstack/react-query';
 import { isFirebaseConfigured } from '../config/firebase';
@@ -10,6 +10,8 @@ import { getExistingShareToken, getOrCreateShareToken } from '../services/sharin
 import { SetTabs } from '../components/filters/SetTabs';
 import { SortControl } from '../components/filters/SortControl';
 import { OwnershipFilter } from '../components/filters/OwnershipFilter';
+import { BoosterFilter } from '../components/filters/BoosterFilter';
+import { FilterDrawer } from '../components/filters/FilterDrawer';
 import { SearchInput } from '../components/filters/SearchInput';
 import { CollectionSummary } from '../components/stats/CollectionSummary';
 import { CardGrid, CardGridSkeleton } from '../components/cards/CardGrid';
@@ -115,6 +117,7 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [shareToken, setShareToken] = useState<string | null>(null);
   const [selectedVariant, setSelectedVariant] = useState<CardVariant>(null);
+  const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
   const { ownedCards, updateLocal } = useOwnedCards(user.uid);
 
   useEffect(() => {
@@ -138,11 +141,22 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
     activeSet, setActiveSet,
     sortOption, setSortOption,
     ownershipFilter, setOwnershipFilter,
+    boosterFilter, setBoosterFilter,
+    boosterMapLoading,
     selectedCard, setSelectedCard,
     groupBySet, setGroupBySet,
     currentCards, isCardsLoading,
     cardCounts, stats, sortedFilteredCards,
   } = useCardCollection({ ownedCards, searchQuery });
+
+  const activeFilterCount = (boosterFilter !== 'all' ? 1 : 0) + (ownershipFilter !== 'all' ? 1 : 0);
+  const hasActiveFilters = boosterFilter !== 'all' || ownershipFilter !== 'all' || sortOption !== 'number-asc';
+
+  const handleResetFilters = useCallback(() => {
+    setBoosterFilter('all');
+    setOwnershipFilter('all');
+    setSortOption('number-asc');
+  }, [setBoosterFilter, setOwnershipFilter, setSortOption]);
 
   // Handlers
   const handleToggle = useCallback(
@@ -239,7 +253,7 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
 
   return (
     <>
-      <PullToRefresh onRefresh={handleRefresh} disabled={isSearchOpen || !!selectedCard}>
+      <PullToRefresh onRefresh={handleRefresh} disabled={isSearchOpen || !!selectedCard || isFilterDrawerOpen}>
         <div className="app-container-padded safe-bottom touch-pan-y">
           {/* Set tabs */}
           <SetTabs activeSet={activeSet} onChange={setActiveSet} cardCounts={cardCounts} />
@@ -258,21 +272,75 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
           </div>
 
           {/* Toolbar */}
-          <div className="flex items-center justify-between gap-2 sm:gap-3 pb-4">
-            <OwnershipFilter value={ownershipFilter} onChange={setOwnershipFilter} />
-            <div className="flex items-center gap-4">
+          <div className="pb-4 space-y-2">
+            {/* Mobile toolbar: filter button + sort */}
+            <div className="flex items-center justify-between gap-2 md:hidden">
+              <button
+                type="button"
+                onClick={() => setIsFilterDrawerOpen(true)}
+                className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-neutral-600 bg-white border border-surface-border rounded-lg hover:bg-neutral-50 transition-colors cursor-pointer"
+              >
+                <SlidersHorizontal className="w-4 h-4" />
+                <span>Filters</span>
+                {activeFilterCount > 0 && (
+                  <span className="flex items-center justify-center w-5 h-5 text-[11px] font-bold bg-primary-500 text-white rounded-full">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </button>
               {activeSet === 'all' && (
                 <button
                   onClick={() => setGroupBySet(!groupBySet)}
-                  className={`cursor-pointer transition-colors duration-150 ${
-                    groupBySet ? 'text-primary-500' : 'text-neutral-400 hover:text-neutral-600'
-                  }`}
                   title={groupBySet ? 'Show all at once' : 'Group by set'}
+                  className={`
+                    p-2 cursor-pointer transition-colors duration-150 relative
+                    border rounded-lg text-sm font-medium
+                    ${groupBySet
+                      ? 'bg-primary-500 text-white border-primary-500 z-10'
+                      : 'bg-white text-neutral-500 border-neutral-200 hover:text-neutral-700 hover:bg-neutral-50 z-0'
+                    }
+                  `}
                 >
-                  {groupBySet ? <Layers className="w-5 h-5" /> : <LayoutGrid className="w-5 h-5" />}
+                  {groupBySet ? <Layers className="w-4 h-4" /> : <LayoutGrid className="w-4 h-4" />}
                 </button>
               )}
+            </div>
+
+            {/* Desktop toolbar: ownership + sort + booster + groupby + reset */}
+            <div className="hidden md:flex items-center gap-4">
+              <OwnershipFilter value={ownershipFilter} onChange={setOwnershipFilter} />
               <SortControl value={sortOption} onChange={setSortOption} />
+              <BoosterFilter
+                value={boosterFilter}
+                onChange={setBoosterFilter}
+                isLoading={boosterMapLoading}
+              />
+              {activeSet === 'all' && (
+                <button
+                  onClick={() => setGroupBySet(!groupBySet)}
+                  title={groupBySet ? 'Show all at once' : 'Group by set'}
+                  className={`
+                    p-2 cursor-pointer transition-colors duration-150 relative
+                    border rounded-lg text-sm font-medium
+                    ${groupBySet
+                      ? 'bg-primary-500 text-white border-primary-500 z-10'
+                      : 'bg-white text-neutral-500 border-neutral-200 hover:text-neutral-700 hover:bg-neutral-50 z-0'
+                    }
+                  `}
+                >
+                  {groupBySet ? <Layers className="w-4 h-4" /> : <LayoutGrid className="w-4 h-4" />}
+                </button>
+              )}
+              {hasActiveFilters && (
+                <button
+                  type="button"
+                  onClick={handleResetFilters}
+                  title="Reset filters"
+                  className="p-2 cursor-pointer transition-colors duration-150 border rounded-lg text-sm font-medium bg-white text-neutral-500 border-neutral-200 hover:text-neutral-700 hover:bg-neutral-50"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                </button>
+              )}
             </div>
           </div>
 
@@ -293,6 +361,21 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
           )}
         </div>
       </PullToRefresh>
+
+      {/* Mobile filter drawer */}
+      <FilterDrawer
+        isOpen={isFilterDrawerOpen}
+        onClose={() => setIsFilterDrawerOpen(false)}
+        boosterFilter={boosterFilter}
+        onBoosterChange={setBoosterFilter}
+        ownershipFilter={ownershipFilter}
+        onOwnershipChange={setOwnershipFilter}
+        sortOption={sortOption}
+        onSortChange={setSortOption}
+        boosterMapLoading={boosterMapLoading}
+        hasActiveFilters={hasActiveFilters}
+        onReset={handleResetFilters}
+      />
 
       {/* Card detail modal */}
       <CardDetail

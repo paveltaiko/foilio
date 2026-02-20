@@ -69,6 +69,7 @@ export interface SetInfo {
 
 export type SortOption = 'number-asc' | 'number-desc' | 'price-asc' | 'price-desc';
 export type OwnershipFilter = 'all' | 'owned' | 'missing';
+export type BoosterFilter = 'all' | 'play' | 'collector';
 
 export type CardVariant = 'nonfoil' | 'foil' | null;
 
