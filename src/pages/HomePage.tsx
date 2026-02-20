@@ -294,7 +294,7 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
                     type="button"
                     onClick={handleResetFilters}
                     title="Reset filters"
-                    className="p-2 cursor-pointer transition-colors duration-150 border rounded-lg text-sm font-medium bg-white text-neutral-500 border-neutral-200 hover:text-neutral-700 hover:bg-neutral-50"
+                    className="flex items-center justify-center h-[38px] w-[38px] cursor-pointer transition-colors duration-150 border rounded-lg bg-white text-neutral-500 border-surface-border hover:text-neutral-700 hover:bg-neutral-50"
                   >
                     <RotateCcw className="w-4 h-4" />
                   </button>
@@ -305,11 +305,11 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
                   onClick={() => setGroupBySet(!groupBySet)}
                   title={groupBySet ? 'Show all at once' : 'Group by set'}
                   className={`
-                    p-2 cursor-pointer transition-colors duration-150 relative
-                    border rounded-lg text-sm font-medium
+                    flex items-center justify-center h-[38px] w-[38px] cursor-pointer transition-colors duration-150
+                    border rounded-lg
                     ${groupBySet
-                      ? 'bg-primary-500 text-white border-primary-500 z-10'
-                      : 'bg-white text-neutral-500 border-neutral-200 hover:text-neutral-700 hover:bg-neutral-50 z-0'
+                      ? 'bg-primary-500 text-white border-primary-500'
+                      : 'bg-white text-neutral-500 border-neutral-200 hover:text-neutral-700 hover:bg-neutral-50'
                     }
                   `}
                 >
