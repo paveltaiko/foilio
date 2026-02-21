@@ -26,13 +26,14 @@ export function SortControl({ value, onChange }: SortControlProps) {
   return (
     <div className="flex text-sm">
       {([
-        { group: 'number' as SortGroup, label: numberLabel, active: isNumberActive },
-        { group: 'price' as SortGroup, label: priceLabel, active: isPriceActive },
+        { group: 'number' as SortGroup, label: numberLabel, active: isNumberActive, title: 'Sort by collector number' },
+        { group: 'price' as SortGroup, label: priceLabel, active: isPriceActive, title: 'Sort by price' },
       ]).map((item) => (
         <button
           key={item.group}
           type="button"
           onClick={() => handleClick(item.group)}
+          title={item.title}
           className={`
             px-4 py-1.5 font-medium transition-colors duration-150 cursor-pointer relative
             border first:rounded-l-lg last:rounded-r-lg -ml-px first:ml-0

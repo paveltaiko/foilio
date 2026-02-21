@@ -6,10 +6,10 @@ interface BoosterFilterProps {
   isLoading?: boolean;
 }
 
-const OPTIONS: { id: BoosterFilterType; label: string }[] = [
-  { id: 'all', label: 'All' },
-  { id: 'play', label: 'Play' },
-  { id: 'collector', label: 'Collector' },
+const OPTIONS: { id: BoosterFilterType; label: string; title: string }[] = [
+  { id: 'all', label: 'All', title: 'Show all boosters' },
+  { id: 'play', label: 'Play', title: 'Show only Play Booster cards' },
+  { id: 'collector', label: 'Collector', title: 'Show only Collector Booster cards' },
 ];
 
 export function BoosterFilter({ value, onChange, isLoading }: BoosterFilterProps) {
@@ -21,6 +21,7 @@ export function BoosterFilter({ value, onChange, isLoading }: BoosterFilterProps
             key={option.id}
             type="button"
             onClick={() => onChange(option.id)}
+            title={option.title}
             className={`
               px-4 py-1.5 font-medium transition-colors duration-150 cursor-pointer relative
               border first:rounded-l-lg last:rounded-r-lg -ml-px first:ml-0

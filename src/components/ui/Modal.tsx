@@ -6,6 +6,39 @@ interface ModalProps {
   children: React.ReactNode;
 }
 
+let bodyScrollLockCount = 0;
+let savedHtmlOverflow = '';
+let savedBodyOverflow = '';
+let savedBodyPaddingRight = '';
+
+function lockBodyScroll() {
+  if (bodyScrollLockCount === 0) {
+    const scrollbarCompensation = window.innerWidth - document.documentElement.clientWidth;
+
+    savedHtmlOverflow = document.documentElement.style.overflow;
+    savedBodyOverflow = document.body.style.overflow;
+    savedBodyPaddingRight = document.body.style.paddingRight;
+
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+    document.body.style.paddingRight = scrollbarCompensation > 0 ? `${scrollbarCompensation}px` : savedBodyPaddingRight;
+  }
+
+  bodyScrollLockCount += 1;
+}
+
+function unlockBodyScroll() {
+  if (bodyScrollLockCount === 0) return;
+
+  bodyScrollLockCount -= 1;
+
+  if (bodyScrollLockCount === 0) {
+    document.documentElement.style.overflow = savedHtmlOverflow;
+    document.body.style.overflow = savedBodyOverflow;
+    document.body.style.paddingRight = savedBodyPaddingRight;
+  }
+}
+
 export function Modal({ isOpen, onClose, children }: ModalProps) {
   const overlayRef = useRef<HTMLDivElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
@@ -15,34 +48,12 @@ export function Modal({ isOpen, onClose, children }: ModalProps) {
 
   useEffect(() => {
     if (isOpen) {
-      // Save current scroll position and lock body
-      const scrollY = window.scrollY;
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.left = '0';
-      document.body.style.right = '0';
-      document.body.style.overflow = 'hidden';
-    } else {
-      // Restore scroll position
-      const scrollY = document.body.style.top;
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.left = '';
-      document.body.style.right = '';
-      document.body.style.overflow = '';
-      if (scrollY) {
-        window.scrollTo(0, parseInt(scrollY || '0') * -1);
-      }
+      lockBodyScroll();
     }
+
     return () => {
-      const scrollY = document.body.style.top;
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.left = '';
-      document.body.style.right = '';
-      document.body.style.overflow = '';
-      if (scrollY) {
-        window.scrollTo(0, parseInt(scrollY || '0') * -1);
+      if (isOpen) {
+        unlockBodyScroll();
       }
     };
   }, [isOpen]);

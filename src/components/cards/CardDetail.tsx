@@ -7,6 +7,11 @@ import { formatPrice, parsePrice } from '../../utils/formatPrice';
 import { getRarityInfo } from '../../utils/rarity';
 import { CardProductsTooltip } from './CardProductsTooltip';
 
+const DEFAULT_SWIPE_VIEWPORT_WIDTH = 400;
+const DEFAULT_SWIPE_TRACK_WIDTH = 300;
+const SWIPE_EXIT_PADDING = 24;
+const DEFAULT_EXIT_DISTANCE_PX = Math.ceil((DEFAULT_SWIPE_VIEWPORT_WIDTH + DEFAULT_SWIPE_TRACK_WIDTH) / 2 + SWIPE_EXIT_PADDING);
+
 interface CardDetailProps {
   card: ScryfallCard | null;
   selectedVariant?: CardVariant;
@@ -23,12 +28,13 @@ export function CardDetail({ card, selectedVariant = null, owned, onClose, onTog
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const [touchStartY, setTouchStartY] = useState<number | null>(null);
   const [swipeOffset, setSwipeOffset] = useState(0);
-  const [isImageZoomed, setIsImageZoomed] = useState(false);
+  const [zoomedImageKey, setZoomedImageKey] = useState<string | null>(null);
 
   // Animation state machine: 'idle' | 'exiting' | 'repositioning' | 'entering'
   const [animPhase, setAnimPhase] = useState<'idle' | 'exiting' | 'repositioning' | 'entering'>('idle');
   const [animDirection, setAnimDirection] = useState<'prev' | 'next'>('next');
   const [lockedHeight, setLockedHeight] = useState<number | null>(null);
+  const [exitDistancePx, setExitDistancePx] = useState(DEFAULT_EXIT_DISTANCE_PX);
   const pendingNavigate = useRef<{ card: ScryfallCard; variant: CardVariant } | null>(null);
   const imageWrapperRef = useRef<HTMLDivElement>(null);
   const swipeViewportRef = useRef<HTMLDivElement>(null);
@@ -136,8 +142,33 @@ export function CardDetail({ card, selectedVariant = null, owned, onClose, onTog
   }, [card, goToPrev, goToNext]);
 
   useEffect(() => {
-    setIsImageZoomed(false);
-  }, [card?.id, selectedVariant]);
+    if (!card) return;
+
+    const updateExitDistance = () => {
+      const viewportWidth = swipeViewportRef.current?.getBoundingClientRect().width ?? DEFAULT_SWIPE_VIEWPORT_WIDTH;
+      const trackWidth = swipeTrackRef.current?.getBoundingClientRect().width ?? DEFAULT_SWIPE_TRACK_WIDTH;
+      const nextDistance = Math.ceil((viewportWidth + trackWidth) / 2 + SWIPE_EXIT_PADDING);
+      setExitDistancePx((prev) => (prev === nextDistance ? prev : nextDistance));
+    };
+
+    updateExitDistance();
+
+    if (typeof ResizeObserver !== 'undefined') {
+      const resizeObserver = new ResizeObserver(updateExitDistance);
+
+      if (swipeViewportRef.current) {
+        resizeObserver.observe(swipeViewportRef.current);
+      }
+      if (swipeTrackRef.current) {
+        resizeObserver.observe(swipeTrackRef.current);
+      }
+
+      return () => resizeObserver.disconnect();
+    }
+
+    window.addEventListener('resize', updateExitDistance);
+    return () => window.removeEventListener('resize', updateExitDistance);
+  }, [card, selectedVariant]);
 
   // Swipe handlers
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -194,12 +225,11 @@ export function CardDetail({ card, selectedVariant = null, owned, onClose, onTog
   const showFoilEffect = selectedVariant === 'foil' || (selectedVariant === null && isOwnedFoil);
   const hasNonFoil = card.finishes.includes('nonfoil');
   const hasFoil = card.finishes.includes('foil');
+  const currentImageKey = `${card.id}:${selectedVariant ?? 'default'}`;
+  const isImageZoomed = zoomedImageKey === currentImageKey;
 
   const scryfallPriceEur = parsePrice(card.prices.eur);
   const scryfallPriceFoil = parsePrice(card.prices.eur_foil);
-  const viewportWidth = swipeViewportRef.current?.getBoundingClientRect().width ?? 400;
-  const trackWidth = swipeTrackRef.current?.getBoundingClientRect().width ?? 300;
-  const exitDistancePx = Math.ceil((viewportWidth + trackWidth) / 2 + 24);
 
   return (
     <Modal isOpen={!!card} onClose={onClose}>
@@ -287,7 +317,7 @@ export function CardDetail({ card, selectedVariant = null, owned, onClose, onTog
                 <div className="relative overflow-hidden rounded-lg">
                   <button
                     type="button"
-                    onClick={() => setIsImageZoomed(true)}
+                    onClick={() => setZoomedImageKey(currentImageKey)}
                     className="block cursor-zoom-in leading-none"
                     aria-label={`Open enlarged image for ${card.name}`}
                   >
@@ -481,12 +511,12 @@ export function CardDetail({ card, selectedVariant = null, owned, onClose, onTog
         )}
       </div>
       {isImageZoomed && imageUrl && createPortal(
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/85 p-3 sm:p-6" onClick={() => setIsImageZoomed(false)}>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/85 p-3 sm:p-6" onClick={() => setZoomedImageKey(null)}>
           <button
             type="button"
             onClick={(e) => {
               e.stopPropagation();
-              setIsImageZoomed(false);
+              setZoomedImageKey(null);
             }}
             className="absolute top-3 right-3 sm:top-5 sm:right-5 rounded-full bg-white/15 p-2 text-white hover:bg-white/25 transition-colors cursor-pointer"
             aria-label="Close enlarged card image"

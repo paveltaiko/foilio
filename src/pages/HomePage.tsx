@@ -333,6 +333,7 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
                 <button
                   type="button"
                   onClick={() => setIsFilterDrawerOpen(true)}
+                  title="Open filters"
                   className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-neutral-600 bg-white border border-surface-border rounded-lg hover:bg-neutral-50 transition-colors cursor-pointer"
                 >
                   <SlidersHorizontal className="w-4 h-4" />
