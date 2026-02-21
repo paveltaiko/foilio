@@ -34,7 +34,7 @@ export function SearchInput({ value, onChange, isOpen, onClose, placeholder = 'S
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-x-0 top-0 z-[100] flex items-center bg-white px-3 py-2 shadow-md animate-fade-in">
+    <div className="fixed inset-x-0 top-0 z-[100] flex items-center bg-white px-3 py-3 shadow-md animate-fade-in">
       <Search className="w-4 h-4 text-neutral-400 shrink-0 mr-2" strokeWidth={2.5} />
       <input
         ref={inputRef}
