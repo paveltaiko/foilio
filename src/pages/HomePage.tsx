@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
-import { Share, Check, Layers, LayoutGrid, SlidersHorizontal, RotateCcw } from 'lucide-react';
+import { Share, Check, Layers, LayoutGrid, SlidersHorizontal, RotateCcw, Settings } from 'lucide-react';
+import { Link } from 'react-router';
 import type { User } from 'firebase/auth';
 import { useQueryClient } from '@tanstack/react-query';
 import { isFirebaseConfigured } from '../config/firebase';
@@ -200,7 +201,8 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
 
   const { settings: collectionSettings } = useCollectionsSettings();
   const visibleCollectionSets = getVisibleSets(collectionSettings, collectionSets);
-  const visibleSetIds = visibleCollectionSets.length > 0
+  const settingsInitialized = Object.keys(collectionSettings.collections).length > 0;
+  const visibleSetIds: SetCode[] | undefined = settingsInitialized
     ? visibleCollectionSets.map((s) => s.id as SetCode)
     : undefined;
 
@@ -446,6 +448,23 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
           {/* Card grid */}
           {isCardsLoading ? (
             <CardGridSkeleton />
+          ) : !settingsInitialized || (visibleSetIds && visibleSetIds.length === 0) ? (
+            <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
+              <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-neutral-100 mb-4">
+                <Settings className="w-7 h-7 text-neutral-400" />
+              </div>
+              <h2 className="text-base font-semibold text-neutral-800 mb-1">No collection selected</h2>
+              <p className="text-sm text-neutral-500 max-w-xs mb-5">
+                Enable a collection in Settings to start tracking your cards.
+              </p>
+              <Link
+                to="/settings"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-500 text-white text-sm font-semibold hover:bg-primary-600 transition-colors"
+              >
+                <Settings className="w-4 h-4" />
+                Open Settings
+              </Link>
+            </div>
           ) : (
             <CardGrid
               cards={sortedFilteredCards}

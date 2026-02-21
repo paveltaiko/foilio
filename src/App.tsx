@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { Routes, Route, useNavigate } from 'react-router';
+import { Routes, Route, useNavigate, useLocation } from 'react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuth } from './hooks/useAuth';
 import { Header } from './components/layout/Header';
@@ -16,6 +16,7 @@ const queryClient = new QueryClient();
 function AppContent() {
   const { user, loading, error, login, logout } = useAuth();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   const handleSearchClick = useCallback(() => {
@@ -30,6 +31,11 @@ function AppContent() {
     navigate('/settings');
   }, [navigate]);
 
+  const handleLogout = useCallback(async () => {
+    await logout();
+    navigate('/');
+  }, [logout, navigate]);
+
   return (
     <CollectionsSettingsProvider>
       <div className="min-h-svh bg-surface-secondary flex flex-col overflow-x-hidden">
@@ -37,10 +43,10 @@ function AppContent() {
           userName={user?.displayName}
           userPhoto={user?.photoURL}
           onLogin={login}
-          onLogout={logout}
+          onLogout={handleLogout}
           onOpenSettings={handleOpenSettings}
           isLoggedIn={!!user}
-          onSearchClick={handleSearchClick}
+          onSearchClick={pathname === '/settings' ? undefined : handleSearchClick}
         />
         <main className="flex-1 overflow-y-auto pt-3 pb-8" style={{ scrollbarGutter: 'stable' }}>
           <Routes>
