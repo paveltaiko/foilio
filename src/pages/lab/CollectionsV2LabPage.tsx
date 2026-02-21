@@ -5,6 +5,9 @@ import { Link } from 'react-router';
 import { labCards, labFranchises, labSets } from './collectionsV2.mock';
 import { useCollectionsSettings } from './useCollectionsSettings';
 import { getVisibleCards, getVisibleSets, isActiveTabValid } from './collectionsSettings';
+import type { CollectionSet } from '../../config/collections';
+
+const labSetsAsCollectionSets = labSets as unknown as CollectionSet[];
 
 function rarityClass(rarity: string): string {
   if (rarity === 'mythic') return 'text-orange-600';
@@ -17,12 +20,12 @@ export function CollectionsV2LabPage() {
   const { settings } = useCollectionsSettings();
   const [activeSetId, setActiveSetId] = useState<string>('all');
 
-  const visibleSets = useMemo(() => getVisibleSets(settings, labSets), [settings]);
+  const visibleSets = useMemo(() => getVisibleSets(settings, labSetsAsCollectionSets), [settings]);
   const effectiveActiveSetId = isActiveTabValid(activeSetId, visibleSets) ? activeSetId : 'all';
 
   const cardsInScope = useMemo(() => {
     if (effectiveActiveSetId === 'all') {
-      return getVisibleCards(settings, labSets, labCards);
+      return getVisibleCards(settings, labSetsAsCollectionSets, labCards);
     }
 
     return labCards.filter((item) => item.setId === effectiveActiveSetId);
@@ -42,7 +45,7 @@ export function CollectionsV2LabPage() {
     return bySet;
   }, [visibleSets]);
 
-  const totalOwned = cardsInScope.filter((card) => card.owned).length;
+  const totalOwned = cardsInScope.filter((card: typeof labCards[number]) => card.owned).length;
 
   return (
     <div className="app-container-padded py-4 sm:py-6">
@@ -101,7 +104,7 @@ export function CollectionsV2LabPage() {
           <div className="rounded-xl border border-neutral-200 bg-white p-3">
             <p className="mb-3 text-sm font-semibold text-neutral-800">Mock Card Grid</p>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-              {cardsInScope.map((card) => {
+              {cardsInScope.map((card: typeof labCards[number]) => {
                 const set = labSets.find((item) => item.id === card.setId);
                 const franchise = labFranchises.find((item) => item.id === card.franchiseId);
 
