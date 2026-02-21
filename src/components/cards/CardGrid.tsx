@@ -1,15 +1,7 @@
 import { useMemo } from 'react';
 import type { ScryfallCard, OwnedCard, CardWithVariant, CardVariant } from '../../types/card';
+import type { CollectionSet } from '../../config/collections';
 import { CardItem } from './CardItem';
-
-const SET_DISPLAY_NAMES: Record<string, string> = {
-  spm: "Marvel's Spider-Man",
-  spe: "Marvel's Spider-Man Eternal",
-  mar: 'Marvel Universe',
-};
-
-// Ordered set codes for consistent grouping
-const SET_ORDER = ['spm', 'spe', 'mar'];
 
 interface CardGridProps {
   cards: CardWithVariant[];
@@ -18,9 +10,10 @@ interface CardGridProps {
   onCardClick: (card: ScryfallCard, variant: CardVariant) => void;
   readOnly?: boolean;
   groupBySet?: boolean;
+  sets?: CollectionSet[];
 }
 
-function CardGridInner({ cards, ownedCards, onToggle, onCardClick, readOnly }: Omit<CardGridProps, 'groupBySet'>) {
+function CardGridInner({ cards, ownedCards, onToggle, onCardClick, readOnly }: Omit<CardGridProps, 'groupBySet' | 'sets'>) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
       {cards.map((item) => (
@@ -38,7 +31,7 @@ function CardGridInner({ cards, ownedCards, onToggle, onCardClick, readOnly }: O
   );
 }
 
-export function CardGrid({ cards, ownedCards, onToggle, onCardClick, readOnly, groupBySet }: CardGridProps) {
+export function CardGrid({ cards, ownedCards, onToggle, onCardClick, readOnly, groupBySet, sets }: CardGridProps) {
   const groupedCards = useMemo(() => {
     if (!groupBySet) return null;
     const groups = new Map<string, CardWithVariant[]>();
@@ -50,6 +43,14 @@ export function CardGrid({ cards, ownedCards, onToggle, onCardClick, readOnly, g
     return groups;
   }, [cards, groupBySet]);
 
+  // Set order and names derived from sets prop (fallback to order of appearance)
+  const setOrder = useMemo(() => sets?.map((s) => s.id) ?? [], [sets]);
+  const setNameById = useMemo(() => {
+    const map: Record<string, string> = {};
+    sets?.forEach((s) => { map[s.id] = s.name; });
+    return map;
+  }, [sets]);
+
   if (cards.length === 0) {
     return (
       <div className="text-center py-16 text-neutral-400 text-sm">
@@ -59,12 +60,17 @@ export function CardGrid({ cards, ownedCards, onToggle, onCardClick, readOnly, g
   }
 
   if (groupBySet && groupedCards) {
+    // Render sets in config order, then any unknown sets at the end
+    const orderedSets = [
+      ...setOrder.filter((id) => groupedCards.has(id)),
+      ...[...groupedCards.keys()].filter((id) => !setOrder.includes(id)),
+    ];
     return (
       <div className="space-y-6">
-        {SET_ORDER.filter((set) => groupedCards.has(set)).map((set) => (
+        {orderedSets.map((set) => (
           <section key={set}>
             <h2 className="text-sm font-semibold text-neutral-700 mb-3">
-              {SET_DISPLAY_NAMES[set] ?? set}
+              {setNameById[set] ?? set}
               <span className="ml-2 text-xs font-normal text-neutral-400">
                 {groupedCards.get(set)!.length}
               </span>

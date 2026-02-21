@@ -11,6 +11,7 @@ interface FilterDrawerProps {
   sortOption: SortOption;
   onSortChange: (v: SortOption) => void;
   boosterMapLoading?: boolean;
+  showBoosterFilter?: boolean;
   hasActiveFilters?: boolean;
   onReset?: () => void;
 }
@@ -77,6 +78,7 @@ export function FilterDrawer({
   sortOption,
   onSortChange,
   boosterMapLoading,
+  showBoosterFilter = true,
   hasActiveFilters,
   onReset,
 }: FilterDrawerProps) {
@@ -131,13 +133,15 @@ export function FilterDrawer({
           </div>
         </div>
 
-        <DrawerSegmented
-          label="Booster"
-          options={BOOSTER_OPTIONS}
-          value={boosterFilter}
-          onChange={onBoosterChange}
-          disabled={boosterMapLoading}
-        />
+        {showBoosterFilter && (
+          <DrawerSegmented
+            label="Booster"
+            options={BOOSTER_OPTIONS}
+            value={boosterFilter}
+            onChange={onBoosterChange}
+            disabled={boosterMapLoading}
+          />
+        )}
 
         <button
           type="button"

@@ -1,17 +1,19 @@
-import { LogOut, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { Link } from 'react-router';
 import { Button } from '../ui/Button';
+import { AvatarMenu } from './AvatarMenu';
 
 interface HeaderProps {
   userName?: string | null;
   userPhoto?: string | null;
   onLogin: () => void;
   onLogout: () => void;
+  onOpenSettings: () => void;
   isLoggedIn: boolean;
   onSearchClick?: () => void;
 }
 
-export function Header({ userName, userPhoto, onLogin, onLogout, isLoggedIn, onSearchClick }: HeaderProps) {
+export function Header({ userName, userPhoto, onLogin, onLogout, onOpenSettings, isLoggedIn, onSearchClick }: HeaderProps) {
   return (
     <header className="bg-surface-primary border-b border-surface-border sticky top-0 z-40">
       <div className="app-container-padded h-12 sm:h-14 flex items-center justify-between relative">
@@ -29,33 +31,18 @@ export function Header({ userName, userPhoto, onLogin, onLogout, isLoggedIn, onS
               {onSearchClick && (
                 <button
                   onClick={onSearchClick}
-                  className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-full bg-primary-100 text-primary-500 sm:hover:bg-primary-500 sm:hover:text-white transition-colors duration-150 cursor-pointer"
+                  className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-full bg-red-50 text-primary-500 hover:bg-red-100 transition-colors duration-150 cursor-pointer"
                   aria-label="Search"
                 >
                   <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4" strokeWidth={2.5} />
                 </button>
               )}
-              {userPhoto && (
-                <img
-                  src={userPhoto}
-                  alt={userName ?? 'Avatar'}
-                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-full"
-                  referrerPolicy="no-referrer"
-                />
-              )}
-
-              <button
-                onClick={onLogout}
-                className="sm:hidden w-7 h-7 flex items-center justify-center text-neutral-500 hover:text-red-500 transition-colors cursor-pointer"
-                aria-label="Sign out"
-              >
-                <LogOut className="w-5 h-5" />
-              </button>
-              <div className="hidden sm:block">
-                <Button variant="danger-ghost" size="sm" onClick={onLogout}>
-                  Sign out
-                </Button>
-              </div>
+              <AvatarMenu
+                userName={userName}
+                userPhoto={userPhoto}
+                onOpenSettings={onOpenSettings}
+                onLogout={onLogout}
+              />
             </div>
           ) : (
             <Button variant="primary" size="sm" onClick={onLogin}>

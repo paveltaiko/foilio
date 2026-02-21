@@ -1,10 +1,14 @@
 import { useState, useCallback, useEffect } from 'react';
-import { Share, Check, Layers, LayoutGrid, SlidersHorizontal, RotateCcw } from 'lucide-react';
+import { Share, Check, Layers, LayoutGrid, SlidersHorizontal, RotateCcw, Settings } from 'lucide-react';
+import { Link } from 'react-router';
 import type { User } from 'firebase/auth';
 import { useQueryClient } from '@tanstack/react-query';
 import { isFirebaseConfigured } from '../config/firebase';
 import { useOwnedCards } from '../hooks/useOwnedCards';
 import { useCardCollection } from '../hooks/useCardCollection';
+import { useCollectionsSettings } from './lab/useCollectionsSettings';
+import { getVisibleSets } from './lab/collectionsSettings';
+import { collectionSets } from '../config/collections';
 import { toggleCardOwnership, updateCardQuantity } from '../services/firestore';
 import { getExistingShareToken, getOrCreateShareToken } from '../services/sharing';
 import { SetTabs } from '../components/filters/SetTabs';
@@ -194,6 +198,13 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
     return () => { cancelled = true; };
   }, [user.uid]);
 
+  const { settings: collectionSettings } = useCollectionsSettings();
+  const visibleCollectionSets = getVisibleSets(collectionSettings, collectionSets);
+  const settingsInitialized = Object.keys(collectionSettings.collections).length > 0;
+  const visibleSetIds: string[] | undefined = settingsInitialized
+    ? visibleCollectionSets.map((s) => s.id)
+    : undefined;
+
   const {
     activeSet, setActiveSet,
     sortOption, setSortOption,
@@ -204,10 +215,18 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
     groupBySet, setGroupBySet,
     currentCards, isCardsLoading,
     cardCounts, stats, sortedFilteredCards,
-  } = useCardCollection({ ownedCards, searchQuery });
+    hasBoosterData,
+  } = useCardCollection({ ownedCards, searchQuery, visibleSetIds, sets: collectionSets });
 
-  const activeFilterCount = (boosterFilter !== 'all' ? 1 : 0) + (ownershipFilter !== 'all' ? 1 : 0);
-  const hasActiveFilters = boosterFilter !== 'all' || ownershipFilter !== 'all' || sortOption !== 'number-asc';
+  // Reset booster filter when switching to a set that has no booster data
+  useEffect(() => {
+    if (!hasBoosterData && boosterFilter !== 'all') {
+      setBoosterFilter('all');
+    }
+  }, [hasBoosterData, boosterFilter, setBoosterFilter]);
+
+  const activeFilterCount = (boosterFilter !== 'all' && hasBoosterData ? 1 : 0) + (ownershipFilter !== 'all' ? 1 : 0);
+  const hasActiveFilters = (boosterFilter !== 'all' && hasBoosterData) || ownershipFilter !== 'all' || sortOption !== 'number-asc';
 
   const handleResetFilters = useCallback(() => {
     setBoosterFilter('all');
@@ -313,7 +332,7 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
       <PullToRefresh onRefresh={handleRefresh} disabled={isSearchOpen || !!selectedCard || isFilterDrawerOpen}>
         <div className="app-container-padded safe-bottom touch-pan-y">
           {/* Set tabs */}
-          <SetTabs activeSet={activeSet} onChange={setActiveSet} cardCounts={cardCounts} />
+          <SetTabs activeSet={activeSet} onChange={setActiveSet} sets={collectionSets} cardCounts={cardCounts} visibleSets={visibleSetIds} />
 
           {/* Stats */}
           <div className="py-2">
@@ -333,6 +352,7 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
                 <button
                   type="button"
                   onClick={() => setIsFilterDrawerOpen(true)}
+                  title="Open filters"
                   className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-neutral-600 bg-white border border-surface-border rounded-lg hover:bg-neutral-50 transition-colors cursor-pointer"
                 >
                   <SlidersHorizontal className="w-4 h-4" />
@@ -388,11 +408,13 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
             <div className="hidden md:flex items-center gap-4">
               <OwnershipFilter value={ownershipFilter} onChange={setOwnershipFilter} />
               <SortControl value={sortOption} onChange={setSortOption} />
-              <BoosterFilter
-                value={boosterFilter}
-                onChange={setBoosterFilter}
-                isLoading={boosterMapLoading}
-              />
+              {hasBoosterData && (
+                <BoosterFilter
+                  value={boosterFilter}
+                  onChange={setBoosterFilter}
+                  isLoading={boosterMapLoading}
+                />
+              )}
               {activeSet === 'all' && (
                 <button
                   onClick={() => setGroupBySet(!groupBySet)}
@@ -435,6 +457,23 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
           {/* Card grid */}
           {isCardsLoading ? (
             <CardGridSkeleton />
+          ) : !settingsInitialized || (visibleSetIds && visibleSetIds.length === 0) ? (
+            <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
+              <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-neutral-100 mb-4">
+                <Settings className="w-7 h-7 text-neutral-400" />
+              </div>
+              <h2 className="text-base font-semibold text-neutral-800 mb-1">No collection selected</h2>
+              <p className="text-sm text-neutral-500 max-w-xs mb-5">
+                Enable a collection in Settings to start tracking your cards.
+              </p>
+              <Link
+                to="/settings"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-500 text-white text-sm font-semibold hover:bg-primary-600 transition-colors"
+              >
+                <Settings className="w-4 h-4" />
+                Open Settings
+              </Link>
+            </div>
           ) : (
             <CardGrid
               cards={sortedFilteredCards}
@@ -445,6 +484,7 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
                 setSelectedVariant(variant);
               }}
               groupBySet={activeSet === 'all' && groupBySet}
+              sets={collectionSets}
             />
           )}
         </div>
@@ -461,6 +501,7 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
         sortOption={sortOption}
         onSortChange={setSortOption}
         boosterMapLoading={boosterMapLoading}
+        showBoosterFilter={hasBoosterData}
         hasActiveFilters={hasActiveFilters}
         onReset={handleResetFilters}
       />

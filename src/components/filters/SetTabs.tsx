@@ -1,31 +1,34 @@
 import { Tabs } from '../ui/Tabs';
-import type { SetCode } from '../../types/card';
+import type { CollectionSet } from '../../config/collections';
 
 interface SetTabsProps {
-  activeSet: SetCode;
-  onChange: (set: SetCode) => void;
-  cardCounts?: Record<SetCode, number>;
+  activeSet: string;
+  onChange: (set: string) => void;
+  sets: CollectionSet[];
+  cardCounts?: Record<string, number>;
+  visibleSets?: string[];
 }
 
-const SET_NAMES: Record<SetCode, string> = {
-  all: 'Full Collection',
-  spm: "Marvel's Spider-Man",
-  spe: "Marvel's Spider-Man Eternal",
-  mar: 'Marvel Universe',
-};
+export function SetTabs({ activeSet, onChange, sets, cardCounts, visibleSets }: SetTabsProps) {
+  const allowedSetIds = visibleSets ? visibleSets : sets.map((s) => s.id);
 
-export function SetTabs({ activeSet, onChange, cardCounts }: SetTabsProps) {
-  const tabs = (Object.keys(SET_NAMES) as SetCode[]).map((setCode) => ({
-    id: setCode,
-    label: SET_NAMES[setCode],
-    count: cardCounts?.[setCode],
-  }));
+  const tabs = [
+    { id: 'all', label: 'Full Collection', count: cardCounts?.['all'] },
+    ...allowedSetIds.map((setId) => {
+      const set = sets.find((s) => s.id === setId);
+      return {
+        id: setId,
+        label: set?.name ?? setId,
+        count: cardCounts?.[setId],
+      };
+    }),
+  ];
 
   return (
     <Tabs
       tabs={tabs}
       activeTab={activeSet}
-      onChange={(id) => onChange(id as SetCode)}
+      onChange={onChange}
     />
   );
 }

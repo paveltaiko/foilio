@@ -142,26 +142,26 @@ export function CardItem({ card, owned, displayVariant, onToggle, onClick, readO
           {readOnly ? (
             <div className="flex gap-1 sm:gap-1.5 pt-0 sm:pt-0.5">
               {displayVariant === 'foil' ? (
-                <div className={`flex-1 py-1.5 sm:py-1 text-2xs font-medium tracking-wide uppercase rounded-sm border text-center ${isOwnedFoil ? 'bg-foil-bg text-foil-purple border-foil-border' : 'bg-neutral-50 text-neutral-400 border-neutral-200'}`}>
-                  {isOwnedFoil && <Check className="inline w-3 h-3 mr-0.5" strokeWidth={3} />}
+                <div className={`flex flex-1 h-6 items-center justify-center gap-0.5 text-2xs leading-none font-medium tracking-wide uppercase rounded-sm border ${isOwnedFoil ? 'bg-foil-bg text-foil-purple border-foil-border' : 'bg-neutral-50 text-neutral-400 border-neutral-200'}`}>
+                  {isOwnedFoil && <Check className="w-3 h-3 shrink-0" strokeWidth={3} />}
                   Foil
                 </div>
               ) : displayVariant === 'nonfoil' ? (
-                <div className={`flex-1 py-1.5 sm:py-1 text-2xs font-medium tracking-wide uppercase rounded-sm border text-center ${isOwnedNonFoil ? 'bg-owned-bg text-owned border-owned-border' : 'bg-neutral-50 text-neutral-400 border-neutral-200'}`}>
-                  {isOwnedNonFoil && <Check className="inline w-3 h-3 mr-0.5" strokeWidth={3} />}
+                <div className={`flex flex-1 h-6 items-center justify-center gap-0.5 text-2xs leading-none font-medium tracking-wide uppercase rounded-sm border ${isOwnedNonFoil ? 'bg-owned-bg text-owned border-owned-border' : 'bg-neutral-50 text-neutral-400 border-neutral-200'}`}>
+                  {isOwnedNonFoil && <Check className="w-3 h-3 shrink-0" strokeWidth={3} />}
                   Non-Foil
                 </div>
               ) : (
                 <>
                   {hasNonFoil && (
-                    <div className={`flex-1 py-1.5 sm:py-1 text-2xs font-medium tracking-wide uppercase rounded-sm border text-center ${isOwnedNonFoil ? 'bg-owned-bg text-owned border-owned-border' : 'bg-neutral-50 text-neutral-400 border-neutral-200'}`}>
-                      {isOwnedNonFoil && <Check className="inline w-3 h-3 mr-0.5" strokeWidth={3} />}
+                    <div className={`flex flex-1 h-6 items-center justify-center gap-0.5 text-2xs leading-none font-medium tracking-wide uppercase rounded-sm border ${isOwnedNonFoil ? 'bg-owned-bg text-owned border-owned-border' : 'bg-neutral-50 text-neutral-400 border-neutral-200'}`}>
+                      {isOwnedNonFoil && <Check className="w-3 h-3 shrink-0" strokeWidth={3} />}
                       NF
                     </div>
                   )}
                   {hasFoil && (
-                    <div className={`flex-1 py-1.5 sm:py-1 text-2xs font-medium tracking-wide uppercase rounded-sm border text-center ${isOwnedFoil ? 'bg-foil-bg text-foil-purple border-foil-border' : 'bg-neutral-50 text-neutral-400 border-neutral-200'}`}>
-                      {isOwnedFoil && <Check className="inline w-3 h-3 mr-0.5" strokeWidth={3} />}
+                    <div className={`flex flex-1 h-6 items-center justify-center gap-0.5 text-2xs leading-none font-medium tracking-wide uppercase rounded-sm border ${isOwnedFoil ? 'bg-foil-bg text-foil-purple border-foil-border' : 'bg-neutral-50 text-neutral-400 border-neutral-200'}`}>
+                      {isOwnedFoil && <Check className="w-3 h-3 shrink-0" strokeWidth={3} />}
                       F
                     </div>
                   )}
@@ -175,7 +175,7 @@ export function CardItem({ card, owned, displayVariant, onToggle, onClick, readO
                 <button
                   onClick={(e) => handleToggle(e, 'foil')}
                   className={`
-                    flex-1 py-1.5 sm:py-1 text-2xs font-medium tracking-wide uppercase rounded-sm border cursor-pointer
+                    flex flex-1 h-6 items-center justify-center gap-0.5 text-2xs leading-none font-medium tracking-wide uppercase rounded-sm border cursor-pointer
                     transition-all duration-200 active:scale-95
                     ${isOwnedFoil
                       ? 'bg-foil-bg text-foil-purple border-foil-border hover:bg-purple-100'
@@ -183,14 +183,14 @@ export function CardItem({ card, owned, displayVariant, onToggle, onClick, readO
                     }
                   `}
                 >
-                  {isOwnedFoil && <Check className="inline w-3 h-3 mr-0.5" strokeWidth={3} />}
+                  {isOwnedFoil && <Check className="w-3 h-3 shrink-0" strokeWidth={3} />}
                   Foil
                 </button>
               ) : displayVariant === 'nonfoil' ? (
                 <button
                   onClick={(e) => handleToggle(e, 'nonfoil')}
                   className={`
-                    flex-1 py-1.5 sm:py-1 text-2xs font-medium tracking-wide uppercase rounded-sm border cursor-pointer
+                    flex flex-1 h-6 items-center justify-center gap-0.5 text-2xs leading-none font-medium tracking-wide uppercase rounded-sm border cursor-pointer
                     transition-all duration-200 active:scale-95
                     ${isOwnedNonFoil
                       ? 'bg-owned-bg text-owned border-owned-border hover:bg-green-100'
@@ -198,7 +198,7 @@ export function CardItem({ card, owned, displayVariant, onToggle, onClick, readO
                     }
                   `}
                 >
-                  {isOwnedNonFoil && <Check className="inline w-3 h-3 mr-0.5" strokeWidth={3} />}
+                  {isOwnedNonFoil && <Check className="w-3 h-3 shrink-0" strokeWidth={3} />}
                   Non-Foil
                 </button>
               ) : (
@@ -207,7 +207,7 @@ export function CardItem({ card, owned, displayVariant, onToggle, onClick, readO
                     <button
                       onClick={(e) => handleToggle(e, 'nonfoil')}
                       className={`
-                        flex-1 py-1.5 sm:py-1 text-2xs font-medium tracking-wide uppercase rounded-sm border cursor-pointer
+                        flex flex-1 h-6 items-center justify-center gap-0.5 text-2xs leading-none font-medium tracking-wide uppercase rounded-sm border cursor-pointer
                         transition-all duration-200 active:scale-95
                         ${isOwnedNonFoil
                           ? 'bg-owned-bg text-owned border-owned-border hover:bg-green-100'
@@ -215,7 +215,7 @@ export function CardItem({ card, owned, displayVariant, onToggle, onClick, readO
                         }
                       `}
                     >
-                      {isOwnedNonFoil && <Check className="inline w-3 h-3 mr-0.5" strokeWidth={3} />}
+                      {isOwnedNonFoil && <Check className="w-3 h-3 shrink-0" strokeWidth={3} />}
                       NF
                     </button>
                   )}
@@ -223,7 +223,7 @@ export function CardItem({ card, owned, displayVariant, onToggle, onClick, readO
                     <button
                       onClick={(e) => handleToggle(e, 'foil')}
                       className={`
-                        flex-1 py-1.5 sm:py-1 text-2xs font-medium tracking-wide uppercase rounded-sm border cursor-pointer
+                        flex flex-1 h-6 items-center justify-center gap-0.5 text-2xs leading-none font-medium tracking-wide uppercase rounded-sm border cursor-pointer
                         transition-all duration-200 active:scale-95
                         ${isOwnedFoil
                           ? 'bg-foil-bg text-foil-purple border-foil-border hover:bg-purple-100'
@@ -231,7 +231,7 @@ export function CardItem({ card, owned, displayVariant, onToggle, onClick, readO
                         }
                       `}
                     >
-                      {isOwnedFoil && <Check className="inline w-3 h-3 mr-0.5" strokeWidth={3} />}
+                      {isOwnedFoil && <Check className="w-3 h-3 shrink-0" strokeWidth={3} />}
                       F
                     </button>
                   )}

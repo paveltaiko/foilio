@@ -1,4 +1,5 @@
 import type { CardProduct } from '../types/card';
+import type { CollectionSet } from '../config/collections';
 
 const MTGJSON_BASE = 'https://mtgjson.com/api/v5';
 
@@ -61,26 +62,42 @@ function formatProductName(raw: string): string {
     .trim();
 }
 
+// Master set = first set (lowest order) within a franchise
+// It holds sealedProduct definitions for the whole franchise family
+function getMasterSetId(franchiseId: string, sets: CollectionSet[]): string {
+  const franchiseSets = sets
+    .filter((s) => s.franchiseId === franchiseId)
+    .sort((a, b) => a.order - b.order);
+  if (franchiseSets.length === 0) throw new Error(`No sets found for franchise: ${franchiseId}`);
+  return franchiseSets[0].id;
+}
+
 export interface BoosterEntry {
   play: Set<'foil' | 'nonfoil'>;
   collector: Set<'foil' | 'nonfoil'>;
 }
 export type BoosterMap = Map<string, BoosterEntry>;
 
-export async function fetchBoosterMap(): Promise<BoosterMap> {
-  const [spmData, speData, marData] = await Promise.all([
-    fetchMtgjsonSet('spm'),
-    fetchMtgjsonSet('spe'),
-    fetchMtgjsonSet('mar'),
-  ]);
+export async function fetchBoosterMap(sets: CollectionSet[]): Promise<BoosterMap> {
+  // Fetch all set data in parallel
+  const setDataList = await Promise.all(sets.map((s) => fetchMtgjsonSet(s.id)));
+  const setDataById: Record<string, MtgjsonSetData> = {};
+  sets.forEach((s, i) => { setDataById[s.id] = setDataList[i]; });
 
-  // SPM.json holds all sealedProduct definitions for the whole set family
-  const sealedProducts = spmData.sealedProduct ?? [];
-  const productMap = new Map(sealedProducts.map((p) => [p.uuid, p]));
+  // Build a product map per franchise (from the master set of each franchise)
+  const franchiseIds = [...new Set(sets.map((s) => s.franchiseId))];
+  const productMapByFranchise: Record<string, Map<string, MtgjsonSealedProduct>> = {};
+  for (const franchiseId of franchiseIds) {
+    const masterId = getMasterSetId(franchiseId, sets);
+    const masterData = setDataById[masterId];
+    const sealedProducts = masterData?.sealedProduct ?? [];
+    productMapByFranchise[franchiseId] = new Map(sealedProducts.map((p) => [p.uuid, p]));
+  }
 
   const boosterMap: BoosterMap = new Map();
 
-  const processCards = (cards: MtgjsonCard[], setCode: string) => {
+  const processCards = (cards: MtgjsonCard[], setCode: string, franchiseId: string) => {
+    const productMap = productMapByFranchise[franchiseId];
     for (const card of cards) {
       if (!card.sourceProducts) continue;
 
@@ -111,24 +128,30 @@ export async function fetchBoosterMap(): Promise<BoosterMap> {
     }
   };
 
-  processCards(spmData.cards, 'spm');
-  processCards(speData.cards, 'spe');
-  processCards(marData.cards, 'mar');
+  for (const set of sets) {
+    const data = setDataById[set.id];
+    if (data) processCards(data.cards, set.id, set.franchiseId);
+  }
 
   return boosterMap;
 }
 
 export async function fetchCardProducts(
   setCode: string,
-  collectorNumber: string
+  collectorNumber: string,
+  sets: CollectionSet[]
 ): Promise<CardProduct[]> {
-  // SPM.json is the master — it holds all sealedProduct definitions
-  const [spmData, cardSetData] = await Promise.all([
-    fetchMtgjsonSet('spm'),
-    setCode.toLowerCase() !== 'spm' ? fetchMtgjsonSet(setCode) : Promise.resolve(null),
+  // Find which franchise this set belongs to, then get its master set
+  const matchedSet = sets.find((s) => s.id === setCode.toLowerCase());
+  const franchiseId = matchedSet?.franchiseId;
+  const masterId = franchiseId ? getMasterSetId(franchiseId, sets) : setCode.toLowerCase();
+
+  const [masterData, cardSetData] = await Promise.all([
+    fetchMtgjsonSet(masterId),
+    setCode.toLowerCase() !== masterId ? fetchMtgjsonSet(setCode) : Promise.resolve(null),
   ]);
 
-  const setData = cardSetData ?? spmData;
+  const setData = cardSetData ?? masterData;
   const card = setData.cards.find((c) => c.number === collectorNumber);
   if (!card || !card.sourceProducts) return [];
 
@@ -136,7 +159,7 @@ export async function fetchCardProducts(
   const nonfoilUuids = new Set(card.sourceProducts.nonfoil ?? []);
   const allUuids = new Set([...foilUuids, ...nonfoilUuids]);
 
-  const sealedProducts = spmData.sealedProduct ?? [];
+  const sealedProducts = masterData.sealedProduct ?? [];
   const productMap = new Map(sealedProducts.map((p) => [p.uuid, p]));
 
   const results = new Map<string, CardProduct>();

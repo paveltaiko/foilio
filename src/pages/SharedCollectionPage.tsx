@@ -13,6 +13,7 @@ import { CardGrid, CardGridSkeleton } from '../components/cards/CardGrid';
 import { CardDetail } from '../components/cards/CardDetail';
 import { PullToRefresh } from '../components/ui/PullToRefresh';
 import type { CardVariant } from '../types/card';
+import { collectionSets } from '../config/collections';
 
 interface SharedCollectionPageProps {
   currentUserId: string | null;
@@ -43,7 +44,7 @@ export function SharedCollectionPage({ currentUserId, isSearchOpen, onSearchClos
     selectedCard, setSelectedCard,
     groupBySet, setGroupBySet,
     isCardsLoading, cardCounts, stats, sortedFilteredCards,
-  } = useCardCollection({ ownedCards, searchQuery });
+  } = useCardCollection({ ownedCards, searchQuery, sets: collectionSets });
 
   const isLoading = collectionLoading || isCardsLoading;
   const handleRefresh = async () => {
@@ -100,7 +101,7 @@ export function SharedCollectionPage({ currentUserId, isSearchOpen, onSearchClos
           </div>
 
           {/* Set tabs */}
-          <SetTabs activeSet={activeSet} onChange={setActiveSet} cardCounts={cardCounts} />
+          <SetTabs activeSet={activeSet} onChange={setActiveSet} sets={collectionSets} cardCounts={cardCounts} />
 
           {/* Stats */}
           <div className="py-4">
