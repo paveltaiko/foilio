@@ -84,6 +84,11 @@ export function getVisibleSets(settings: CollectionSettings, sets: CollectionSet
   });
 }
 
+export function getVisibleCards<T extends { setId: string }>(settings: CollectionSettings, sets: CollectionSet[], cards: T[]): T[] {
+  const visibleSetIds = new Set(getVisibleSets(settings, sets).map((set) => set.id));
+  return cards.filter((card) => visibleSetIds.has(card.setId));
+}
+
 export function isActiveTabValid(activeSetId: string, visibleSets: CollectionSet[]): boolean {
   if (activeSetId === 'all') return true;
   return visibleSets.some((set) => set.id === activeSetId);
