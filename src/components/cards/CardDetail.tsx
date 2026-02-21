@@ -239,12 +239,13 @@ export function CardDetail({ card, selectedVariant = null, owned, onClose, onTog
         style={{ height: lockedHeight ?? undefined }}
       >
         {/* Header */}
-        <div className="flex items-start justify-between">
-          <div>
-            <h2 className="text-lg font-semibold text-neutral-800">{card.name}</h2>
-            <div className="mt-0.5 flex items-center gap-4 flex-wrap">
-              <p className="text-xs font-mono text-neutral-500">
-                #{card.collector_number} · {card.set_name} · <span className={`font-semibold ${getRarityInfo(card.rarity).colorClass}`}>{getRarityInfo(card.rarity).label}</span>
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <h2 className="text-lg font-semibold text-neutral-800 truncate">{card.name}</h2>
+            <p className="text-xs text-neutral-500 mt-1.5 truncate">{card.set_name}</p>
+            <div className="mt-1.5 flex items-center gap-2">
+              <p className="text-xs font-mono text-neutral-500 whitespace-nowrap">
+                #{card.collector_number} · <span className={`font-semibold ${getRarityInfo(card.rarity).colorClass}`}>{getRarityInfo(card.rarity).label}</span> ·
               </p>
               <CardProductsTooltip setCode={card.set} collectorNumber={card.collector_number} />
             </div>
