@@ -17,7 +17,7 @@ export function CollectionsSettingsPanel({
   onSetToggle,
 }: CollectionsSettingsPanelProps) {
   const renderCard = (franchise: Franchise) => {
-    const collection = value.collections[franchise.id];
+    const collection = value.collections[franchise.id] ?? { enabled: false, setVisibility: {} };
     const franchiseSets = sets
       .filter((set) => set.franchiseId === franchise.id)
       .sort((a, b) => a.order - b.order);
