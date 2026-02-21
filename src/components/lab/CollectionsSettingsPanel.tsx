@@ -52,7 +52,7 @@ export function CollectionsSettingsPanel({
                 const checked = collection.setVisibility[set.id] ?? false;
 
                 return (
-                  <div key={set.id} className="flex cursor-pointer items-center justify-between pl-4 pr-3 py-2.5 text-sm" onClick={() => collection.enabled && onSetToggle(franchise.id, set.id, !checked)}>
+                  <div key={set.id} className="flex cursor-pointer items-center justify-between pl-0 pr-0 py-2.5 text-sm sm:pl-4 sm:pr-3" onClick={() => collection.enabled && onSetToggle(franchise.id, set.id, !checked)}>
                     <span className="text-neutral-700">
                       {set.name}
                       <span className="ml-2 text-xs text-neutral-400">{set.code}</span>
