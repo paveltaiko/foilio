@@ -5,6 +5,10 @@ import { useQueryClient } from '@tanstack/react-query';
 import { isFirebaseConfigured } from '../config/firebase';
 import { useOwnedCards } from '../hooks/useOwnedCards';
 import { useCardCollection } from '../hooks/useCardCollection';
+import { useCollectionsSettings } from './lab/useCollectionsSettings';
+import { getVisibleSets } from './lab/collectionsSettings';
+import { collectionSets } from '../config/collections';
+import type { SetCode } from '../types/card';
 import { toggleCardOwnership, updateCardQuantity } from '../services/firestore';
 import { getExistingShareToken, getOrCreateShareToken } from '../services/sharing';
 import { SetTabs } from '../components/filters/SetTabs';
@@ -194,6 +198,12 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
     return () => { cancelled = true; };
   }, [user.uid]);
 
+  const { settings: collectionSettings } = useCollectionsSettings();
+  const visibleCollectionSets = getVisibleSets(collectionSettings, collectionSets);
+  const visibleSetIds = visibleCollectionSets.length > 0
+    ? visibleCollectionSets.map((s) => s.id as SetCode)
+    : undefined;
+
   const {
     activeSet, setActiveSet,
     sortOption, setSortOption,
@@ -204,7 +214,7 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
     groupBySet, setGroupBySet,
     currentCards, isCardsLoading,
     cardCounts, stats, sortedFilteredCards,
-  } = useCardCollection({ ownedCards, searchQuery });
+  } = useCardCollection({ ownedCards, searchQuery, visibleSetIds });
 
   const activeFilterCount = (boosterFilter !== 'all' ? 1 : 0) + (ownershipFilter !== 'all' ? 1 : 0);
   const hasActiveFilters = boosterFilter !== 'all' || ownershipFilter !== 'all' || sortOption !== 'number-asc';
@@ -313,7 +323,7 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
       <PullToRefresh onRefresh={handleRefresh} disabled={isSearchOpen || !!selectedCard || isFilterDrawerOpen}>
         <div className="app-container-padded safe-bottom touch-pan-y">
           {/* Set tabs */}
-          <SetTabs activeSet={activeSet} onChange={setActiveSet} cardCounts={cardCounts} />
+          <SetTabs activeSet={activeSet} onChange={setActiveSet} cardCounts={cardCounts} visibleSets={visibleSetIds} />
 
           {/* Stats */}
           <div className="py-2">

@@ -8,9 +8,10 @@ import { parsePrice } from '../utils/formatPrice';
 interface UseCardCollectionOptions {
   ownedCards: Map<string, OwnedCard>;
   searchQuery?: string;
+  visibleSetIds?: SetCode[];
 }
 
-export function useCardCollection({ ownedCards, searchQuery = '' }: UseCardCollectionOptions) {
+export function useCardCollection({ ownedCards, searchQuery = '', visibleSetIds }: UseCardCollectionOptions) {
   const [activeSet, setActiveSet] = useState<SetCode>('all');
   const [sortOption, setSortOption] = useState<SortOption>('number-asc');
   const [ownershipFilter, setOwnershipFilter] = useState<OwnershipFilter>('all');
@@ -25,16 +26,23 @@ export function useCardCollection({ ownedCards, searchQuery = '' }: UseCardColle
   const { data: speCards = [], isLoading: speLoading } = useScryfallCards('spe');
   const { data: marCards = [], isLoading: marLoading } = useScryfallCards('mar');
 
-  // All cards combined
-  const combinedCards = useMemo(
-    () => [...spmCards, ...speCards, ...marCards],
-    [spmCards, speCards, marCards]
-  );
+  // All cards combined (filtered by visible sets if provided)
+  const combinedCards = useMemo(() => {
+    const all = [...spmCards, ...speCards, ...marCards];
+    if (!visibleSetIds) return all;
+    const allowed = new Set(visibleSetIds);
+    return all.filter((c) => allowed.has(c.set as SetCode));
+  }, [spmCards, speCards, marCards, visibleSetIds]);
 
   // Current set cards
   const allCards: Record<SetCode, ScryfallCard[]> = useMemo(
-    () => ({ all: combinedCards, spm: spmCards, spe: speCards, mar: marCards }),
-    [combinedCards, spmCards, speCards, marCards]
+    () => ({
+      all: combinedCards,
+      spm: visibleSetIds && !visibleSetIds.includes('spm') ? [] : spmCards,
+      spe: visibleSetIds && !visibleSetIds.includes('spe') ? [] : speCards,
+      mar: visibleSetIds && !visibleSetIds.includes('mar') ? [] : marCards,
+    }),
+    [combinedCards, spmCards, speCards, marCards, visibleSetIds]
   );
   const currentCards = allCards[activeSet];
   const isCardsLoading = activeSet === 'all'

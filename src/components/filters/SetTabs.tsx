@@ -5,6 +5,7 @@ interface SetTabsProps {
   activeSet: SetCode;
   onChange: (set: SetCode) => void;
   cardCounts?: Record<SetCode, number>;
+  visibleSets?: SetCode[];
 }
 
 const SET_NAMES: Record<SetCode, string> = {
@@ -14,8 +15,14 @@ const SET_NAMES: Record<SetCode, string> = {
   mar: 'Marvel Universe',
 };
 
-export function SetTabs({ activeSet, onChange, cardCounts }: SetTabsProps) {
-  const tabs = (Object.keys(SET_NAMES) as SetCode[]).map((setCode) => ({
+const SET_CODES: SetCode[] = ['all', 'spm', 'spe', 'mar'];
+
+export function SetTabs({ activeSet, onChange, cardCounts, visibleSets }: SetTabsProps) {
+  const allowedSets = visibleSets
+    ? (['all', ...visibleSets] as SetCode[])
+    : SET_CODES;
+
+  const tabs = allowedSets.map((setCode) => ({
     id: setCode,
     label: SET_NAMES[setCode],
     count: cardCounts?.[setCode],
