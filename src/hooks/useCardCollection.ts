@@ -249,6 +249,38 @@ export function useCardCollection({ ownedCards, searchQuery = '', visibleSetIds,
     };
   }, [isSearchActive, activeSet, fetchNextPageForSet, setPages]);
 
+  useEffect(() => {
+    if (!isSearchActive || activeSet !== 'all') return;
+    let cancelled = false;
+
+    const completeSearchDataForAll = async () => {
+      while (!cancelled) {
+        let foundTarget: string | null = null;
+        for (const setId of setOrder) {
+          const state = getStateForSet(setPagesRef.current, setId);
+          if (!state.initialized || state.hasMore || state.error) {
+            foundTarget = setId;
+            break;
+          }
+        }
+        if (!foundTarget) break;
+        const state = getStateForSet(setPagesRef.current, foundTarget);
+        if (state.isFetching) {
+          await new Promise((resolve) => setTimeout(resolve, FETCH_DELAY_MS));
+          continue;
+        }
+        const loaded = await fetchNextPageForSet(foundTarget);
+        if (!loaded) break;
+        await new Promise((resolve) => setTimeout(resolve, FETCH_DELAY_MS));
+      }
+    };
+
+    void completeSearchDataForAll();
+    return () => {
+      cancelled = true;
+    };
+  }, [isSearchActive, activeSet, setOrder, fetchNextPageForSet, setPages]);
+
   const cardsBySet = useMemo(() => {
     const map: Record<string, ScryfallCard[]> = {};
     for (const setId of allSetIds) {
@@ -416,9 +448,12 @@ export function useCardCollection({ ownedCards, searchQuery = '', visibleSetIds,
 
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim();
+      const isExactNumber = /^\d+$/.test(query);
       cards = cards.filter((c) =>
         c.name.toLowerCase().includes(query) ||
-        c.collector_number.toLowerCase().includes(query)
+        (isExactNumber
+          ? c.collector_number.toLowerCase() === query
+          : c.collector_number.toLowerCase().includes(query))
       );
     }
 
@@ -539,10 +574,16 @@ export function useCardCollection({ ownedCards, searchQuery = '', visibleSetIds,
   }, [activeSet, allNetworkTargetSet, setPages]);
 
   const isCompletingSearch = useMemo(() => {
-    if (!isSearchActive || activeSet === 'all') return false;
+    if (!isSearchActive) return false;
+    if (activeSet === 'all') {
+      return setOrder.some((setId) => {
+        const state = getStateForSet(setPages, setId);
+        return state.initialized && (state.hasMore || state.isFetching);
+      });
+    }
     const state = getStateForSet(setPages, activeSet);
     return state.initialized && (state.hasMore || state.isFetching);
-  }, [isSearchActive, activeSet, setPages]);
+  }, [isSearchActive, activeSet, setPages, setOrder]);
 
   const hasNextPage = canExpandRender || networkHasMore;
 
