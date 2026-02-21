@@ -1,5 +1,7 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { franchises, collectionSets } from '../../config/collections';
+import { isFirebaseConfigured } from '../../config/firebase';
+import { subscribeToCollectionSettings, saveCollectionSettings } from '../../services/firestore';
 import {
   createDefaultCollectionSettings,
   normalizeCollectionSettings,
@@ -9,26 +11,59 @@ import { CollectionsSettingsContext, type CollectionsSettingsContextValue } from
 
 const STORAGE_KEY = 'foilio-collections-settings-v1';
 
-function loadInitialSettings(): CollectionSettings {
+function loadFromLocalStorage(): CollectionSettings {
   const defaults = createDefaultCollectionSettings(franchises, collectionSets);
-
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return defaults;
-
-    const parsed = JSON.parse(raw) as unknown;
-    return normalizeCollectionSettings(parsed, franchises, collectionSets);
+    return normalizeCollectionSettings(JSON.parse(raw) as unknown, franchises, collectionSets);
   } catch {
     return defaults;
   }
 }
 
-export function CollectionsSettingsProvider({ children }: { children: ReactNode }) {
-  const [settings, setSettings] = useState<CollectionSettings>(loadInitialSettings);
+interface CollectionsSettingsProviderProps {
+  userId: string | null;
+  children: ReactNode;
+}
+
+export function CollectionsSettingsProvider({ userId, children }: CollectionsSettingsProviderProps) {
+  const [settings, setSettings] = useState<CollectionSettings>(() =>
+    isFirebaseConfigured
+      ? createDefaultCollectionSettings(franchises, collectionSets)
+      : loadFromLocalStorage()
+  );
+
+  useEffect(() => {
+    if (!userId || !isFirebaseConfigured) return;
+
+    const unsubscribe = subscribeToCollectionSettings(userId, (raw) => {
+      if (raw === null) {
+        // Firestore nemá data — migruj z localStorage pokud existuje
+        const localRaw = window.localStorage.getItem(STORAGE_KEY);
+        if (localRaw) {
+          const local = loadFromLocalStorage();
+          saveCollectionSettings(userId, local as unknown as Record<string, unknown>).catch(() => {});
+          setSettings(local);
+        } else {
+          setSettings(createDefaultCollectionSettings(franchises, collectionSets));
+        }
+      } else {
+        setSettings(normalizeCollectionSettings(raw, franchises, collectionSets));
+      }
+    });
+
+    return unsubscribe;
+  }, [userId]);
 
   const persist = (next: CollectionSettings) => {
-    setSettings(next);
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    setSettings(next); // okamžitá optimistická aktualizace
+
+    if (isFirebaseConfigured && userId) {
+      saveCollectionSettings(userId, next as unknown as Record<string, unknown>).catch(() => {});
+    } else {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    }
   };
 
   const value = useMemo<CollectionsSettingsContextValue>(() => ({
@@ -62,7 +97,8 @@ export function CollectionsSettingsProvider({ children }: { children: ReactNode 
       };
       persist(next);
     },
-  }), [settings]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [settings, userId]);
 
   return (
     <CollectionsSettingsContext.Provider value={value}>

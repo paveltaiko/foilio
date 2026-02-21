@@ -37,7 +37,7 @@ function AppContent() {
   }, [logout, navigate]);
 
   return (
-    <CollectionsSettingsProvider>
+    <CollectionsSettingsProvider userId={user?.uid ?? null}>
       <div className="min-h-svh bg-surface-secondary flex flex-col overflow-x-hidden">
         <Header
           userName={user?.displayName}

@@ -104,6 +104,30 @@ export async function toggleCardOwnership(
   }
 }
 
+// ─── Collection Settings ──────────────────────────────────────────────────────
+
+function settingsDocRef(userId: string) {
+  return doc(getDb(), 'users', userId, 'settings', 'collections');
+}
+
+export function subscribeToCollectionSettings(
+  userId: string,
+  callback: (raw: Record<string, unknown> | null) => void
+): Unsubscribe {
+  return onSnapshot(settingsDocRef(userId), (snap) => {
+    callback(snap.exists() ? (snap.data() as Record<string, unknown>) : null);
+  });
+}
+
+export async function saveCollectionSettings(
+  userId: string,
+  settings: Record<string, unknown>
+): Promise<void> {
+  await setDoc(settingsDocRef(userId), settings);
+}
+
+// ─── Card Quantity ────────────────────────────────────────────────────────────
+
 export async function updateCardQuantity(
   userId: string,
   cardId: string,
