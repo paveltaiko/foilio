@@ -37,7 +37,7 @@ export function AvatarMenu({ userName, userPhoto, onOpenSettings, onLogout }: Av
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className={`flex h-8 w-8 cursor-pointer items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-300 ${
+        className={`flex h-[34px] w-[34px] cursor-pointer items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-300 ${
           isOpen
             ? 'bg-neutral-100 text-neutral-700'
             : 'bg-white hover:bg-neutral-50'
@@ -52,7 +52,7 @@ export function AvatarMenu({ userName, userPhoto, onOpenSettings, onLogout }: Av
           <img
             src={userPhoto}
             alt={userName ?? 'Avatar'}
-            className="h-8 w-8 rounded-full"
+            className="h-[34px] w-[34px] rounded-full"
             referrerPolicy="no-referrer"
           />
         ) : (
