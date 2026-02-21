@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
+import { useQueries } from '@tanstack/react-query';
 import { Sparkles, ShieldCheck, Share2, ChartColumnIncreasing } from 'lucide-react';
-import { useScryfallCards } from '../hooks/useScryfallCards';
+import { collectionSets } from '../config/collections';
+import { fetchCardsForSet } from '../services/scryfall';
 import { CardGrid, CardGridSkeleton } from '../components/cards/CardGrid';
 import { CardDetail } from '../components/cards/CardDetail';
 import { FaqAccordion } from '../components/ui/FaqAccordion';
@@ -69,13 +71,26 @@ export function PreviewLoginLandingPage({ onLogin, isLoggedIn }: PreviewLoginLan
   const navigate = useNavigate();
   const [selectedCard, setSelectedCard] = useState<ScryfallCard | null>(null);
   const [selectedVariant, setSelectedVariant] = useState<CardVariant>(null);
-  const { data: spmCards = [], isLoading: spmLoading } = useScryfallCards('spm');
-  const { data: speCards = [], isLoading: speLoading } = useScryfallCards('spe');
-  const { data: marCards = [], isLoading: marLoading } = useScryfallCards('mar');
+  const STALE_TIME = 24 * 60 * 60 * 1000;
+  const setQueries = useQueries({
+    queries: collectionSets.map((set) => ({
+      queryKey: ['scryfall-cards', set.id],
+      queryFn: () => fetchCardsForSet(set.id),
+      staleTime: STALE_TIME,
+      gcTime: STALE_TIME,
+      refetchOnWindowFocus: false,
+    })),
+  });
 
-  const isLoading = spmLoading || speLoading || marLoading;
-  const totalCards = spmCards.length + speCards.length + marCards.length;
-  const allCards = useMemo(() => [...spmCards, ...speCards, ...marCards], [spmCards, speCards, marCards]);
+  const isLoading = setQueries.some((q) => q.isLoading);
+  const allSetData = setQueries.map((q) => q.data);
+  const cardsBySets = useMemo(
+    () => collectionSets.map((set, i) => ({ set, cards: allSetData[i] ?? [] })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    allSetData
+  );
+  const totalCards = cardsBySets.reduce((sum, { cards }) => sum + cards.length, 0);
+  const allCards = useMemo(() => cardsBySets.flatMap(({ cards }) => cards), [cardsBySets]);
   const topCards = useMemo(
     () => PREVIEW_CARD_SELECTION
       .map((target) => allCards.find((card) => card.name === target.name && card.collector_number === target.collectorNumber))
@@ -132,9 +147,9 @@ export function PreviewLoginLandingPage({ onLogin, isLoggedIn }: PreviewLoginLan
 
       <section className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         <StatTile label="Total cards" value={isLoading ? '...' : `${totalCards}`} />
-        <StatTile label="Main set (SPM)" value={isLoading ? '...' : `${spmCards.length}`} />
-        <StatTile label="Specials (SPE)" value={isLoading ? '...' : `${speCards.length}`} />
-        <StatTile label="Marvel (MAR)" value={isLoading ? '...' : `${marCards.length}`} />
+        {cardsBySets.map(({ set, cards }) => (
+          <StatTile key={set.id} label={set.name} value={isLoading ? '...' : `${cards.length}`} />
+        ))}
       </section>
 
       <section className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">

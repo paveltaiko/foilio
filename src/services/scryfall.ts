@@ -33,13 +33,12 @@ export async function fetchCardsForSet(setCode: SetCode): Promise<ScryfallCard[]
   return allCards;
 }
 
-export async function fetchAllSets(): Promise<Record<string, ScryfallCard[]>> {
-  const sets: SetCode[] = ['spm', 'spe', 'mar'];
+export async function fetchAllSets(setCodes: string[]): Promise<Record<string, ScryfallCard[]>> {
   const results: Record<string, ScryfallCard[]> = {};
 
-  for (const set of sets) {
+  for (const set of setCodes) {
     results[set] = await fetchCardsForSet(set);
-    if (set !== sets[sets.length - 1]) {
+    if (set !== setCodes[setCodes.length - 1]) {
       await delay(RATE_LIMIT_MS);
     }
   }

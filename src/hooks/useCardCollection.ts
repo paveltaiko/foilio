@@ -1,17 +1,22 @@
 import { useState, useMemo } from 'react';
+import { useQueries } from '@tanstack/react-query';
 import type { ScryfallCard, SetCode, SortOption, OwnershipFilter, BoosterFilter, OwnedCard, CardWithVariant } from '../types/card';
-import { useScryfallCards } from './useScryfallCards';
+import type { CollectionSet } from '../config/collections';
+import { fetchCardsForSet } from '../services/scryfall';
 import { useCollectionStats } from './useCollectionStats';
 import { useBoosterMap } from './useBoosterMap';
 import { parsePrice } from '../utils/formatPrice';
 
+const STALE_TIME = 24 * 60 * 60 * 1000;
+
 interface UseCardCollectionOptions {
   ownedCards: Map<string, OwnedCard>;
   searchQuery?: string;
-  visibleSetIds?: SetCode[];
+  visibleSetIds?: string[];
+  sets: CollectionSet[];
 }
 
-export function useCardCollection({ ownedCards, searchQuery = '', visibleSetIds }: UseCardCollectionOptions) {
+export function useCardCollection({ ownedCards, searchQuery = '', visibleSetIds, sets }: UseCardCollectionOptions) {
   const [activeSet, setActiveSet] = useState<SetCode>('all');
   const [sortOption, setSortOption] = useState<SortOption>('number-asc');
   const [ownershipFilter, setOwnershipFilter] = useState<OwnershipFilter>('all');
@@ -21,42 +26,67 @@ export function useCardCollection({ ownedCards, searchQuery = '', visibleSetIds 
 
   const { data: boosterMap, isLoading: boosterMapLoading } = useBoosterMap();
 
-  // Fetch cards from Scryfall
-  const { data: spmCards = [], isLoading: spmLoading } = useScryfallCards('spm');
-  const { data: speCards = [], isLoading: speLoading } = useScryfallCards('spe');
-  const { data: marCards = [], isLoading: marLoading } = useScryfallCards('mar');
+  // Fetch cards dynamically for all sets
+  const setQueries = useQueries({
+    queries: sets.map((set) => ({
+      queryKey: ['scryfall-cards', set.id],
+      queryFn: () => fetchCardsForSet(set.id),
+      staleTime: STALE_TIME,
+      gcTime: STALE_TIME,
+      refetchOnWindowFocus: false,
+    })),
+  });
+
+  // Build a map: setId -> cards
+  const cardsBySet = useMemo(() => {
+    const map: Record<string, ScryfallCard[]> = {};
+    sets.forEach((set, i) => {
+      map[set.id] = setQueries[i]?.data ?? [];
+    });
+    return map;
+  }, [sets, setQueries]);
+
+  // Set order derived from config (respects the order field)
+  const setOrder = useMemo(() => sets.map((s) => s.id), [sets]);
 
   // All cards combined (filtered by visible sets if provided)
   const combinedCards = useMemo(() => {
-    const all = [...spmCards, ...speCards, ...marCards];
+    const all = setOrder.flatMap((id) => cardsBySet[id] ?? []);
     if (!visibleSetIds) return all;
     const allowed = new Set(visibleSetIds);
-    return all.filter((c) => allowed.has(c.set as SetCode));
-  }, [spmCards, speCards, marCards, visibleSetIds]);
+    return all.filter((c) => allowed.has(c.set));
+  }, [setOrder, cardsBySet, visibleSetIds]);
 
   // Current set cards
-  const allCards: Record<SetCode, ScryfallCard[]> = useMemo(
-    () => ({
-      all: combinedCards,
-      spm: visibleSetIds && !visibleSetIds.includes('spm') ? [] : spmCards,
-      spe: visibleSetIds && !visibleSetIds.includes('spe') ? [] : speCards,
-      mar: visibleSetIds && !visibleSetIds.includes('mar') ? [] : marCards,
-    }),
-    [combinedCards, spmCards, speCards, marCards, visibleSetIds]
-  );
-  const currentCards = allCards[activeSet];
-  const isCardsLoading = activeSet === 'all'
-    ? (spmLoading || speLoading || marLoading)
-    : activeSet === 'spm' ? spmLoading : activeSet === 'spe' ? speLoading : marLoading;
+  const currentCards = useMemo(() => {
+    if (activeSet === 'all') return combinedCards;
+    if (visibleSetIds && !visibleSetIds.includes(activeSet)) return [];
+    return cardsBySet[activeSet] ?? [];
+  }, [activeSet, combinedCards, cardsBySet, visibleSetIds]);
+
+  const isCardsLoading = useMemo(() => {
+    if (activeSet === 'all') return setQueries.some((q) => q.isLoading);
+    const idx = sets.findIndex((s) => s.id === activeSet);
+    return idx >= 0 ? (setQueries[idx]?.isLoading ?? false) : false;
+  }, [activeSet, sets, setQueries]);
 
   // Stats
   const stats = useCollectionStats(currentCards, ownedCards, activeSet);
 
-  // Card counts per set
-  const cardCounts: Record<SetCode, number> = useMemo(
-    () => ({ all: combinedCards.length, spm: spmCards.length, spe: speCards.length, mar: marCards.length }),
-    [combinedCards.length, spmCards.length, speCards.length, marCards.length]
-  );
+  // Whether the current card set has any booster data available
+  const hasBoosterData = useMemo(() => {
+    if (!boosterMap || boosterMap.size === 0) return false;
+    return currentCards.some((c) => boosterMap.has(`${c.set}:${c.collector_number}`));
+  }, [boosterMap, currentCards]);
+
+  // Card counts per set + all
+  const cardCounts = useMemo(() => {
+    const counts: Record<string, number> = { all: combinedCards.length };
+    for (const id of setOrder) {
+      counts[id] = visibleSetIds && !visibleSetIds.includes(id) ? 0 : (cardsBySet[id]?.length ?? 0);
+    }
+    return counts;
+  }, [combinedCards.length, setOrder, cardsBySet, visibleSetIds]);
 
   // Sort & filter
   const sortedFilteredCards: CardWithVariant[] = useMemo(() => {
@@ -103,7 +133,6 @@ export function useCardCollection({ ownedCards, searchQuery = '', visibleSetIds 
 
     // Sort by number
     if (sortOption === 'number-asc' || sortOption === 'number-desc') {
-      const setOrder = ['spm', 'spe', 'mar'];
       cards.sort((a, b) => {
         // When grouped by set, sort by set first to match visual grid order
         if (activeSet === 'all' && groupBySet) {
@@ -115,7 +144,6 @@ export function useCardCollection({ ownedCards, searchQuery = '', visibleSetIds 
         return sortOption === 'number-asc' ? aNum - bNum : bNum - aNum;
       });
       if (getBoosterVariants) {
-        // Expand to show only the variants available in the selected booster
         const result: CardWithVariant[] = [];
         for (const card of cards) {
           const variants = getBoosterVariants(card)!;
@@ -168,7 +196,7 @@ export function useCardCollection({ ownedCards, searchQuery = '', visibleSetIds 
     });
 
     return filtered;
-  }, [currentCards, ownershipFilter, boosterFilter, boosterMap, sortOption, ownedCards, searchQuery, activeSet, groupBySet]);
+  }, [currentCards, ownershipFilter, boosterFilter, boosterMap, sortOption, ownedCards, searchQuery, activeSet, groupBySet, setOrder]);
 
   return {
     // State
@@ -192,5 +220,6 @@ export function useCardCollection({ ownedCards, searchQuery = '', visibleSetIds 
     cardCounts,
     stats,
     sortedFilteredCards,
+    hasBoosterData,
   };
 }
