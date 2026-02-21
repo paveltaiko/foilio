@@ -1,5 +1,5 @@
 import { createContext } from 'react';
-import type { FranchiseId } from './collectionsV2.mock';
+import type { FranchiseId } from '../../config/collections';
 import type { CollectionSettings } from './collectionsSettings';
 
 export interface CollectionsSettingsContextValue {

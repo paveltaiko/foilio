@@ -1,4 +1,4 @@
-import type { LabCard, LabFranchise, LabSet, FranchiseId } from './collectionsV2.mock';
+import type { Franchise, CollectionSet, FranchiseId } from '../../config/collections';
 
 export interface CollectionConfig {
   enabled: boolean;
@@ -10,8 +10,8 @@ export interface CollectionSettings {
 }
 
 export function createDefaultCollectionSettings(
-  franchises: LabFranchise[],
-  sets: LabSet[]
+  franchises: Franchise[],
+  sets: CollectionSet[]
 ): CollectionSettings {
   const collections = {} as Record<FranchiseId, CollectionConfig>;
 
@@ -34,8 +34,8 @@ export function createDefaultCollectionSettings(
 
 export function normalizeCollectionSettings(
   value: unknown,
-  franchises: LabFranchise[],
-  sets: LabSet[]
+  franchises: Franchise[],
+  sets: CollectionSet[]
 ): CollectionSettings {
   const defaults = createDefaultCollectionSettings(franchises, sets);
 
@@ -77,19 +77,14 @@ export function normalizeCollectionSettings(
   return defaults;
 }
 
-export function getVisibleSets(settings: CollectionSettings, sets: LabSet[]): LabSet[] {
+export function getVisibleSets(settings: CollectionSettings, sets: CollectionSet[]): CollectionSet[] {
   return sets.filter((set) => {
     const collection = settings.collections[set.franchiseId];
     return collection?.enabled && collection.setVisibility[set.id];
   });
 }
 
-export function getVisibleCards(settings: CollectionSettings, sets: LabSet[], cards: LabCard[]): LabCard[] {
-  const visibleSetIds = new Set(getVisibleSets(settings, sets).map((set) => set.id));
-  return cards.filter((card) => visibleSetIds.has(card.setId));
-}
-
-export function isActiveTabValid(activeSetId: string, visibleSets: LabSet[]): boolean {
+export function isActiveTabValid(activeSetId: string, visibleSets: CollectionSet[]): boolean {
   if (activeSetId === 'all') return true;
   return visibleSets.some((set) => set.id === activeSetId);
 }

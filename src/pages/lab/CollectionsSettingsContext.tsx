@@ -1,5 +1,5 @@
 import { useMemo, useState, type ReactNode } from 'react';
-import { labFranchises, labSets } from './collectionsV2.mock';
+import { franchises, collectionSets } from '../../config/collections';
 import {
   createDefaultCollectionSettings,
   normalizeCollectionSettings,
@@ -7,17 +7,17 @@ import {
 } from './collectionsSettings';
 import { CollectionsSettingsContext, type CollectionsSettingsContextValue } from './CollectionsSettingsStore';
 
-const STORAGE_KEY = 'foilio-lab-collections-settings-v1';
+const STORAGE_KEY = 'foilio-collections-settings-v1';
 
 function loadInitialSettings(): CollectionSettings {
-  const defaults = createDefaultCollectionSettings(labFranchises, labSets);
+  const defaults = createDefaultCollectionSettings(franchises, collectionSets);
 
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return defaults;
 
     const parsed = JSON.parse(raw) as unknown;
-    return normalizeCollectionSettings(parsed, labFranchises, labSets);
+    return normalizeCollectionSettings(parsed, franchises, collectionSets);
   } catch {
     return defaults;
   }

@@ -1,13 +1,13 @@
 import type { CollectionSettings } from '../../pages/lab/collectionsSettings';
-import type { LabFranchise, LabSet } from '../../pages/lab/collectionsV2.mock';
+import type { Franchise, CollectionSet, FranchiseId } from '../../config/collections';
 import { Checkbox } from '../ui/Checkbox';
 
 interface CollectionsSettingsPanelProps {
-  franchises: LabFranchise[];
-  sets: LabSet[];
+  franchises: Franchise[];
+  sets: CollectionSet[];
   value: CollectionSettings;
-  onCollectionToggle: (franchiseId: LabFranchise['id'], enabled: boolean) => void;
-  onSetToggle: (franchiseId: LabFranchise['id'], setId: string, visible: boolean) => void;
+  onCollectionToggle: (franchiseId: FranchiseId, enabled: boolean) => void;
+  onSetToggle: (franchiseId: FranchiseId, setId: string, visible: boolean) => void;
 }
 
 export function CollectionsSettingsPanel({
