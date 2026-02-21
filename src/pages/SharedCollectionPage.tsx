@@ -153,7 +153,7 @@ export function SharedCollectionPage({ currentUserId, isSearchOpen, onSearchClos
                   setSelectedVariant(variant);
                 }}
                 readOnly
-                groupBySet={activeSet === 'all' && groupBySet}
+                groupBySet={activeSet === 'all' && groupBySet && searchQuery.trim().length === 0}
                 sets={collectionSets}
                 onLoadMore={loadNextPage}
                 hasMore={hasNextPage}

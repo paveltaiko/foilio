@@ -26,7 +26,7 @@ export function CollectionsSettingsPanel({
           .sort((a, b) => a.order - b.order);
 
         return (
-          <section key={franchise.id} className="py-5 first:pt-0 last:pb-0">
+          <section key={franchise.id} className="py-2 first:pt-0 last:pb-0">
             <div className={`flex items-center justify-between gap-3 rounded-xl pl-4 pr-3 py-4 transition-colors ${collection.enabled ? 'bg-neutral-100' : 'bg-neutral-50'}`}>
               <h3 className="text-sm font-semibold text-neutral-900">{franchise.name}</h3>
 
@@ -47,25 +47,26 @@ export function CollectionsSettingsPanel({
               </button>
             </div>
 
-            <div className={`mt-3 divide-y divide-neutral-100 ${collection.enabled ? '' : 'opacity-45'}`}>
-              {franchiseSets.map((set) => {
-                const checked = collection.setVisibility[set.id] ?? false;
+            {collection.enabled && (
+              <div className="mt-1 divide-y divide-neutral-100">
+                {franchiseSets.map((set) => {
+                  const checked = collection.setVisibility[set.id] ?? false;
 
-                return (
-                  <div key={set.id} className="flex cursor-pointer items-center justify-between pl-0 pr-0 py-2.5 text-sm sm:pl-4 sm:pr-3" onClick={() => collection.enabled && onSetToggle(franchise.id, set.id, !checked)}>
-                    <span className="text-neutral-700">
-                      {set.name}
-                      <span className="ml-2 text-xs text-neutral-400">{set.code}</span>
-                    </span>
-                    <Checkbox
-                      checked={checked}
-                      disabled={!collection.enabled}
-                      onChange={(value) => onSetToggle(franchise.id, set.id, value)}
-                    />
-                  </div>
-                );
-              })}
-            </div>
+                  return (
+                    <div key={set.id} className="flex cursor-pointer items-center justify-between pl-0 pr-0 py-2.5 text-sm sm:pl-4 sm:pr-3" onClick={() => onSetToggle(franchise.id, set.id, !checked)}>
+                      <span className="text-neutral-700">
+                        {set.name}
+                        <span className="ml-2 text-xs text-neutral-400">{set.code}</span>
+                      </span>
+                      <Checkbox
+                        checked={checked}
+                        onChange={(value) => onSetToggle(franchise.id, set.id, value)}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </section>
         );
       })}

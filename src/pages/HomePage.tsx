@@ -495,7 +495,7 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
                   setSelectedCard(card);
                   setSelectedVariant(variant);
                 }}
-                groupBySet={activeSet === 'all' && groupBySet}
+                groupBySet={activeSet === 'all' && groupBySet && searchQuery.trim().length === 0}
                 sets={collectionSets}
                 onLoadMore={loadNextPage}
                 hasMore={hasNextPage}

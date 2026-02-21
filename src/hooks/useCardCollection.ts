@@ -227,6 +227,7 @@ export function useCardCollection({ ownedCards, searchQuery = '', visibleSetIds,
   }, [activeSet, setOrder, fetchNextPageForSet]);
 
   const isSearchActive = searchQuery.trim().length > 0;
+  const shouldGroupBySet = activeSet === 'all' && groupBySet && !isSearchActive;
 
   useEffect(() => {
     if (!isSearchActive || activeSet === 'all') return;
@@ -451,7 +452,7 @@ export function useCardCollection({ ownedCards, searchQuery = '', visibleSetIds,
 
     if (sortOption === 'number-asc' || sortOption === 'number-desc') {
       cards.sort((a, b) => {
-        if (activeSet === 'all' && groupBySet) {
+        if (shouldGroupBySet) {
           const setDiff = setOrder.indexOf(a.set) - setOrder.indexOf(b.set);
           if (setDiff !== 0) return setDiff;
         }
@@ -510,7 +511,7 @@ export function useCardCollection({ ownedCards, searchQuery = '', visibleSetIds,
     });
 
     return filtered;
-  }, [currentCards, ownershipFilter, boosterFilter, boosterMap, sortOption, ownedCards, searchQuery, activeSet, groupBySet, setOrder]);
+  }, [currentCards, ownershipFilter, boosterFilter, boosterMap, sortOption, ownedCards, searchQuery, shouldGroupBySet, setOrder]);
 
   const visibleCards = useMemo(
     () => sortedFilteredCards.slice(0, renderLimit),

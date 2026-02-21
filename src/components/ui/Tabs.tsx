@@ -77,7 +77,7 @@ function Dropdown({ tabs, activeTab, onChange }: TabsProps) {
                 w-full flex items-center justify-between px-4 py-3 text-sm font-medium transition-colors cursor-pointer
                 ${activeTab === tab.id
                   ? 'bg-primary-50 text-primary-600'
-                  : 'text-neutral-700 hover:bg-neutral-50'
+                  : 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900'
                 }
               `}
               role="option"
@@ -218,7 +218,7 @@ function DesktopTabs({ tabs, activeTab, onChange }: TabsProps) {
                       w-full flex items-center justify-between gap-4 px-4 py-3 text-sm font-medium transition-colors cursor-pointer whitespace-nowrap
                       ${activeTab === tab.id
                         ? 'bg-primary-50 text-primary-600'
-                        : 'text-neutral-700 hover:bg-neutral-50'
+                        : 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900'
                       }
                     `}
                   >
