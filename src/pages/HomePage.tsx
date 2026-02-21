@@ -2,7 +2,6 @@ import { useState, useCallback, useEffect } from 'react';
 import { Share, Check, Layers, LayoutGrid, SlidersHorizontal, RotateCcw, Settings } from 'lucide-react';
 import { Link } from 'react-router';
 import type { User } from 'firebase/auth';
-import { useQueryClient } from '@tanstack/react-query';
 import { isFirebaseConfigured } from '../config/firebase';
 import { useOwnedCards } from '../hooks/useOwnedCards';
 import { useCardCollection } from '../hooks/useCardCollection';
@@ -164,7 +163,6 @@ function ShareIconButton({
 }
 
 export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
-  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [shareToken, setShareToken] = useState<string | null>(null);
   const [shareToastMessage, setShareToastMessage] = useState<string | null>(null);
@@ -214,8 +212,15 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
     selectedCard, setSelectedCard,
     groupBySet, setGroupBySet,
     currentCards, isCardsLoading,
-    cardCounts, stats, sortedFilteredCards,
+    cardCounts, stats, sortedFilteredCards, visibleCards,
     hasBoosterData,
+    isFetchingNextPage,
+    hasNextPage,
+    loadNextPage,
+    loadMoreError,
+    isCompletingSearch,
+    isComputingTotalValue,
+    refreshCards,
   } = useCardCollection({ ownedCards, searchQuery, visibleSetIds, sets: collectionSets });
 
   // Reset booster filter when switching to a set that has no booster data
@@ -321,11 +326,8 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
   );
 
   const handleRefresh = useCallback(async () => {
-    await queryClient.refetchQueries({
-      queryKey: ['scryfall-cards'],
-      type: 'active',
-    });
-  }, [queryClient]);
+    refreshCards();
+  }, [refreshCards]);
 
   return (
     <>
@@ -475,17 +477,32 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
               </Link>
             </div>
           ) : (
-            <CardGrid
-              cards={sortedFilteredCards}
-              ownedCards={ownedCards}
-              onToggle={handleToggle}
-              onCardClick={(card, variant) => {
-                setSelectedCard(card);
-                setSelectedVariant(variant);
-              }}
-              groupBySet={activeSet === 'all' && groupBySet}
-              sets={collectionSets}
-            />
+            <div className="space-y-3">
+              {(isCompletingSearch || isFetchingNextPage || isComputingTotalValue) && (
+                <p className="text-xs text-neutral-500">
+                  {isComputingTotalValue
+                    ? 'Calculating total collection value…'
+                    : isCompletingSearch
+                      ? 'Searching through remaining cards…'
+                      : 'Loading more cards…'}
+                </p>
+              )}
+              <CardGrid
+                cards={visibleCards}
+                ownedCards={ownedCards}
+                onToggle={handleToggle}
+                onCardClick={(card, variant) => {
+                  setSelectedCard(card);
+                  setSelectedVariant(variant);
+                }}
+                groupBySet={activeSet === 'all' && groupBySet}
+                sets={collectionSets}
+                onLoadMore={loadNextPage}
+                hasMore={hasNextPage}
+                isLoadingMore={isFetchingNextPage}
+                loadMoreError={loadMoreError}
+              />
+            </div>
           )}
         </div>
       </PullToRefresh>

@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { ArrowLeft, Layers, LayoutGrid } from 'lucide-react';
-import { useQueryClient } from '@tanstack/react-query';
 import { useSharedCollection } from '../hooks/useSharedCollection';
 import { useCardCollection } from '../hooks/useCardCollection';
 import { SetTabs } from '../components/filters/SetTabs';
@@ -22,7 +21,6 @@ interface SharedCollectionPageProps {
 }
 
 export function SharedCollectionPage({ currentUserId, isSearchOpen, onSearchClose }: SharedCollectionPageProps) {
-  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedVariant, setSelectedVariant] = useState<CardVariant>(null);
   const { token } = useParams<{ token: string }>();
@@ -43,16 +41,16 @@ export function SharedCollectionPage({ currentUserId, isSearchOpen, onSearchClos
     ownershipFilter, setOwnershipFilter,
     selectedCard, setSelectedCard,
     groupBySet, setGroupBySet,
-    isCardsLoading, cardCounts, stats, sortedFilteredCards,
+    isCardsLoading, cardCounts, stats, sortedFilteredCards, visibleCards,
+    isFetchingNextPage, hasNextPage, loadNextPage, loadMoreError, isCompletingSearch,
+    isComputingTotalValue,
+    refreshCards,
   } = useCardCollection({ ownedCards, searchQuery, sets: collectionSets });
 
   const isLoading = collectionLoading || isCardsLoading;
   const handleRefresh = async () => {
     refresh();
-    await queryClient.refetchQueries({
-      queryKey: ['scryfall-cards'],
-      type: 'active',
-    });
+    refreshCards();
   };
 
   // No-op toggle for read-only mode
@@ -136,17 +134,33 @@ export function SharedCollectionPage({ currentUserId, isSearchOpen, onSearchClos
           {isLoading ? (
             <CardGridSkeleton />
           ) : (
-            <CardGrid
-              cards={sortedFilteredCards}
-              ownedCards={ownedCards}
-              onToggle={noop}
-              onCardClick={(card, variant) => {
-                setSelectedCard(card);
-                setSelectedVariant(variant);
-              }}
-              readOnly
-              groupBySet={activeSet === 'all' && groupBySet}
-            />
+            <div className="space-y-3">
+              {(isCompletingSearch || isFetchingNextPage || isComputingTotalValue) && (
+                <p className="text-xs text-neutral-500">
+                  {isComputingTotalValue
+                    ? 'Calculating total collection value…'
+                    : isCompletingSearch
+                      ? 'Searching through remaining cards…'
+                      : 'Loading more cards…'}
+                </p>
+              )}
+              <CardGrid
+                cards={visibleCards}
+                ownedCards={ownedCards}
+                onToggle={noop}
+                onCardClick={(card, variant) => {
+                  setSelectedCard(card);
+                  setSelectedVariant(variant);
+                }}
+                readOnly
+                groupBySet={activeSet === 'all' && groupBySet}
+                sets={collectionSets}
+                onLoadMore={loadNextPage}
+                hasMore={hasNextPage}
+                isLoadingMore={isFetchingNextPage}
+                loadMoreError={loadMoreError}
+              />
+            </div>
           )}
         </div>
       </PullToRefresh>

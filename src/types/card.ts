@@ -37,6 +37,12 @@ export interface ScryfallSearchResponse {
   data: ScryfallCard[];
 }
 
+export interface ScryfallCardsPage {
+  cards: ScryfallCard[];
+  hasMore: boolean;
+  nextPage: string | null;
+}
+
 export interface OwnedCard {
   scryfallId: string;
   set: string;
