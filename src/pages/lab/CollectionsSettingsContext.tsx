@@ -43,7 +43,9 @@ export function CollectionsSettingsProvider({ userId, children }: CollectionsSet
         const localRaw = window.localStorage.getItem(STORAGE_KEY);
         if (localRaw) {
           const local = loadFromLocalStorage();
-          saveCollectionSettings(userId, local as unknown as Record<string, unknown>).catch(() => {});
+          saveCollectionSettings(userId, local as unknown as Record<string, unknown>).catch((err) => {
+            console.error('[CollectionsSettings] Migrace z localStorage selhala:', err);
+          });
           setSettings(local);
         } else {
           setSettings(createDefaultCollectionSettings(franchises, collectionSets));
@@ -60,7 +62,9 @@ export function CollectionsSettingsProvider({ userId, children }: CollectionsSet
     setSettings(next); // okamžitá optimistická aktualizace
 
     if (isFirebaseConfigured && userId) {
-      saveCollectionSettings(userId, next as unknown as Record<string, unknown>).catch(() => {});
+      saveCollectionSettings(userId, next as unknown as Record<string, unknown>).catch((err) => {
+        console.error('[CollectionsSettings] Uložení do Firestore selhalo:', err);
+      });
     } else {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
     }
