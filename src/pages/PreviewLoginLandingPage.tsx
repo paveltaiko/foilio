@@ -38,14 +38,14 @@ const featureCards = [
 ];
 
 const PREVIEW_CARD_SELECTION = [
-  { name: 'The Soul Stone',                         set: 'spe', collectorNumber: '242' },
-  { name: 'The Soul Stone',                         set: 'spe', collectorNumber: '243' },
+  { name: 'The Soul Stone',                         set: 'spm', collectorNumber: '242' },
+  { name: 'The Soul Stone',                         set: 'spm', collectorNumber: '243' },
   { name: 'The Soul Stone',                         set: 'spm', collectorNumber: '66'  },
-  { name: 'Parallel Lives',                         set: 'spm', collectorNumber: '36'  },
-  { name: 'Miles Morales // Ultimate Spider-Man',   set: 'spe', collectorNumber: '234' },
-  { name: 'Spectacular Spider-Man',                 set: 'spe', collectorNumber: '240' },
-  { name: 'Gwen Stacy // Ghost-Spider',             set: 'spe', collectorNumber: '202' },
-  { name: 'Eddie Brock // Venom, Lethal Protector', set: 'spe', collectorNumber: '233' },
+  { name: 'Miles Morales // Ultimate Spider-Man',   set: 'spm', collectorNumber: '234' },
+  { name: 'Spectacular Spider-Man',                 set: 'spm', collectorNumber: '240' },
+  { name: 'Gwen Stacy // Ghost-Spider',             set: 'spm', collectorNumber: '202' },
+  { name: 'Eddie Brock // Venom, Lethal Protector', set: 'spm', collectorNumber: '233' },
+  { name: 'Miles Morales // Ultimate Spider-Man',   set: 'spm', collectorNumber: '200' },
 ] as const;
 
 const FAQ_ITEMS = [
