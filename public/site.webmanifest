@@ -1,7 +1,7 @@
 {
-  "name": "Foilio — MTG Spider-Man Card Collection Manager",
+  "name": "Foilio — MTG Universes Beyond Collection Tracker",
   "short_name": "Foilio",
-  "description": "Manage your Magic: The Gathering Spider-Man card collection.",
+  "description": "Track your Magic: The Gathering Universes Beyond card collections.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f5f5f5",

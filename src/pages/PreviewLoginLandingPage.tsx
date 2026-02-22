@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useQueries } from '@tanstack/react-query';
 import { Sparkles, ShieldCheck, Share2, ChartColumnIncreasing } from 'lucide-react';
-import { collectionSets } from '../config/collections';
+import { collectionSets, franchises } from '../config/collections';
 import { fetchCardsForSet } from '../services/scryfall';
 import { CardGrid, CardGridSkeleton } from '../components/cards/CardGrid';
 import { CardDetail } from '../components/cards/CardDetail';
@@ -32,7 +32,7 @@ const featureCards = [
   },
   {
     title: 'Private by Default',
-    description: 'Auth and access controls via Firebase rules.',
+    description: 'Your collection is visible only to you unless you choose to share it.',
     icon: ShieldCheck,
   },
 ];
@@ -89,7 +89,6 @@ export function PreviewLoginLandingPage({ onLogin, isLoggedIn }: PreviewLoginLan
     // eslint-disable-next-line react-hooks/exhaustive-deps
     allSetData
   );
-  const totalCards = cardsBySets.reduce((sum, { cards }) => sum + cards.length, 0);
   const allCards = useMemo(() => cardsBySets.flatMap(({ cards }) => cards), [cardsBySets]);
   const topCards = useMemo(
     () => PREVIEW_CARD_SELECTION
@@ -123,10 +122,10 @@ export function PreviewLoginLandingPage({ onLogin, isLoggedIn }: PreviewLoginLan
 
         <div className="relative space-y-4 sm:space-y-6 max-w-3xl">
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-tight">
-            Track your MTG Spider-Man collection without spreadsheet chaos.
+            Track your MTG Universes Beyond collections without spreadsheet chaos.
           </h1>
           <p className="text-sm sm:text-base text-neutral-200 max-w-2xl">
-            See exactly what you own, what is still missing, and how much your collection is worth. Save progress across devices and share a clean read-only link whenever you want.
+            Lord of the Rings, Fallout, Final Fantasy, Spider-Man and more. See exactly what you own, what is still missing, and how much your collection is worth. Save progress across devices and share a clean read-only link whenever you want.
           </p>
           <div className="flex flex-col sm:flex-row gap-3">
             <button
@@ -145,11 +144,23 @@ export function PreviewLoginLandingPage({ onLogin, isLoggedIn }: PreviewLoginLan
         </div>
       </section>
 
-      <section className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-        <StatTile label="Total cards" value={isLoading ? '...' : `${totalCards}`} />
-        {cardsBySets.map(({ set, cards }) => (
-          <StatTile key={set.id} label={set.name} value={isLoading ? '...' : `${cards.length}`} />
+      <section className="space-y-4">
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <h2 className="text-lg sm:text-xl font-bold text-neutral-900">Supported collections</h2>
+            <p className="mt-2 text-xs sm:text-sm text-neutral-500">All Universes Beyond sets, updated as new releases arrive.</p>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2">
+        {franchises.map((franchise) => (
+          <span
+            key={franchise.id}
+            className="inline-flex items-center px-4 py-1.5 rounded-full text-xs font-medium bg-surface-primary border border-surface-border text-neutral-600"
+          >
+            {franchise.name}
+          </span>
         ))}
+        </div>
       </section>
 
       <section className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -169,7 +180,7 @@ export function PreviewLoginLandingPage({ onLogin, isLoggedIn }: PreviewLoginLan
         <div className="flex items-end justify-between gap-4">
           <div>
             <h2 className="text-lg sm:text-xl font-bold text-neutral-900">Most Popular Cards</h2>
-            <p className="mt-2 text-xs sm:text-sm text-neutral-500">Using the same card design as the app, including owned foil previews.</p>
+            <p className="mt-2 text-xs sm:text-sm text-neutral-500">Browse real cards from the app, including foil variants and owned state previews.</p>
           </div>
         </div>
 
@@ -241,14 +252,6 @@ export function PreviewLoginLandingPage({ onLogin, isLoggedIn }: PreviewLoginLan
   );
 }
 
-function StatTile({ label, value }: { label: string; value: string }) {
-  return (
-    <article className="rounded-xl border border-surface-border bg-surface-primary p-3 sm:p-4">
-      <p className="text-xs text-neutral-500">{label}</p>
-      <p className="text-xl sm:text-2xl font-black tracking-tight text-neutral-900 mt-1">{value}</p>
-    </article>
-  );
-}
 
 function createPreviewOwnedCards(cards: ScryfallCard[]): Map<string, OwnedCard> {
   const now = new Date();
