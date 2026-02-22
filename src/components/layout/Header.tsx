@@ -16,7 +16,7 @@ interface HeaderProps {
 export function Header({ userName, userPhoto, onLogin, onLogout, onOpenSettings, isLoggedIn, onSearchClick }: HeaderProps) {
   return (
     <header className="bg-surface-primary border-b border-surface-border sticky top-0 z-40">
-      <div className="app-container-padded h-12 sm:h-14 flex items-center justify-between relative">
+      <div className="app-container-padded h-16 sm:h-14 flex items-center justify-between relative">
         {/* Logo */}
         <div className="flex items-center shrink-0 absolute left-1/2 -translate-x-1/2 sm:static sm:translate-x-0">
           <Link to="/" className="inline-flex items-center" aria-label="Go to homepage">
@@ -31,10 +31,10 @@ export function Header({ userName, userPhoto, onLogin, onLogout, onOpenSettings,
               {onSearchClick && (
                 <button
                   onClick={onSearchClick}
-                  className="w-[34px] h-[34px] flex items-center justify-center rounded-full bg-red-50 text-primary-500 hover:bg-red-100 transition-colors duration-150 cursor-pointer"
+                  className="w-[44px] h-[44px] sm:w-[34px] sm:h-[34px] flex items-center justify-center rounded-full bg-red-50 text-primary-500 hover:bg-red-100 transition-colors duration-150 cursor-pointer"
                   aria-label="Search"
                 >
-                  <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4" strokeWidth={2.5} />
+                  <Search className="w-4.5 h-4.5 sm:w-4 sm:h-4" strokeWidth={2.5} />
                 </button>
               )}
               <AvatarMenu
