@@ -1,4 +1,11 @@
 import type { ScryfallCard, ScryfallCardsPage, ScryfallSearchResponse, SetCode } from '../types/card';
+import {
+  validateCacheVersion,
+  getCachedCardById,
+  setCachedCardById,
+  getCachedSetCount,
+  setCachedSetCount,
+} from '../utils/scryfallCache';
 
 const BASE_URL = 'https://api.scryfall.com';
 const RATE_LIMIT_MS = 100; // Scryfall asks for 50-100ms between requests
@@ -6,6 +13,8 @@ const setCardCountCache = new Map<string, number>();
 const setCardCountInFlight = new Map<string, Promise<number | null>>();
 const cardByIdCache = new Map<string, ScryfallCard>();
 const missingCardIds = new Set<string>();
+
+validateCacheVersion();
 
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -62,6 +71,13 @@ export async function fetchSetCardCount(setCode: SetCode): Promise<number | null
     return setCardCountInFlight.get(key)!;
   }
 
+  // L2 cache: localStorage
+  const lsCached = getCachedSetCount(key);
+  if (lsCached !== null) {
+    setCardCountCache.set(key, lsCached);
+    return lsCached;
+  }
+
   const promise = (async () => {
     const response = await fetch(`${BASE_URL}/sets/${key}`);
     if (!response.ok) {
@@ -73,6 +89,7 @@ export async function fetchSetCardCount(setCode: SetCode): Promise<number | null
     const count = typeof data.card_count === 'number' ? data.card_count : null;
     if (count !== null) {
       setCardCountCache.set(key, count);
+      setCachedSetCount(key, count);
     }
     return count;
   })()
@@ -92,6 +109,15 @@ interface ScryfallCollectionResponse {
 
 export async function fetchCardsByIds(cardIds: string[]): Promise<Record<string, ScryfallCard>> {
   const unique = Array.from(new Set(cardIds));
+
+  // L2 cache: fill in-memory cache from localStorage for ids not yet loaded
+  for (const id of unique) {
+    if (!cardByIdCache.has(id) && !missingCardIds.has(id)) {
+      const lsCached = getCachedCardById(id);
+      if (lsCached) cardByIdCache.set(id, lsCached);
+    }
+  }
+
   const unresolved = unique.filter((id) => !cardByIdCache.has(id) && !missingCardIds.has(id));
   const chunks: string[][] = [];
   const CHUNK_SIZE = 75; // Scryfall collection endpoint limit
@@ -115,6 +141,7 @@ export async function fetchCardsByIds(cardIds: string[]): Promise<Record<string,
     const data: ScryfallCollectionResponse = await response.json();
     for (const card of data.data ?? []) {
       cardByIdCache.set(card.id, card);
+      setCachedCardById(card);
     }
     for (const notFound of data.not_found ?? []) {
       if (notFound.id) missingCardIds.add(notFound.id);

@@ -10,6 +10,7 @@ import type {
 } from '../types/card';
 import type { CollectionSet } from '../config/collections';
 import { fetchCardsByIds, fetchCardsPageForSet, fetchSetCardCount } from '../services/scryfall';
+import { getCachedSetPage, setCachedSetPage, invalidateCachedSetPage } from '../utils/scryfallCache';
 import { useCollectionStats } from './useCollectionStats';
 import { useBoosterMap } from './useBoosterMap';
 import { parsePrice } from '../utils/formatPrice';
@@ -95,6 +96,31 @@ export function useCardCollection({ ownedCards, searchQuery = '', visibleSetIds,
 
   const allSetIds = useMemo(() => sets.map((s) => s.id), [sets]);
 
+  // Hydrate setPages from localStorage on first load
+  useEffect(() => {
+    if (setOrder.length === 0) return;
+    setSetPages((prev) => {
+      let changed = false;
+      const next = { ...prev };
+      for (const setId of setOrder) {
+        if (next[setId]?.initialized) continue;
+        const cached = getCachedSetPage(setId);
+        if (!cached) continue;
+        next[setId] = {
+          cards: cached.cards,
+          nextPage: cached.nextPage,
+          hasMore: cached.hasMore,
+          isFetching: false,
+          initialized: true,
+          error: null,
+        };
+        changed = true;
+      }
+      return changed ? next : prev;
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [setOrder]);
+
   useEffect(() => {
     const onResize = () => {
       const next = getBatchSize();
@@ -163,11 +189,18 @@ export function useCardCollection({ ownedCards, searchQuery = '', visibleSetIds,
 
       setSetPages((prev) => {
         const current = getStateForSet(prev, setId);
+        const mergedCards = mergeCards(current.cards, page.cards);
+        // Persist to localStorage after each successful fetch
+        setCachedSetPage(setId, {
+          cards: mergedCards,
+          nextPage: page.nextPage,
+          hasMore: page.hasMore,
+        });
         return {
           ...prev,
           [setId]: {
             ...current,
-            cards: mergeCards(current.cards, page.cards),
+            cards: mergedCards,
             nextPage: page.nextPage,
             hasMore: page.hasMore,
             initialized: true,
@@ -604,7 +637,10 @@ export function useCardCollection({ ownedCards, searchQuery = '', visibleSetIds,
     inFlightRef.current.clear();
     setSetPages({});
     setRenderLimit(renderBatchSize);
-  }, [renderBatchSize]);
+    for (const setId of setOrder) {
+      invalidateCachedSetPage(setId);
+    }
+  }, [renderBatchSize, setOrder]);
 
   return {
     activeSet,
