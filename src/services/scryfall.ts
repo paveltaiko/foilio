@@ -133,6 +133,23 @@ export async function fetchCardsByIds(cardIds: string[]): Promise<Record<string,
   return result;
 }
 
+export async function fetchCardsByCollectorNumbers(
+  identifiers: Array<{ set: string; collector_number: string }>
+): Promise<ScryfallCard[]> {
+  const response = await fetch(`${BASE_URL}/cards/collection`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ identifiers }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Scryfall collection API error: ${response.status}`);
+  }
+
+  const data: ScryfallCollectionResponse = await response.json();
+  return data.data ?? [];
+}
+
 export async function fetchAllSets(setCodes: string[]): Promise<Record<string, ScryfallCard[]>> {
   const results: Record<string, ScryfallCard[]> = {};
 

@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { useQueries } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { Sparkles, ShieldCheck, Share2, ChartColumnIncreasing } from 'lucide-react';
-import { collectionSets, franchises } from '../config/collections';
-import { fetchCardsForSet } from '../services/scryfall';
+import { franchises } from '../config/collections';
+import { fetchCardsByCollectorNumbers } from '../services/scryfall';
 import { CardGrid, CardGridSkeleton } from '../components/cards/CardGrid';
 import { CardDetail } from '../components/cards/CardDetail';
 import { FaqAccordion } from '../components/ui/FaqAccordion';
@@ -38,14 +38,14 @@ const featureCards = [
 ];
 
 const PREVIEW_CARD_SELECTION = [
-  { name: 'The Soul Stone', collectorNumber: '242' },
-  { name: 'The Soul Stone', collectorNumber: '243' },
-  { name: 'The Soul Stone', collectorNumber: '66' },
-  { name: 'Parallel Lives', collectorNumber: '36' },
-  { name: 'Miles Morales // Ultimate Spider-Man', collectorNumber: '234' },
-  { name: 'Spectacular Spider-Man', collectorNumber: '240' },
-  { name: 'Gwen Stacy // Ghost-Spider', collectorNumber: '202' },
-  { name: 'Eddie Brock // Venom, Lethal Protector', collectorNumber: '233' },
+  { name: 'The Soul Stone',                         set: 'spe', collectorNumber: '242' },
+  { name: 'The Soul Stone',                         set: 'spe', collectorNumber: '243' },
+  { name: 'The Soul Stone',                         set: 'spm', collectorNumber: '66'  },
+  { name: 'Parallel Lives',                         set: 'spm', collectorNumber: '36'  },
+  { name: 'Miles Morales // Ultimate Spider-Man',   set: 'spe', collectorNumber: '234' },
+  { name: 'Spectacular Spider-Man',                 set: 'spe', collectorNumber: '240' },
+  { name: 'Gwen Stacy // Ghost-Spider',             set: 'spe', collectorNumber: '202' },
+  { name: 'Eddie Brock // Venom, Lethal Protector', set: 'spe', collectorNumber: '233' },
 ] as const;
 
 const FAQ_ITEMS = [
@@ -72,29 +72,23 @@ export function PreviewLoginLandingPage({ onLogin, isLoggedIn }: PreviewLoginLan
   const [selectedCard, setSelectedCard] = useState<ScryfallCard | null>(null);
   const [selectedVariant, setSelectedVariant] = useState<CardVariant>(null);
   const STALE_TIME = 24 * 60 * 60 * 1000;
-  const setQueries = useQueries({
-    queries: collectionSets.map((set) => ({
-      queryKey: ['scryfall-cards', set.id],
-      queryFn: () => fetchCardsForSet(set.id),
-      staleTime: STALE_TIME,
-      gcTime: STALE_TIME,
-      refetchOnWindowFocus: false,
-    })),
+  const { data: fetchedCards = [], isLoading } = useQuery({
+    queryKey: ['preview-cards'],
+    queryFn: () => fetchCardsByCollectorNumbers(
+      PREVIEW_CARD_SELECTION.map(({ set, collectorNumber }) => ({ set, collector_number: collectorNumber }))
+    ),
+    staleTime: STALE_TIME,
+    gcTime: STALE_TIME,
+    refetchOnWindowFocus: false,
   });
 
-  const isLoading = setQueries.some((q) => q.isLoading);
-  const allSetData = setQueries.map((q) => q.data);
-  const cardsBySets = useMemo(
-    () => collectionSets.map((set, i) => ({ set, cards: allSetData[i] ?? [] })),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    allSetData
-  );
-  const allCards = useMemo(() => cardsBySets.flatMap(({ cards }) => cards), [cardsBySets]);
   const topCards = useMemo(
     () => PREVIEW_CARD_SELECTION
-      .map((target) => allCards.find((card) => card.name === target.name && card.collector_number === target.collectorNumber))
+      .map((target) => fetchedCards.find(
+        (card) => card.name === target.name && card.collector_number === target.collectorNumber
+      ))
       .filter((card): card is ScryfallCard => !!card),
-    [allCards]
+    [fetchedCards]
   );
   const previewOwnedCards = useMemo(() => createPreviewOwnedCards(topCards), [topCards]);
   const topCardItems: CardWithVariant[] = useMemo(
