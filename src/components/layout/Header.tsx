@@ -20,7 +20,7 @@ export function Header({ userName, userPhoto, onLogin, onLogout, onOpenSettings,
         {/* Logo */}
         <div className="flex items-center shrink-0 absolute left-1/2 -translate-x-1/2 sm:static sm:translate-x-0">
           <Link to="/" className="inline-flex items-center" aria-label="Go to homepage">
-            <span className="text-xl sm:text-2xl text-neutral-900 tracking-tight" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 800, fontStyle: 'italic' }}>Foilio</span>
+            <span className="text-2xl sm:text-2xl text-neutral-900 tracking-tight" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 800, fontStyle: 'italic' }}>Foilio</span>
           </Link>
         </div>
 
