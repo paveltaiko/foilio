@@ -28,7 +28,7 @@ export interface CollectionSet {
 export const franchises: Franchise[] = [
   { id: 'warhammer-40k',         name: 'Warhammer 40,000' },                              // říjen 2022
   { id: 'transformers',          name: 'Transformers' },                                   // listopad 2022
-  { id: 'lord-of-the-rings',     name: 'The Lord of the Rings: Tales of Middle-earth' },  // červen 2023
+  { id: 'lord-of-the-rings',     name: 'The Lord of the Rings' },                         // červen 2023
   { id: 'doctor-who',            name: 'Doctor Who' },                                     // říjen 2023
   { id: 'fallout',               name: 'Fallout' },                                         // březen 2024
   { id: 'assassins-creed',       name: "Assassin's Creed" },                               // červenec 2024
