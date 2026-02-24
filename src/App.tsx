@@ -13,6 +13,7 @@ import { CollectionsSettingsPage } from './pages/lab/CollectionsSettingsPage';
 import { CollectionsSettingsProvider } from './pages/lab/CollectionsSettingsContext';
 
 const queryClient = new QueryClient();
+const isStandalone = window.matchMedia('(display-mode: standalone)').matches
 
 function AppContent() {
   const { user, loading, error, login, logout } = useAuth();
@@ -47,7 +48,7 @@ function AppContent() {
           onLogout={handleLogout}
           onOpenSettings={handleOpenSettings}
           isLoggedIn={!!user}
-          onSearchClick={pathname === '/settings' ? undefined : handleSearchClick}
+          onSearchClick={isStandalone || pathname === '/settings' ? undefined : handleSearchClick}
         />
         <main className={`flex-1 overflow-y-auto pt-3 sm:pb-8 ${user ? 'pb-nav' : 'pb-8'}`} style={{ scrollbarGutter: 'stable' }}>
           <Routes>
