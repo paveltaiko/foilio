@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuth } from './hooks/useAuth';
 import { Header } from './components/layout/Header';
 import { Footer } from './components/layout/Footer';
+import { BottomNav } from './components/layout/BottomNav';
 import { AuthGuard } from './components/auth/AuthGuard';
 import { HomePage } from './pages/HomePage';
 import { SharedCollectionPage } from './pages/SharedCollectionPage';
@@ -48,7 +49,7 @@ function AppContent() {
           isLoggedIn={!!user}
           onSearchClick={pathname === '/settings' ? undefined : handleSearchClick}
         />
-        <main className="flex-1 overflow-y-auto pt-3 pb-8" style={{ scrollbarGutter: 'stable' }}>
+        <main className={`flex-1 overflow-y-auto pt-3 sm:pb-8 ${user ? 'pb-nav' : 'pb-8'}`} style={{ scrollbarGutter: 'stable' }}>
           <Routes>
             <Route
               path="/"
@@ -77,6 +78,10 @@ function AppContent() {
             </div>
           )}
         </main>
+        <BottomNav
+          isLoggedIn={!!user}
+          onSearchClick={pathname === '/settings' ? undefined : handleSearchClick}
+        />
         <Footer />
       </div>
     </CollectionsSettingsProvider>

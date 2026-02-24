@@ -286,6 +286,17 @@ body {
   padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
+/* Bottom nav padding — extra prostor pod obsahem pro fixed bottom nav na mobilu */
+.pb-nav {
+  padding-bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px));
+}
+
+@media (min-width: 640px) {
+  .pb-nav {
+    padding-bottom: 2rem;
+  }
+}
+
 /* Touch action for better scroll performance */
 .touch-pan-y {
   touch-action: pan-y;
