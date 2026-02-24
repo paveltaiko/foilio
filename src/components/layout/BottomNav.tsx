@@ -58,8 +58,8 @@ export function BottomNav({ isLoggedIn, onSearchClick }: BottomNavProps) {
             disabled={!onSearchClick}
             className={`w-11 h-11 flex items-center justify-center rounded-full transition-colors duration-200 ${
               onSearchClick
-                ? 'bg-red-50 text-primary-500 active:bg-red-100 cursor-pointer'
-                : 'bg-red-50 text-primary-200 cursor-default'
+                ? 'bg-neutral-100 text-neutral-600 active:bg-neutral-200 cursor-pointer'
+                : 'bg-neutral-100 text-neutral-300 cursor-default'
             }`}
             aria-label="Hledat"
           >
