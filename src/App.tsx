@@ -83,7 +83,7 @@ function AppContent() {
           isLoggedIn={!!user}
           onSearchClick={pathname === '/settings' ? undefined : handleSearchClick}
         />
-        <Footer />
+        {!isStandalone && <Footer />}
       </div>
     </CollectionsSettingsProvider>
   );
