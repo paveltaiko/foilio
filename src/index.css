@@ -111,6 +111,12 @@
 
 /* ===== Base Styles ===== */
 
+:root {
+  --bottom-nav-height-mobile: 60px;
+  --bottom-nav-offset-mobile: 32px;
+  --bottom-nav-clearance-mobile: calc(var(--bottom-nav-height-mobile) + var(--bottom-nav-offset-mobile) + 0.75rem);
+}
+
 html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -288,23 +294,12 @@ body {
 
 /* Bottom nav padding — extra prostor pod obsahem pro fixed bottom nav na mobilu */
 .pb-nav {
-  padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(var(--bottom-nav-clearance-mobile) + env(safe-area-inset-bottom, 0px));
 }
 
 @media (min-width: 640px) {
   .pb-nav {
     padding-bottom: 2rem;
-  }
-}
-
-/* Extra bottom spacing for Settings so content stays above floating bottom nav */
-.settings-safe-bottom {
-  padding-bottom: calc(7rem + env(safe-area-inset-bottom, 0px));
-}
-
-@media (min-width: 640px) {
-  .settings-safe-bottom {
-    padding-bottom: 1rem;
   }
 }
 

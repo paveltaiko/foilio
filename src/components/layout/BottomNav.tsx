@@ -15,12 +15,11 @@ export function BottomNav({ isLoggedIn, onSearchClick }: BottomNavProps) {
     <nav
       className="sm:hidden fixed inset-x-0 z-40 pointer-events-none"
       style={{
-        bottom: 'env(safe-area-inset-bottom, 0px)',
-        transform: 'translateY(-32px)',
+        bottom: 'calc(env(safe-area-inset-bottom, 0px) + var(--bottom-nav-offset-mobile))',
       }}
     >
       <div className="flex justify-center px-3 pointer-events-none">
-        <div className="pointer-events-auto flex items-center justify-between gap-2 bg-white rounded-full shadow-[0_6px_20px_rgba(0,0,0,0.08)] p-2 w-full max-w-sm">
+        <div className="pointer-events-auto flex items-center justify-between gap-2 bg-white rounded-full shadow-[0_6px_20px_rgba(0,0,0,0.08)] p-2 h-[60px] w-full max-w-sm">
 
           {/* Navigační položky — seskupené vlevo */}
           <div className="flex items-center gap-1">
