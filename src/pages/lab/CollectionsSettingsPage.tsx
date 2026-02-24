@@ -9,7 +9,7 @@ export function CollectionsSettingsPage() {
   const { settings, setCollectionEnabled, setSetVisibility } = useCollectionsSettings();
 
   return (
-    <div className="app-container-padded py-3 sm:py-4 min-h-screen">
+    <div className="app-container-padded pt-3 sm:pt-4 settings-safe-bottom min-h-screen">
       <div className="mb-4 flex items-center gap-2 sm:mb-5">
         <button
           type="button"

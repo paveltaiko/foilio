@@ -297,6 +297,17 @@ body {
   }
 }
 
+/* Extra bottom spacing for Settings so content stays above floating bottom nav */
+.settings-safe-bottom {
+  padding-bottom: calc(7rem + env(safe-area-inset-bottom, 0px));
+}
+
+@media (min-width: 640px) {
+  .settings-safe-bottom {
+    padding-bottom: 1rem;
+  }
+}
+
 /* Touch action for better scroll performance */
 .touch-pan-y {
   touch-action: pan-y;
