@@ -11,53 +11,60 @@ export function BottomNav({ isLoggedIn, onSearchClick }: BottomNavProps) {
 
   return (
     <nav
-      className="sm:hidden fixed bottom-0 inset-x-0 z-40 bg-surface-primary border-t border-surface-border"
-      style={{ paddingBottom: 'env(safe-area-inset-bottom, 0)' }}
+      className="sm:hidden fixed bottom-0 inset-x-0 z-40 pointer-events-none"
+      style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 12px)' }}
     >
-      <div className="flex items-stretch h-14">
-        {/* Kolekce */}
-        <NavLink
-          to="/"
-          end
-          className={({ isActive }) =>
-            `flex-1 flex flex-col items-center justify-center gap-1 transition-colors duration-150 ${
-              isActive ? 'text-primary-500' : 'text-neutral-400 hover:text-neutral-600'
-            }`
-          }
-          aria-label="Kolekce"
-        >
-          <LayoutGrid className="w-5 h-5" strokeWidth={2} />
-          <span className="text-[10px] font-medium leading-none">Kolekce</span>
-        </NavLink>
+      <div className="flex justify-center p-3 pointer-events-none">
+        <div className="pointer-events-auto flex items-center justify-between gap-2 bg-white rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.12)] p-2 w-full max-w-sm">
 
-        {/* Hledat */}
-        <button
-          onClick={onSearchClick}
-          disabled={!onSearchClick}
-          className={`flex-1 flex flex-col items-center justify-center gap-1 transition-colors duration-150 ${
-            onSearchClick
-              ? 'text-neutral-400 hover:text-neutral-600 active:text-primary-500 cursor-pointer'
-              : 'text-neutral-300 cursor-default'
-          }`}
-          aria-label="Hledat"
-        >
-          <Search className="w-5 h-5" strokeWidth={2} />
-          <span className="text-[10px] font-medium leading-none">Hledat</span>
-        </button>
+          {/* Navigační položky — seskupené vlevo */}
+          <div className="flex items-center gap-1">
+            {/* Kolekce */}
+            <NavLink to="/" end>
+              {({ isActive }) => (
+                <div className={`flex flex-col items-center justify-center gap-1 rounded-full px-4 h-11 transition-all duration-200 ${isActive ? 'bg-red-50' : ''}`}>
+                  <LayoutGrid
+                    className={`w-5 h-5 shrink-0 transition-colors duration-200 ${isActive ? 'text-primary-500' : 'text-neutral-400'}`}
+                    strokeWidth={2}
+                  />
+                  <span className={`text-[10px] font-medium leading-none transition-colors duration-200 ${isActive ? 'text-primary-500' : 'text-neutral-400'}`}>
+                    Kolekce
+                  </span>
+                </div>
+              )}
+            </NavLink>
 
-        {/* Nastavení */}
-        <NavLink
-          to="/settings"
-          className={({ isActive }) =>
-            `flex-1 flex flex-col items-center justify-center gap-1 transition-colors duration-150 ${
-              isActive ? 'text-primary-500' : 'text-neutral-400 hover:text-neutral-600'
-            }`
-          }
-          aria-label="Nastavení"
-        >
-          <Settings className="w-5 h-5" strokeWidth={2} />
-          <span className="text-[10px] font-medium leading-none">Nastavení</span>
-        </NavLink>
+            {/* Nastavení */}
+            <NavLink to="/settings">
+              {({ isActive }) => (
+                <div className={`flex flex-col items-center justify-center gap-1 rounded-full px-4 h-11 transition-all duration-200 ${isActive ? 'bg-red-50' : ''}`}>
+                  <Settings
+                    className={`w-[22px] h-[22px] shrink-0 transition-colors duration-200 ${isActive ? 'text-primary-500' : 'text-neutral-400'}`}
+                    strokeWidth={2}
+                  />
+                  <span className={`text-[10px] font-medium leading-none transition-colors duration-200 ${isActive ? 'text-primary-500' : 'text-neutral-400'}`}>
+                    Nastavení
+                  </span>
+                </div>
+              )}
+            </NavLink>
+          </div>
+
+          {/* Search — samostatné kulaté tlačítko vpravo */}
+          <button
+            onClick={onSearchClick}
+            disabled={!onSearchClick}
+            className={`w-11 h-11 flex items-center justify-center rounded-full transition-colors duration-200 ${
+              onSearchClick
+                ? 'bg-red-50 text-primary-500 active:bg-red-100 cursor-pointer'
+                : 'bg-red-50 text-primary-200 cursor-default'
+            }`}
+            aria-label="Hledat"
+          >
+            <Search className="w-5 h-5" strokeWidth={2} />
+          </button>
+
+        </div>
       </div>
     </nav>
   );

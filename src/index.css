@@ -288,7 +288,7 @@ body {
 
 /* Bottom nav padding — extra prostor pod obsahem pro fixed bottom nav na mobilu */
 .pb-nav {
-  padding-bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
 }
 
 @media (min-width: 640px) {
