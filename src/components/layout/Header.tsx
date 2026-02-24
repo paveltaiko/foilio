@@ -26,7 +26,7 @@ export function Header({ userName, userPhoto, onLogin, onLogout, onOpenSettings,
             aria-label="Go back"
             title="Back"
           >
-            <ChevronLeft className="h-6 w-6" />
+            <ChevronLeft className="h-7 w-7" />
           </button>
         )}
 
