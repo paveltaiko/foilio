@@ -13,7 +13,7 @@ export function BottomNav({ isLoggedIn, onSearchClick }: BottomNavProps) {
 
   return (
     <nav
-      className="sm:hidden fixed bottom-0 inset-x-0 z-40 pointer-events-none"
+      className="sm:hidden absolute bottom-0 inset-x-0 z-40 pointer-events-none"
       style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 12px)' }}
     >
       <div className="flex justify-center p-3 pointer-events-none">

@@ -40,7 +40,7 @@ function AppContent() {
 
   return (
     <CollectionsSettingsProvider userId={user?.uid ?? null}>
-      <div className="min-h-svh bg-surface-secondary flex flex-col overflow-x-hidden">
+      <div className="relative h-[100dvh] bg-surface-secondary flex flex-col overflow-hidden">
         <Header
           userName={user?.displayName}
           userPhoto={user?.photoURL}
