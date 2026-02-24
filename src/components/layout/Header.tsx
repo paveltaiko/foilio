@@ -1,4 +1,4 @@
-import { ArrowLeft, Search } from 'lucide-react';
+import { ChevronLeft, Search } from 'lucide-react';
 import { Link } from 'react-router';
 import { Button } from '../ui/Button';
 import { AvatarMenu } from './AvatarMenu';
@@ -26,7 +26,7 @@ export function Header({ userName, userPhoto, onLogin, onLogout, onOpenSettings,
             aria-label="Go back"
             title="Back"
           >
-            <ArrowLeft className="h-5 w-5" />
+            <ChevronLeft className="h-6 w-6" />
           </button>
         )}
 
