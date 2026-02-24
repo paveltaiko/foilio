@@ -33,6 +33,14 @@ function AppContent() {
     navigate('/settings');
   }, [navigate]);
 
+  const handleBack = useCallback(() => {
+    if (window.history.length > 1) {
+      navigate(-1);
+      return;
+    }
+    navigate('/');
+  }, [navigate]);
+
   const handleLogout = useCallback(async () => {
     await logout();
     navigate('/');
@@ -49,6 +57,7 @@ function AppContent() {
           onOpenSettings={handleOpenSettings}
           isLoggedIn={!!user}
           onSearchClick={isStandalone || pathname === '/settings' ? undefined : handleSearchClick}
+          onMobileBack={pathname === '/settings' ? handleBack : undefined}
         />
         <main className={`flex-1 overflow-y-auto pt-3 sm:pb-8 ${user ? 'pb-nav' : 'pb-8'}`} style={{ scrollbarGutter: 'stable' }}>
           <Routes>

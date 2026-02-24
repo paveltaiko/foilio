@@ -1,4 +1,4 @@
-import { Search } from 'lucide-react';
+import { ArrowLeft, Search } from 'lucide-react';
 import { Link } from 'react-router';
 import { Button } from '../ui/Button';
 import { AvatarMenu } from './AvatarMenu';
@@ -11,12 +11,25 @@ interface HeaderProps {
   onOpenSettings: () => void;
   isLoggedIn: boolean;
   onSearchClick?: () => void;
+  onMobileBack?: () => void;
 }
 
-export function Header({ userName, userPhoto, onLogin, onLogout, onOpenSettings, isLoggedIn, onSearchClick }: HeaderProps) {
+export function Header({ userName, userPhoto, onLogin, onLogout, onOpenSettings, isLoggedIn, onSearchClick, onMobileBack }: HeaderProps) {
   return (
     <header className="bg-surface-primary border-b border-surface-border sticky top-0 z-40">
       <div className="app-container-padded h-16 sm:h-14 flex items-center justify-between relative">
+        {onMobileBack && (
+          <button
+            type="button"
+            onClick={onMobileBack}
+            className="sm:hidden inline-flex h-11 w-11 items-center justify-center rounded-lg text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-700 cursor-pointer"
+            aria-label="Go back"
+            title="Back"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+        )}
+
         {/* Logo */}
         <div className="flex items-center shrink-0 absolute left-1/2 -translate-x-1/2 sm:static sm:translate-x-0">
           <Link to="/" className="inline-flex items-center" aria-label="Go to homepage">
