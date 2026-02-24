@@ -26,7 +26,7 @@ export function BottomNav({ isLoggedIn, onSearchClick }: BottomNavProps) {
             {/* Collection */}
             <NavLink to="/" end>
               {({ isActive }) => (
-                <div className={`flex flex-col items-center justify-center gap-1 rounded-full px-4 h-11 transition-all duration-200 ${isActive ? 'bg-primary-50' : ''}`}>
+                <div className={`flex flex-col items-center justify-center gap-1 rounded-full px-5 h-11 transition-all duration-200 ${isActive ? 'bg-primary-50' : ''}`}>
                   <LayoutGrid
                     className={`w-5 h-5 shrink-0 transition-colors duration-200 ${isActive ? 'text-primary-500' : 'text-neutral-600'}`}
                     strokeWidth={2.2}
