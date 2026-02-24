@@ -26,10 +26,10 @@ export function BottomNav({ isLoggedIn, onSearchClick }: BottomNavProps) {
               {({ isActive }) => (
                 <div className={`flex flex-col items-center justify-center gap-1 rounded-full px-4 h-11 transition-all duration-200 ${isActive ? 'bg-neutral-300' : ''}`}>
                   <LayoutGrid
-                    className={`w-5 h-5 shrink-0 transition-colors duration-200 ${isActive ? 'text-primary-500' : 'text-neutral-600'}`}
+                    className={`w-5 h-5 shrink-0 transition-colors duration-200 ${isActive ? 'text-neutral-800' : 'text-neutral-500'}`}
                     strokeWidth={2.2}
                   />
-                  <span className={`text-[10px] font-medium leading-none transition-colors duration-200 ${isActive ? 'text-primary-500' : 'text-neutral-600'}`}>
+                  <span className={`text-[10px] font-medium leading-none transition-colors duration-200 ${isActive ? 'text-neutral-800' : 'text-neutral-500'}`}>
                     Collection
                   </span>
                 </div>
@@ -41,10 +41,10 @@ export function BottomNav({ isLoggedIn, onSearchClick }: BottomNavProps) {
               {({ isActive }) => (
                 <div className={`flex flex-col items-center justify-center gap-1 rounded-full px-4 h-11 transition-all duration-200 ${isActive ? 'bg-neutral-300' : ''}`}>
                   <Settings
-                    className={`w-[22px] h-[22px] shrink-0 transition-colors duration-200 ${isActive ? 'text-primary-500' : 'text-neutral-600'}`}
+                    className={`w-[22px] h-[22px] shrink-0 transition-colors duration-200 ${isActive ? 'text-neutral-800' : 'text-neutral-500'}`}
                     strokeWidth={2.2}
                   />
-                  <span className={`text-[10px] font-medium leading-none transition-colors duration-200 ${isActive ? 'text-primary-500' : 'text-neutral-600'}`}>
+                  <span className={`text-[10px] font-medium leading-none transition-colors duration-200 ${isActive ? 'text-neutral-800' : 'text-neutral-500'}`}>
                     Settings
                   </span>
                 </div>
@@ -58,7 +58,7 @@ export function BottomNav({ isLoggedIn, onSearchClick }: BottomNavProps) {
             disabled={!onSearchClick}
             className={`w-11 h-11 flex items-center justify-center rounded-full transition-colors duration-200 ${
               onSearchClick
-                ? 'bg-neutral-300 text-primary-500 active:bg-neutral-400 cursor-pointer'
+                ? 'bg-neutral-300 text-neutral-700 active:bg-neutral-400 cursor-pointer'
                 : 'bg-neutral-300 text-neutral-400 cursor-default'
             }`}
             aria-label="Hledat"
