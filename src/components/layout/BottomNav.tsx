@@ -6,13 +6,15 @@ interface BottomNavProps {
   onSearchClick?: () => void;
 }
 
+const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+
 export function BottomNav({ isLoggedIn, onSearchClick }: BottomNavProps) {
   if (!isLoggedIn) return null;
 
   return (
     <nav
       className="sm:hidden fixed bottom-0 inset-x-0 z-40 pointer-events-none"
-      style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 12px)' }}
+      style={{ paddingBottom: isStandalone ? 'max(env(safe-area-inset-bottom, 0px), 12px)' : '80px' }}
     >
       <div className="flex justify-center p-3 pointer-events-none">
         <div className="pointer-events-auto flex items-center justify-between gap-2 bg-white rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.12)] p-2 w-full max-w-sm">
@@ -61,7 +63,7 @@ export function BottomNav({ isLoggedIn, onSearchClick }: BottomNavProps) {
             }`}
             aria-label="Hledat"
           >
-            <Search className="w-5 h-5" strokeWidth={2} />
+            <Search className="w-5 h-5" strokeWidth={2.5} />
           </button>
 
         </div>
