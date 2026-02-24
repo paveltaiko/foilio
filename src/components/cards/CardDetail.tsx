@@ -512,7 +512,7 @@ export function CardDetail({ card, selectedVariant = null, owned, onClose, onTog
         )}
       </div>
       {isImageZoomed && imageUrl && createPortal(
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/85 p-3 sm:p-6" onClick={() => setZoomedImageKey(null)}>
+        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/85 p-3 sm:p-6" onClick={() => setZoomedImageKey(null)}>
           <button
             type="button"
             onClick={(e) => {
