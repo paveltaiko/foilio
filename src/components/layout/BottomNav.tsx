@@ -16,7 +16,7 @@ export function BottomNav({ isLoggedIn, onSearchClick }: BottomNavProps) {
       className="sm:hidden fixed inset-x-0 z-40 pointer-events-none"
       style={{
         bottom: 'env(safe-area-inset-bottom, 0px)',
-        transform: 'translateY(-120px)',
+        transform: 'translateY(-32px)',
       }}
     >
       <div className="flex justify-center px-3 pointer-events-none">
