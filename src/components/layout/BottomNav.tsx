@@ -26,10 +26,10 @@ export function BottomNav({ isLoggedIn, onSearchClick }: BottomNavProps) {
               {({ isActive }) => (
                 <div className={`flex flex-col items-center justify-center gap-1 rounded-full px-4 h-11 transition-all duration-200 ${isActive ? 'bg-red-50' : ''}`}>
                   <LayoutGrid
-                    className={`w-5 h-5 shrink-0 transition-colors duration-200 ${isActive ? 'text-primary-500' : 'text-neutral-400'}`}
+                    className={`w-5 h-5 shrink-0 transition-colors duration-200 ${isActive ? 'text-primary-500' : 'text-neutral-600'}`}
                     strokeWidth={2}
                   />
-                  <span className={`text-[10px] font-medium leading-none transition-colors duration-200 ${isActive ? 'text-primary-500' : 'text-neutral-400'}`}>
+                  <span className={`text-[10px] font-medium leading-none transition-colors duration-200 ${isActive ? 'text-primary-500' : 'text-neutral-600'}`}>
                     Collection
                   </span>
                 </div>
@@ -41,10 +41,10 @@ export function BottomNav({ isLoggedIn, onSearchClick }: BottomNavProps) {
               {({ isActive }) => (
                 <div className={`flex flex-col items-center justify-center gap-1 rounded-full px-4 h-11 transition-all duration-200 ${isActive ? 'bg-red-50' : ''}`}>
                   <Settings
-                    className={`w-[22px] h-[22px] shrink-0 transition-colors duration-200 ${isActive ? 'text-primary-500' : 'text-neutral-400'}`}
+                    className={`w-[22px] h-[22px] shrink-0 transition-colors duration-200 ${isActive ? 'text-primary-500' : 'text-neutral-600'}`}
                     strokeWidth={2}
                   />
-                  <span className={`text-[10px] font-medium leading-none transition-colors duration-200 ${isActive ? 'text-primary-500' : 'text-neutral-400'}`}>
+                  <span className={`text-[10px] font-medium leading-none transition-colors duration-200 ${isActive ? 'text-primary-500' : 'text-neutral-600'}`}>
                     Settings
                   </span>
                 </div>
