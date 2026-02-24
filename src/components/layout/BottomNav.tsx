@@ -13,10 +13,10 @@ export function BottomNav({ isLoggedIn, onSearchClick }: BottomNavProps) {
 
   return (
     <nav
-      className="sm:hidden absolute bottom-0 inset-x-0 z-40 pointer-events-none"
-      style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 12px)' }}
+      className="sm:hidden fixed inset-x-0 z-40 pointer-events-none"
+      style={{ bottom: 'max(env(safe-area-inset-bottom, 0px), 12px)' }}
     >
-      <div className="flex justify-center p-3 pointer-events-none">
+      <div className="flex justify-center px-3 pointer-events-none">
         <div className="pointer-events-auto flex items-center justify-between gap-2 bg-white/80 backdrop-blur-md rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.12)] p-2 w-full max-w-sm">
 
           {/* Navigační položky — seskupené vlevo */}
