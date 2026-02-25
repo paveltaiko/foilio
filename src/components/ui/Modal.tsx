@@ -43,9 +43,11 @@ function unlockBodyScroll() {
 export function Modal({ isOpen, onClose, children }: ModalProps) {
   const overlayRef = useRef<HTMLDivElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const [dragY, setDragY] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const dragStartY = useRef(0);
+  const canSwipeClose = useRef(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -72,21 +74,34 @@ export function Modal({ isOpen, onClose, children }: ModalProps) {
   // Swipe to close handlers
   const handleTouchStart = (e: React.TouchEvent) => {
     dragStartY.current = e.touches[0].clientY;
-    setIsDragging(true);
+    // Allow swipe-to-close only when scrollable content is at the top
+    const scrollEl = scrollRef.current;
+    canSwipeClose.current = !scrollEl || scrollEl.scrollTop === 0;
+    if (canSwipeClose.current) {
+      setIsDragging(true);
+    }
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging) return;
+    if (!canSwipeClose.current) return;
     const currentY = e.touches[0].clientY;
     const diff = currentY - dragStartY.current;
     // Only allow dragging down
     if (diff > 0) {
+      setIsDragging(true);
       setDragY(diff);
+    } else {
+      // Scrolling up — hand control back to native scroll
+      if (dragY === 0) {
+        canSwipeClose.current = false;
+        setIsDragging(false);
+      }
     }
   };
 
   const handleTouchEnd = () => {
     setIsDragging(false);
+    canSwipeClose.current = false;
     // If dragged more than 100px, close the modal
     if (dragY > 100) {
       onClose();
@@ -117,19 +132,18 @@ export function Modal({ isOpen, onClose, children }: ModalProps) {
           transition: isDragging ? 'none' : 'transform 0.2s ease-out'
         }}
         onClick={(e) => e.stopPropagation()}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       >
         <div className="bg-surface-primary max-h-[90svh] sm:max-h-[85vh] flex flex-col animate-slide-up sm:animate-scale-in overflow-hidden sm:rounded-2xl">
-          {/* Drawer handle — mobile only, swipe to close */}
-          <div
-            className="flex justify-center py-3 sm:hidden cursor-grab active:cursor-grabbing flex-shrink-0"
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-          >
+          {/* Drawer handle — mobile only */}
+          <div className="flex justify-center py-3 sm:hidden flex-shrink-0">
             <div className="w-9 h-1 bg-neutral-300 rounded-full" />
           </div>
           {/* Scrollable content */}
           <div
+            ref={scrollRef}
             className="flex-1 overflow-y-auto overscroll-contain touch-pan-y scrollbar-hide sm:scrollbar-default"
             style={{ scrollbarGutter: 'stable', overflowAnchor: 'none' }}
           >
