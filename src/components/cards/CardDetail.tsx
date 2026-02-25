@@ -525,7 +525,6 @@ export function CardDetail({ card, selectedVariant = null, owned, onClose, onTog
       {isImageZoomed && imageUrl && createPortal(
         <div
           className="fixed inset-0 z-[90] flex items-center justify-center bg-black/85 p-3 sm:p-6"
-          style={{ opacity: zoomDragY > 0 ? Math.max(0.2, 1 - zoomDragY / 300) : undefined }}
           onClick={() => setZoomedImageKey(null)}
         >
           <button
