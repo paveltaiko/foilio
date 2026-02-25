@@ -249,7 +249,7 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
 
   // SL hook
   const {
-    activeDrop, setActiveDrop,
+    setActiveDrop,
     sortOption: slSortOption, setSortOption: slSetSortOption,
     ownershipFilter: slOwnershipFilter, setOwnershipFilter: slSetOwnershipFilter,
     selectedCard: slSelectedCard, setSelectedCard: slSetSelectedCard,

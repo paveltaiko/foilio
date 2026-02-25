@@ -7,6 +7,7 @@ export type FranchiseId =
   | 'assassins-creed'
   | 'spider-man'
   | 'marvel-universe'
+  | 'marvel-super-heroes'
   | 'final-fantasy'
   | 'avatar-last-airbender'
   | 'tmnt'
