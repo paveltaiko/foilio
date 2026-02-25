@@ -335,6 +335,25 @@ export function useCardCollection({ ownedCards, searchQuery = '', visibleSetIds,
     return cardsBySet[activeSet] ?? [];
   }, [activeSet, combinedCards, cardsBySet, visibleSetIds]);
 
+  // Keep owned-filter results complete even when "all" mode has only partially
+  // paged data loaded for some sets.
+  const scopedOwnedCards = useMemo(() => {
+    const result: ScryfallCard[] = [];
+    const seen = new Set<string>();
+
+    for (const cardId of scopedOwnedCardIds) {
+      const card = loadedCardsById[cardId] ?? ownedCardDetails[cardId];
+      if (!card) continue;
+      if (activeSet !== 'all' && card.set !== activeSet) continue;
+      if (activeSet === 'all' && visibleSetIds && !visibleSetIds.includes(card.set)) continue;
+      if (seen.has(card.id)) continue;
+      seen.add(card.id);
+      result.push(card);
+    }
+
+    return result;
+  }, [scopedOwnedCardIds, loadedCardsById, ownedCardDetails, activeSet, visibleSetIds]);
+
   const loadedCardsById = useMemo(() => {
     const map: Record<string, ScryfallCard> = {};
     for (const setId of allSetIds) {
@@ -477,7 +496,9 @@ export function useCardCollection({ ownedCards, searchQuery = '', visibleSetIds,
   }, [setOrder, setTotals, allSetIds, cardsBySet, visibleSetIds]);
 
   const sortedFilteredCards: CardWithVariant[] = useMemo(() => {
-    let cards = [...currentCards];
+    let cards = ownershipFilter === 'owned'
+      ? mergeCards(currentCards, scopedOwnedCards)
+      : [...currentCards];
 
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim();
@@ -579,7 +600,7 @@ export function useCardCollection({ ownedCards, searchQuery = '', visibleSetIds,
     });
 
     return filtered;
-  }, [currentCards, ownershipFilter, boosterFilter, boosterMap, sortOption, ownedCards, searchQuery, shouldGroupBySet, setOrder]);
+  }, [currentCards, scopedOwnedCards, ownershipFilter, boosterFilter, boosterMap, sortOption, ownedCards, searchQuery, shouldGroupBySet, setOrder]);
 
   const visibleCards = useMemo(
     () => sortedFilteredCards.slice(0, renderLimit),
