@@ -126,6 +126,34 @@ export async function saveCollectionSettings(
   await setDoc(settingsDocRef(userId), settings);
 }
 
+// ─── Secret Lair Drop Settings ───────────────────────────────────────────────
+
+function secretLairSettingsDocRef(userId: string) {
+  return doc(getDb(), 'users', userId, 'settings', 'secretLair');
+}
+
+export function subscribeToSecretLairSettings(
+  userId: string,
+  callback: (enabledDropIds: string[] | null) => void
+): Unsubscribe {
+  return onSnapshot(secretLairSettingsDocRef(userId), (snap) => {
+    if (!snap.exists()) {
+      callback(null);
+      return;
+    }
+    const data = snap.data() as { enabledDropIds?: unknown };
+    const ids = Array.isArray(data.enabledDropIds) ? (data.enabledDropIds as string[]) : null;
+    callback(ids);
+  });
+}
+
+export async function saveSecretLairSettings(
+  userId: string,
+  enabledDropIds: string[]
+): Promise<void> {
+  await setDoc(secretLairSettingsDocRef(userId), { enabledDropIds });
+}
+
 // ─── Card Quantity ────────────────────────────────────────────────────────────
 
 export async function updateCardQuantity(

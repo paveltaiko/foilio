@@ -11,6 +11,7 @@ import { SharedCollectionPage } from './pages/SharedCollectionPage';
 import { CollectionsV2LabPage } from './pages/lab/CollectionsV2LabPage';
 import { CollectionsSettingsPage } from './pages/lab/CollectionsSettingsPage';
 import { CollectionsSettingsProvider } from './pages/lab/CollectionsSettingsContext';
+import { SecretLairDropSettingsProvider } from './hooks/SecretLairDropSettingsContext';
 
 const queryClient = new QueryClient();
 const isStandalone = window.matchMedia('(display-mode: standalone)').matches
@@ -47,6 +48,7 @@ function AppContent() {
   }, [logout, navigate]);
 
   return (
+    <SecretLairDropSettingsProvider userId={user?.uid ?? null}>
     <CollectionsSettingsProvider userId={user?.uid ?? null}>
       <div className="min-h-svh bg-surface-secondary flex flex-col overflow-x-hidden">
         <Header
@@ -95,6 +97,7 @@ function AppContent() {
         {!isStandalone && <Footer />}
       </div>
     </CollectionsSettingsProvider>
+    </SecretLairDropSettingsProvider>
   );
 }
 
