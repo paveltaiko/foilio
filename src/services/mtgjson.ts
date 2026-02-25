@@ -79,18 +79,33 @@ export interface BoosterEntry {
 export type BoosterMap = Map<string, BoosterEntry>;
 
 export async function fetchBoosterMap(sets: CollectionSet[]): Promise<BoosterMap> {
-  // Fetch all set data in parallel
-  const setDataList = await Promise.all(sets.map((s) => fetchMtgjsonSet(s.id)));
+  // Fetch all set data in parallel. If a set file is missing in MTGJSON,
+  // keep going so booster filtering still works for the remaining sets.
+  const setResults = await Promise.allSettled(sets.map((s) => fetchMtgjsonSet(s.id)));
   const setDataById: Record<string, MtgjsonSetData> = {};
-  sets.forEach((s, i) => { setDataById[s.id] = setDataList[i]; });
+  sets.forEach((s, i) => {
+    const result = setResults[i];
+    if (result.status === 'fulfilled') {
+      setDataById[s.id] = result.value;
+    } else {
+      console.warn(`[MTGJSON] Skipping unavailable set ${s.id.toUpperCase()} in booster map`, result.reason);
+    }
+  });
 
   // Build a product map per franchise (from the master set of each franchise)
   const franchiseIds = [...new Set(sets.map((s) => s.franchiseId))];
   const productMapByFranchise: Record<string, Map<string, MtgjsonSealedProduct>> = {};
   for (const franchiseId of franchiseIds) {
+    const franchiseSets = sets
+      .filter((s) => s.franchiseId === franchiseId)
+      .sort((a, b) => a.order - b.order);
+
+    // Prefer the franchise master set, but if it is missing in MTGJSON,
+    // fall back to the first available set with sealedProduct data.
     const masterId = getMasterSetId(franchiseId, sets);
-    const masterData = setDataById[masterId];
-    const sealedProducts = masterData?.sealedProduct ?? [];
+    const fallbackSet = franchiseSets.find((s) => (setDataById[s.id]?.sealedProduct?.length ?? 0) > 0);
+    const productSetId = setDataById[masterId] ? masterId : fallbackSet?.id;
+    const sealedProducts = productSetId ? (setDataById[productSetId]?.sealedProduct ?? []) : [];
     productMapByFranchise[franchiseId] = new Map(sealedProducts.map((p) => [p.uuid, p]));
   }
 
