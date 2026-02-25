@@ -28,6 +28,8 @@ export function CardDetail({ card, selectedVariant = null, owned, onClose, onTog
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const [touchStartY, setTouchStartY] = useState<number | null>(null);
   const [swipeOffset, setSwipeOffset] = useState(0);
+  // null = not yet decided, 'horizontal' = card swipe, 'vertical' = ignore (modal close)
+  const swipeDirectionLock = useRef<'horizontal' | 'vertical' | null>(null);
   const [zoomedImageKey, setZoomedImageKey] = useState<string | null>(null);
 
   // Animation state machine: 'idle' | 'exiting' | 'repositioning' | 'entering'
@@ -175,6 +177,7 @@ export function CardDetail({ card, selectedVariant = null, owned, onClose, onTog
     if (isAnimating) return;
     setTouchStartX(e.touches[0].clientX);
     setTouchStartY(e.touches[0].clientY);
+    swipeDirectionLock.current = null;
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -183,18 +186,22 @@ export function CardDetail({ card, selectedVariant = null, owned, onClose, onTog
     const deltaX = e.touches[0].clientX - touchStartX;
     const deltaY = e.touches[0].clientY - touchStartY;
 
-    // Only track horizontal swipe if it's more horizontal than vertical
-    if (Math.abs(deltaX) > Math.abs(deltaY)) {
-      // Apply resistance at edges when can't navigate
-      const resistance = 0.2;
-      let offset = deltaX;
-
-      if ((deltaX > 0 && !canGoPrev) || (deltaX < 0 && !canGoNext)) {
-        offset = deltaX * resistance;
-      }
-
-      setSwipeOffset(offset);
+    // Wait until we have enough movement to determine direction
+    if (swipeDirectionLock.current === null) {
+      if (Math.max(Math.abs(deltaX), Math.abs(deltaY)) < 10) return;
+      swipeDirectionLock.current = Math.abs(deltaX) > Math.abs(deltaY) ? 'horizontal' : 'vertical';
     }
+
+    // Vertical swipe — leave it to Modal, do nothing
+    if (swipeDirectionLock.current === 'vertical') return;
+
+    // Apply resistance at edges when can't navigate
+    const resistance = 0.2;
+    let offset = deltaX;
+    if ((deltaX > 0 && !canGoPrev) || (deltaX < 0 && !canGoNext)) {
+      offset = deltaX * resistance;
+    }
+    setSwipeOffset(offset);
   };
 
   const handleTouchEnd = () => {
@@ -202,17 +209,19 @@ export function CardDetail({ card, selectedVariant = null, owned, onClose, onTog
 
     const threshold = 80;
 
-    if (swipeOffset > threshold && canGoPrev) {
-      setSwipeOffset(0);
-      goToPrev();
-    } else if (swipeOffset < -threshold && canGoNext) {
-      setSwipeOffset(0);
-      goToNext();
-    } else {
-      // Snap back to center
-      setSwipeOffset(0);
+    if (swipeDirectionLock.current === 'horizontal') {
+      if (swipeOffset > threshold && canGoPrev) {
+        setSwipeOffset(0);
+        goToPrev();
+      } else if (swipeOffset < -threshold && canGoNext) {
+        setSwipeOffset(0);
+        goToNext();
+      } else {
+        setSwipeOffset(0);
+      }
     }
 
+    swipeDirectionLock.current = null;
     setTouchStartX(null);
     setTouchStartY(null);
   };

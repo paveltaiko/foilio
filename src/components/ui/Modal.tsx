@@ -47,7 +47,10 @@ export function Modal({ isOpen, onClose, children }: ModalProps) {
   const [dragY, setDragY] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const dragStartY = useRef(0);
+  const dragStartX = useRef(0);
   const canSwipeClose = useRef(false);
+  // null = not yet decided, 'vertical' = swipe-to-close, 'horizontal' = ignore (card swipe)
+  const directionLock = useRef<'vertical' | 'horizontal' | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -74,35 +77,38 @@ export function Modal({ isOpen, onClose, children }: ModalProps) {
   // Swipe to close handlers
   const handleTouchStart = (e: React.TouchEvent) => {
     dragStartY.current = e.touches[0].clientY;
-    // Allow swipe-to-close only when scrollable content is at the top
+    dragStartX.current = e.touches[0].clientX;
+    directionLock.current = null;
     const scrollEl = scrollRef.current;
     canSwipeClose.current = !scrollEl || scrollEl.scrollTop === 0;
-    if (canSwipeClose.current) {
-      setIsDragging(true);
-    }
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!canSwipeClose.current) return;
-    const currentY = e.touches[0].clientY;
-    const diff = currentY - dragStartY.current;
-    // Only allow dragging down
-    if (diff > 0) {
+
+    const deltaX = Math.abs(e.touches[0].clientX - dragStartX.current);
+    const deltaY = e.touches[0].clientY - dragStartY.current;
+
+    // Wait until we have enough movement to determine direction
+    if (directionLock.current === null) {
+      if (Math.max(deltaX, Math.abs(deltaY)) < 10) return;
+      directionLock.current = deltaX > Math.abs(deltaY) ? 'horizontal' : 'vertical';
+    }
+
+    // Horizontal swipe — leave it to CardDetail, do nothing
+    if (directionLock.current === 'horizontal') return;
+
+    // Vertical swipe downward — drag modal down
+    if (deltaY > 0) {
       setIsDragging(true);
-      setDragY(diff);
-    } else {
-      // Scrolling up — hand control back to native scroll
-      if (dragY === 0) {
-        canSwipeClose.current = false;
-        setIsDragging(false);
-      }
+      setDragY(deltaY);
     }
   };
 
   const handleTouchEnd = () => {
     setIsDragging(false);
     canSwipeClose.current = false;
-    // If dragged more than 100px, close the modal
+    directionLock.current = null;
     if (dragY > 100) {
       onClose();
     }
