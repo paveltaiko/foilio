@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect, useLayoutEffect, useCallback } from 'react';
+import { useRef, useState, useEffect, useLayoutEffect, useCallback, type ReactNode } from 'react';
 import { ChevronDown } from 'lucide-react';
 
 interface Tab {
@@ -11,10 +11,11 @@ interface TabsProps {
   tabs: Tab[];
   activeTab: string;
   onChange: (id: string) => void;
+  prefix?: ReactNode;
 }
 
 // Dropdown component (used on mobile and when tabs overflow on desktop)
-function Dropdown({ tabs, activeTab, onChange }: TabsProps) {
+function Dropdown({ tabs, activeTab, onChange, prefix }: TabsProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const activeTabData = tabs.find((tab) => tab.id === activeTab);
@@ -43,59 +44,62 @@ function Dropdown({ tabs, activeTab, onChange }: TabsProps) {
   }, [onChange]);
 
   return (
-    <div ref={dropdownRef} className="relative">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between gap-2 px-4 py-3 bg-white border border-surface-border rounded-lg text-sm font-medium text-neutral-800 hover:bg-neutral-50 transition-colors cursor-pointer"
-        aria-expanded={isOpen}
-        aria-haspopup="listbox"
-      >
-        <span className="flex items-center gap-2">
-          <span>{activeTabData?.label}</span>
-          {activeTabData?.count !== undefined && (
-            <span className="px-1.5 py-0.5 text-2xs font-medium bg-primary-50 text-primary-600 rounded-full">
-              {activeTabData.count}
-            </span>
-          )}
-        </span>
-        <ChevronDown
-          className={`w-5 h-5 text-neutral-600 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
-          strokeWidth={2.5}
-        />
-      </button>
-
-      {isOpen && (
-        <div
-          className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-surface-border rounded-lg shadow-lg overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
-          role="listbox"
+    <div className="flex items-center gap-2">
+      {prefix && <div className="flex-shrink-0">{prefix}</div>}
+      <div ref={dropdownRef} className="relative flex-1">
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="w-full flex items-center justify-between gap-2 px-4 py-3 bg-white border border-surface-border rounded-lg text-sm font-medium text-neutral-800 hover:bg-neutral-50 transition-colors cursor-pointer"
+          aria-expanded={isOpen}
+          aria-haspopup="listbox"
         >
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => handleSelect(tab.id)}
-              className={`
-                w-full flex items-center justify-between px-4 py-3 text-sm font-medium transition-colors cursor-pointer
-                ${activeTab === tab.id
-                  ? 'bg-primary-50 text-primary-600'
-                  : 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900'
-                }
-              `}
-              role="option"
-              aria-selected={activeTab === tab.id}
-            >
-              <span>{tab.label}</span>
-              {tab.count !== undefined && (
-                <span className={`px-1.5 py-0.5 text-2xs font-medium rounded-full ${activeTab === tab.id
-                  ? 'bg-primary-100 text-primary-700'
-                  : 'bg-neutral-100 text-neutral-600'
-                  }`}>
-                  {tab.count}
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
-      )}
+          <span className="flex items-center gap-2">
+            <span>{activeTabData?.label}</span>
+            {activeTabData?.count !== undefined && (
+              <span className="px-1.5 py-0.5 text-2xs font-medium bg-primary-50 text-primary-600 rounded-full">
+                {activeTabData.count}
+              </span>
+            )}
+          </span>
+          <ChevronDown
+            className={`w-5 h-5 text-neutral-600 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+            strokeWidth={2.5}
+          />
+        </button>
+
+        {isOpen && (
+          <div
+            className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-surface-border rounded-lg shadow-lg overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
+            role="listbox"
+          >
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => handleSelect(tab.id)}
+                className={`
+                  w-full flex items-center justify-between px-4 py-3 text-sm font-medium transition-colors cursor-pointer
+                  ${activeTab === tab.id
+                    ? 'bg-primary-50 text-primary-600'
+                    : 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900'
+                  }
+                `}
+                role="option"
+                aria-selected={activeTab === tab.id}
+              >
+                <span>{tab.label}</span>
+                {tab.count !== undefined && (
+                  <span className={`px-1.5 py-0.5 text-2xs font-medium rounded-full ${activeTab === tab.id
+                    ? 'bg-primary-100 text-primary-700'
+                    : 'bg-neutral-100 text-neutral-600'
+                    }`}>
+                    {tab.count}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -103,7 +107,7 @@ function Dropdown({ tabs, activeTab, onChange }: TabsProps) {
 const OVERFLOW_BTN_WIDTH = 80; // px reserved for the "More" button
 
 // Desktop tabs — visible tabs + "More ▾" dropdown for overflow tabs
-function DesktopTabs({ tabs, activeTab, onChange }: TabsProps) {
+function DesktopTabs({ tabs, activeTab, onChange, prefix }: TabsProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
   const [visibleCount, setVisibleCount] = useState<number | undefined>(undefined);
@@ -155,7 +159,13 @@ function DesktopTabs({ tabs, activeTab, onChange }: TabsProps) {
   const measured = visibleCount !== undefined;
 
   return (
-    <div ref={containerRef} className="border-b border-surface-border">
+    <div className="border-b border-surface-border flex items-stretch">
+      {prefix && (
+        <div className="flex items-center flex-shrink-0 border-b-2 border-transparent -mb-px">
+          {prefix}
+        </div>
+      )}
+      <div ref={containerRef} className="flex-1 min-w-0">
       <div className={`flex -mb-px items-end ${measured ? '' : 'invisible'}`}>
         {/* All tabs rendered for measurement; hidden ones are invisible + non-interactive */}
         {tabs.map((tab, i) => {
@@ -238,20 +248,21 @@ function DesktopTabs({ tabs, activeTab, onChange }: TabsProps) {
           </div>
         )}
       </div>
+      </div>
     </div>
   );
 }
 
-export function Tabs({ tabs, activeTab, onChange }: TabsProps) {
+export function Tabs({ tabs, activeTab, onChange, prefix }: TabsProps) {
   return (
     <>
       {/* Mobile: Dropdown */}
       <div className="block md:hidden">
-        <Dropdown tabs={tabs} activeTab={activeTab} onChange={onChange} />
+        <Dropdown tabs={tabs} activeTab={activeTab} onChange={onChange} prefix={prefix} />
       </div>
       {/* Desktop: Tabs with overflow fallback to dropdown */}
       <div className="hidden md:block">
-        <DesktopTabs tabs={tabs} activeTab={activeTab} onChange={onChange} />
+        <DesktopTabs tabs={tabs} activeTab={activeTab} onChange={onChange} prefix={prefix} />
       </div>
     </>
   );

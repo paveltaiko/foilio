@@ -1,16 +1,18 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Share, Check, Layers, LayoutGrid, SlidersHorizontal, RotateCcw, Settings } from 'lucide-react';
 import { Link } from 'react-router';
 import type { User } from 'firebase/auth';
 import { isFirebaseConfigured } from '../config/firebase';
 import { useOwnedCards } from '../hooks/useOwnedCards';
 import { useCardCollection } from '../hooks/useCardCollection';
+import { useSecretLairCollection } from '../hooks/useSecretLairCollection';
+import { useSecretLairDropSettings } from '../hooks/useSecretLairDropSettings';
 import { useCollectionsSettings } from './lab/useCollectionsSettings';
 import { getVisibleSets } from './lab/collectionsSettings';
 import { collectionSets } from '../config/collections';
+import { secretLairDrops } from '../config/secretLairDrops';
 import { toggleCardOwnership, updateCardQuantity } from '../services/firestore';
 import { getExistingShareToken, getOrCreateShareToken } from '../services/sharing';
-import { SetTabs } from '../components/filters/SetTabs';
 import { SortControl } from '../components/filters/SortControl';
 import { OwnershipFilter } from '../components/filters/OwnershipFilter';
 import { BoosterFilter } from '../components/filters/BoosterFilter';
@@ -20,6 +22,7 @@ import { CollectionSummary } from '../components/stats/CollectionSummary';
 import { CardGrid, CardGridSkeleton } from '../components/cards/CardGrid';
 import { CardDetail } from '../components/cards/CardDetail';
 import { PullToRefresh } from '../components/ui/PullToRefresh';
+import { Tabs } from '../components/ui/Tabs';
 import type { CardVariant } from '../types/card';
 
 interface HomePageProps {
@@ -169,6 +172,8 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
   const [shareToastType, setShareToastType] = useState<ShareToastType>('success');
   const [selectedVariant, setSelectedVariant] = useState<CardVariant>(null);
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
+  // Unified active tab — buď UB set ID nebo SLD drop ID
+  const [activeTab, setActiveTab] = useState<string>('all');
   const { ownedCards, updateLocal } = useOwnedCards(user.uid);
 
   useEffect(() => {
@@ -196,6 +201,7 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
     return () => { cancelled = true; };
   }, [user.uid]);
 
+  // UB settings
   const { settings: collectionSettings } = useCollectionsSettings();
   const visibleCollectionSets = getVisibleSets(collectionSettings, collectionSets);
   const settingsInitialized = Object.keys(collectionSettings.collections).length > 0;
@@ -203,16 +209,29 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
     ? visibleCollectionSets.map((s) => s.id)
     : undefined;
 
+  // SL drop settings
+  const { enabledDropIds } = useSecretLairDropSettings();
+  const enabledDrops = useMemo(
+    () => secretLairDrops.filter((d) => enabledDropIds.has(d.id)),
+    [enabledDropIds]
+  );
+  const enabledDropIdSet = useMemo(() => new Set(enabledDrops.map((d) => d.id)), [enabledDrops]);
+
+  // Aktivní mode — odvozeno z activeTab
+  const isSLMode = activeTab !== 'all' && enabledDropIdSet.has(activeTab);
+
+  // UB hook — vždy volaný, ale pro tab předáváme správnou hodnotu
+  const ubActiveSet = isSLMode ? 'all' : activeTab;
   const {
-    activeSet, setActiveSet,
+    setActiveSet: ubSetActiveSet,
     sortOption, setSortOption,
     ownershipFilter, setOwnershipFilter,
     boosterFilter, setBoosterFilter,
     boosterMapLoading,
-    selectedCard, setSelectedCard,
+    selectedCard: ubSelectedCard, setSelectedCard: ubSetSelectedCard,
     groupBySet, setGroupBySet,
-    currentCards, isCardsLoading,
-    cardCounts, stats, sortedFilteredCards, visibleCards,
+    currentCards: ubCurrentCards, isCardsLoading: ubIsCardsLoading,
+    cardCounts: ubCardCounts, stats: ubStats, sortedFilteredCards: ubSortedFilteredCards, visibleCards: ubVisibleCards,
     hasBoosterData,
     isFetchingNextPage,
     hasNextPage,
@@ -223,6 +242,105 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
     refreshCards,
   } = useCardCollection({ ownedCards, searchQuery, visibleSetIds, sets: collectionSets });
 
+  // Sync ubActiveSet do hooku
+  useEffect(() => {
+    ubSetActiveSet(ubActiveSet);
+  }, [ubActiveSet, ubSetActiveSet]);
+
+  // SL hook
+  const {
+    activeDrop, setActiveDrop,
+    sortOption: slSortOption, setSortOption: slSetSortOption,
+    ownershipFilter: slOwnershipFilter, setOwnershipFilter: slSetOwnershipFilter,
+    selectedCard: slSelectedCard, setSelectedCard: slSetSelectedCard,
+    currentCards: slCurrentCards, isCardsLoading: slIsCardsLoading,
+    cardCounts: slCardCounts, stats: slStats, sortedFilteredCards: slSortedFilteredCards, visibleCards: slVisibleCards,
+    hasNextPage: slHasNextPage, loadNextPage: slLoadNextPage,
+    refreshCards: slRefreshCards,
+  } = useSecretLairCollection({
+    ownedCards,
+    searchQuery,
+    drops: enabledDrops,
+    active: enabledDrops.length > 0, // vždy aktivní pokud jsou povolené dropy — potřebné pro Full Collection
+  });
+
+  // Sync SL activeDrop
+  useEffect(() => {
+    if (isSLMode) {
+      setActiveDrop(activeTab);
+    }
+  }, [isSLMode, activeTab, setActiveDrop]);
+
+  // Aliases
+  const isAllTab = activeTab === 'all';
+  const selectedCard = isSLMode ? slSelectedCard : ubSelectedCard;
+  const setSelectedCard = isSLMode ? slSetSelectedCard : ubSetSelectedCard;
+  const isCardsLoading = isSLMode ? slIsCardsLoading : ubIsCardsLoading || (isAllTab && slIsCardsLoading);
+  const activeSortOption = isSLMode ? slSortOption : sortOption;
+  const setActiveSortOption = isSLMode ? slSetSortOption : setSortOption;
+  const activeOwnershipFilter = isSLMode ? slOwnershipFilter : ownershipFilter;
+  const setActiveOwnershipFilter = isSLMode ? slSetOwnershipFilter : setOwnershipFilter;
+
+  // Pro Full Collection tab sloučíme UB + SL karty a stats
+  const currentCards = useMemo(() => {
+    if (isSLMode) return slCurrentCards;
+    if (isAllTab) return [...ubCurrentCards, ...slSortedFilteredCards.map((c) => c.card)];
+    return ubCurrentCards;
+  }, [isSLMode, isAllTab, ubCurrentCards, slCurrentCards, slSortedFilteredCards]);
+
+  const sortedFilteredCards = useMemo(() => {
+    if (isSLMode) return slSortedFilteredCards;
+    if (isAllTab) return [...ubSortedFilteredCards, ...slSortedFilteredCards];
+    return ubSortedFilteredCards;
+  }, [isSLMode, isAllTab, ubSortedFilteredCards, slSortedFilteredCards]);
+
+  const visibleCards = useMemo(() => {
+    if (isSLMode) return slVisibleCards;
+    if (isAllTab) return [...ubVisibleCards, ...slVisibleCards];
+    return ubVisibleCards;
+  }, [isSLMode, isAllTab, ubVisibleCards, slVisibleCards]);
+
+  const stats = useMemo(() => {
+    if (isSLMode) return slStats;
+    if (isAllTab) return {
+      totalCards: ubStats.totalCards + slStats.totalCards,
+      ownedCount: ubStats.ownedCount + slStats.ownedCount,
+      totalValue: ubStats.totalValue + slStats.totalValue,
+      percentage: ubStats.totalCards + slStats.totalCards > 0
+        ? Math.round(((ubStats.ownedCount + slStats.ownedCount) / (ubStats.totalCards + slStats.totalCards)) * 100)
+        : 0,
+    };
+    return ubStats;
+  }, [isSLMode, isAllTab, ubStats, slStats]);
+
+  // Sloučené card counts pro lištu tabů
+  const mergedCardCounts = useMemo(() => {
+    const merged: Record<string, number> = { ...ubCardCounts };
+    for (const drop of enabledDrops) {
+      merged[drop.id] = slCardCounts[drop.id] ?? 0;
+    }
+    // 'all' count = UB + SL celkem
+    merged['all'] = (ubCardCounts['all'] ?? 0) + (slCardCounts['all'] ?? 0);
+    return merged;
+  }, [ubCardCounts, slCardCounts, enabledDrops]);
+
+  // Sloučené taby
+  const allTabs = useMemo(() => {
+    const ubTabs = [
+      { id: 'all', label: 'Full Collection', count: mergedCardCounts['all'] },
+      ...(visibleSetIds ?? []).map((setId) => {
+        const set = collectionSets.find((s) => s.id === setId);
+        return { id: setId, label: set?.name ?? setId, count: mergedCardCounts[setId] };
+      }),
+    ];
+    const slTabs = enabledDrops.map((drop) => ({
+      id: drop.id,
+      label: drop.name,
+      count: mergedCardCounts[drop.id],
+    }));
+    return [...ubTabs, ...slTabs];
+  }, [visibleSetIds, enabledDrops, mergedCardCounts]);
+
   // Reset booster filter when switching to a set that has no booster data
   useEffect(() => {
     if (!hasBoosterData && boosterFilter !== 'all') {
@@ -230,14 +348,19 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
     }
   }, [hasBoosterData, boosterFilter, setBoosterFilter]);
 
-  const activeFilterCount = (boosterFilter !== 'all' && hasBoosterData ? 1 : 0) + (ownershipFilter !== 'all' ? 1 : 0);
-  const hasActiveFilters = (boosterFilter !== 'all' && hasBoosterData) || ownershipFilter !== 'all' || sortOption !== 'number-asc';
+  const activeFilterCount = (boosterFilter !== 'all' && hasBoosterData && !isSLMode ? 1 : 0) + (activeOwnershipFilter !== 'all' ? 1 : 0);
+  const hasActiveFilters = (boosterFilter !== 'all' && hasBoosterData && !isSLMode) || activeOwnershipFilter !== 'all' || activeSortOption !== 'number-asc';
 
   const handleResetFilters = useCallback(() => {
-    setBoosterFilter('all');
-    setOwnershipFilter('all');
-    setSortOption('number-asc');
-  }, [setBoosterFilter, setOwnershipFilter, setSortOption]);
+    if (!isSLMode) {
+      setBoosterFilter('all');
+      setOwnershipFilter('all');
+      setSortOption('number-asc');
+    } else {
+      slSetOwnershipFilter('all');
+      slSetSortOption('number-asc');
+    }
+  }, [isSLMode, setBoosterFilter, setOwnershipFilter, setSortOption, slSetOwnershipFilter, slSetSortOption]);
 
   // Handlers
   const handleToggle = useCallback(
@@ -326,15 +449,22 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
   );
 
   const handleRefresh = useCallback(async () => {
-    refreshCards();
-  }, [refreshCards]);
+    if (!isSLMode) refreshCards();
+    else slRefreshCards();
+  }, [isSLMode, refreshCards, slRefreshCards]);
+
+  const noUBCollectionSelected = !isSLMode && settingsInitialized && visibleSetIds !== undefined && visibleSetIds.length === 0;
 
   return (
     <>
       <PullToRefresh onRefresh={handleRefresh} disabled={isSearchOpen || !!selectedCard || isFilterDrawerOpen}>
         <div className="app-container-padded safe-bottom touch-pan-y">
-          {/* Set tabs */}
-          <SetTabs activeSet={activeSet} onChange={setActiveSet} sets={collectionSets} cardCounts={cardCounts} visibleSets={visibleSetIds} />
+          {/* Unified tabs — UB sety + enabled SL dropy */}
+          <Tabs
+            tabs={allTabs}
+            activeTab={activeTab}
+            onChange={setActiveTab}
+          />
 
           {/* Stats */}
           <div className="py-2">
@@ -377,7 +507,7 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
                 )}
               </div>
               <div className="flex items-center gap-2">
-                {activeSet === 'all' && (
+                {!isSLMode && activeTab === 'all' && (
                   <button
                     onClick={() => setGroupBySet(!groupBySet)}
                     title={groupBySet ? 'Show all at once' : 'Group by set'}
@@ -408,16 +538,16 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
 
             {/* Desktop toolbar: ownership + sort + booster + groupby + reset */}
             <div className="hidden md:flex items-center gap-4">
-              <OwnershipFilter value={ownershipFilter} onChange={setOwnershipFilter} />
-              <SortControl value={sortOption} onChange={setSortOption} />
-              {hasBoosterData && (
+              <OwnershipFilter value={activeOwnershipFilter} onChange={setActiveOwnershipFilter} />
+              <SortControl value={activeSortOption} onChange={setActiveSortOption} />
+              {!isSLMode && hasBoosterData && (
                 <BoosterFilter
                   value={boosterFilter}
                   onChange={setBoosterFilter}
                   isLoading={boosterMapLoading}
                 />
               )}
-              {activeSet === 'all' && (
+              {!isSLMode && activeTab === 'all' && (
                 <button
                   onClick={() => setGroupBySet(!groupBySet)}
                   title={groupBySet ? 'Show all at once' : 'Group by set'}
@@ -459,7 +589,7 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
           {/* Card grid */}
           {isCardsLoading ? (
             <CardGridSkeleton />
-          ) : !settingsInitialized || (visibleSetIds && visibleSetIds.length === 0) ? (
+          ) : noUBCollectionSelected ? (
             <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
               <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-neutral-100 mb-4">
                 <Settings className="w-7 h-7 text-neutral-400" />
@@ -478,7 +608,7 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
             </div>
           ) : (
             <div className="space-y-3">
-              {(isCompletingSearch || isFetchingNextPage || isComputingTotalValue) && (
+              {!isSLMode && (isCompletingSearch || isFetchingNextPage || isComputingTotalValue) && (
                 <p className="text-xs text-neutral-500">
                   {isComputingTotalValue
                     ? 'Calculating total collection value…'
@@ -495,12 +625,12 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
                   setSelectedCard(card);
                   setSelectedVariant(variant);
                 }}
-                groupBySet={activeSet === 'all' && groupBySet && searchQuery.trim().length === 0}
+                groupBySet={!isSLMode && activeTab === 'all' && groupBySet && searchQuery.trim().length === 0}
                 sets={collectionSets}
-                onLoadMore={loadNextPage}
-                hasMore={hasNextPage}
-                isLoadingMore={isFetchingNextPage}
-                loadMoreError={loadMoreError}
+                onLoadMore={!isSLMode ? loadNextPage : slLoadNextPage}
+                hasMore={!isSLMode ? hasNextPage : slHasNextPage}
+                isLoadingMore={!isSLMode ? isFetchingNextPage : false}
+                loadMoreError={!isSLMode ? loadMoreError : null}
               />
             </div>
           )}
@@ -513,12 +643,12 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
         onClose={() => setIsFilterDrawerOpen(false)}
         boosterFilter={boosterFilter}
         onBoosterChange={setBoosterFilter}
-        ownershipFilter={ownershipFilter}
-        onOwnershipChange={setOwnershipFilter}
-        sortOption={sortOption}
-        onSortChange={setSortOption}
+        ownershipFilter={activeOwnershipFilter}
+        onOwnershipChange={setActiveOwnershipFilter}
+        sortOption={activeSortOption}
+        onSortChange={setActiveSortOption}
         boosterMapLoading={boosterMapLoading}
-        showBoosterFilter={hasBoosterData}
+        showBoosterFilter={!isSLMode && hasBoosterData}
         hasActiveFilters={hasActiveFilters}
         onReset={handleResetFilters}
       />

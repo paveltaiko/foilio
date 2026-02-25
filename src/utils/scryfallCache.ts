@@ -7,6 +7,7 @@ const SET_PAGE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days - card metadata is pe
 const LS_PREFIX_CARD = 'scryfall_card_';
 const LS_PREFIX_SET_COUNT = 'scryfall_setcount_';
 const LS_PREFIX_SET_PAGE = 'scryfall_setpage_';
+const LS_PREFIX_SLD_DROP = 'scryfall_slddrop_';
 const LS_KEY_VERSION = 'scryfall_cache_v';
 const CACHE_SCHEMA_VERSION = '1';
 
@@ -66,7 +67,8 @@ function evictOldEntries(): void {
     if (
       !key.startsWith(LS_PREFIX_CARD) &&
       !key.startsWith(LS_PREFIX_SET_COUNT) &&
-      !key.startsWith(LS_PREFIX_SET_PAGE)
+      !key.startsWith(LS_PREFIX_SET_PAGE) &&
+      !key.startsWith(LS_PREFIX_SLD_DROP)
     ) continue;
 
     try {
@@ -103,7 +105,8 @@ export function validateCacheVersion(): void {
       if (
         key.startsWith(LS_PREFIX_CARD) ||
         key.startsWith(LS_PREFIX_SET_COUNT) ||
-        key.startsWith(LS_PREFIX_SET_PAGE)
+        key.startsWith(LS_PREFIX_SET_PAGE) ||
+        key.startsWith(LS_PREFIX_SLD_DROP)
       ) {
         keysToRemove.push(key);
       }
@@ -142,6 +145,22 @@ export function setCachedSetPage(setCode: string, data: CachedSetPage): void {
 export function invalidateCachedSetPage(setCode: string): void {
   try {
     localStorage.removeItem(`${LS_PREFIX_SET_PAGE}${setCode.toLowerCase()}`);
+  } catch {
+    // Silent fail
+  }
+}
+
+export function getCachedSLDDrop(dropId: string): ScryfallCard[] | null {
+  return lsGet<ScryfallCard[]>(`${LS_PREFIX_SLD_DROP}${dropId}`);
+}
+
+export function setCachedSLDDrop(dropId: string, cards: ScryfallCard[]): void {
+  lsSet(`${LS_PREFIX_SLD_DROP}${dropId}`, cards, SET_PAGE_TTL_MS);
+}
+
+export function invalidateCachedSLDDrop(dropId: string): void {
+  try {
+    localStorage.removeItem(`${LS_PREFIX_SLD_DROP}${dropId}`);
   } catch {
     // Silent fail
   }

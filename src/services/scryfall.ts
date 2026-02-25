@@ -177,6 +177,33 @@ export async function fetchCardsByCollectorNumbers(
   return data.data ?? [];
 }
 
+export async function fetchCardsForSLDDrop(releasedAt: string): Promise<ScryfallCard[]> {
+  const allCards: ScryfallCard[] = [];
+  let url: string | null =
+    `${BASE_URL}/cards/search?q=set:sld+date=${releasedAt}&order=set&unique=prints`;
+
+  while (url) {
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      if (response.status === 404) break;
+      throw new Error(`Scryfall API error: ${response.status}`);
+    }
+
+    const data: ScryfallSearchResponse = await response.json();
+    allCards.push(...data.data);
+
+    if (data.has_more && data.next_page) {
+      url = data.next_page;
+      await delay(RATE_LIMIT_MS);
+    } else {
+      url = null;
+    }
+  }
+
+  return allCards;
+}
+
 export async function fetchAllSets(setCodes: string[]): Promise<Record<string, ScryfallCard[]>> {
   const results: Record<string, ScryfallCard[]> = {};
 

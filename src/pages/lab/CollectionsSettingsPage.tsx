@@ -1,12 +1,20 @@
+import { useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { CollectionsSettingsPanel } from '../../components/lab/CollectionsSettingsPanel';
+import { SecretLairSettingsPanel } from '../../components/lab/SecretLairSettingsPanel';
+import { CollectionModeTabs } from '../../components/ui/CollectionModeTabs';
+import type { CollectionMode } from '../../components/ui/CollectionModeTabs';
 import { franchises, collectionSets } from '../../config/collections';
+import { secretLairDrops } from '../../config/secretLairDrops';
 import { useCollectionsSettings } from './useCollectionsSettings';
+import { useSecretLairDropSettings } from '../../hooks/useSecretLairDropSettings';
 
 export function CollectionsSettingsPage() {
   const navigate = useNavigate();
   const { settings, setCollectionEnabled, setSetVisibility } = useCollectionsSettings();
+  const { enabledDropIds, toggleDrop } = useSecretLairDropSettings();
+  const [activeMode, setActiveMode] = useState<CollectionMode>('ub');
 
   return (
     <div className="app-container-padded py-3 sm:py-4 min-h-screen">
@@ -30,20 +38,40 @@ export function CollectionsSettingsPage() {
       </div>
 
       <div className="rounded-2xl border border-surface-border bg-white p-4 sm:p-6">
-        <div className="mb-6">
+        <div className="mb-5">
           <h2 className="text-xl font-bold tracking-tight text-neutral-900 sm:text-2xl">Collections</h2>
           <p className="mt-1 text-sm text-neutral-500">
             Turn collections on/off and control which sets are visible in collection tabs.
           </p>
         </div>
 
-        <CollectionsSettingsPanel
-          franchises={franchises}
-          sets={collectionSets}
-          value={settings}
-          onCollectionToggle={setCollectionEnabled}
-          onSetToggle={setSetVisibility}
-        />
+        <CollectionModeTabs activeMode={activeMode} onChange={setActiveMode} />
+
+        <div className="mt-5">
+          {activeMode === 'ub' && (
+            <CollectionsSettingsPanel
+              franchises={franchises}
+              sets={collectionSets}
+              value={settings}
+              onCollectionToggle={setCollectionEnabled}
+              onSetToggle={setSetVisibility}
+            />
+          )}
+
+          {activeMode === 'secret-lair' && (
+            <SecretLairSettingsPanel
+              drops={secretLairDrops}
+              enabledDropIds={enabledDropIds}
+              onToggle={toggleDrop}
+            />
+          )}
+
+          {activeMode === 'custom' && (
+            <div className="flex flex-col items-center justify-center py-16 text-neutral-400">
+              <p className="text-sm font-medium">Custom sets — coming soon</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
