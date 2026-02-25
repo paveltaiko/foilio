@@ -527,17 +527,6 @@ export function CardDetail({ card, selectedVariant = null, owned, onClose, onTog
           className="fixed inset-0 z-[90] flex items-center justify-center bg-black/85 p-3 sm:p-6"
           style={{ opacity: zoomDragY > 0 ? Math.max(0.2, 1 - zoomDragY / 300) : undefined }}
           onClick={() => setZoomedImageKey(null)}
-          onTouchStart={(e) => { zoomDragStartY.current = e.touches[0].clientY; }}
-          onTouchMove={(e) => {
-            if (zoomDragStartY.current === null) return;
-            const diff = e.touches[0].clientY - zoomDragStartY.current;
-            if (diff > 0) setZoomDragY(diff);
-          }}
-          onTouchEnd={() => {
-            if (zoomDragY > 80) setZoomedImageKey(null);
-            setZoomDragY(0);
-            zoomDragStartY.current = null;
-          }}
         >
           <button
             type="button"
@@ -559,6 +548,22 @@ export function CardDetail({ card, selectedVariant = null, owned, onClose, onTog
               transition: zoomDragY > 0 ? 'none' : 'transform 0.2s ease-out',
             }}
             onClick={(e) => e.stopPropagation()}
+            onTouchStart={(e) => {
+              e.stopPropagation();
+              zoomDragStartY.current = e.touches[0].clientY;
+            }}
+            onTouchMove={(e) => {
+              e.stopPropagation();
+              if (zoomDragStartY.current === null) return;
+              const diff = e.touches[0].clientY - zoomDragStartY.current;
+              if (diff > 0) setZoomDragY(diff);
+            }}
+            onTouchEnd={(e) => {
+              e.stopPropagation();
+              if (zoomDragY > 80) setZoomedImageKey(null);
+              setZoomDragY(0);
+              zoomDragStartY.current = null;
+            }}
           >
             <img
               src={imageUrl}
