@@ -31,6 +31,8 @@ export function CardDetail({ card, selectedVariant = null, owned, onClose, onTog
   // null = not yet decided, 'horizontal' = card swipe, 'vertical' = ignore (modal close)
   const swipeDirectionLock = useRef<'horizontal' | 'vertical' | null>(null);
   const [zoomedImageKey, setZoomedImageKey] = useState<string | null>(null);
+  const [zoomDragY, setZoomDragY] = useState(0);
+  const zoomDragStartY = useRef<number | null>(null);
 
   // Animation state machine: 'idle' | 'exiting' | 'repositioning' | 'entering'
   const [animPhase, setAnimPhase] = useState<'idle' | 'exiting' | 'repositioning' | 'entering'>('idle');
@@ -521,7 +523,22 @@ export function CardDetail({ card, selectedVariant = null, owned, onClose, onTog
         )}
       </div>
       {isImageZoomed && imageUrl && createPortal(
-        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/85 p-3 sm:p-6" onClick={() => setZoomedImageKey(null)}>
+        <div
+          className="fixed inset-0 z-[90] flex items-center justify-center bg-black/85 p-3 sm:p-6"
+          style={{ opacity: zoomDragY > 0 ? Math.max(0.2, 1 - zoomDragY / 300) : undefined }}
+          onClick={() => setZoomedImageKey(null)}
+          onTouchStart={(e) => { zoomDragStartY.current = e.touches[0].clientY; }}
+          onTouchMove={(e) => {
+            if (zoomDragStartY.current === null) return;
+            const diff = e.touches[0].clientY - zoomDragStartY.current;
+            if (diff > 0) setZoomDragY(diff);
+          }}
+          onTouchEnd={() => {
+            if (zoomDragY > 80) setZoomedImageKey(null);
+            setZoomDragY(0);
+            zoomDragStartY.current = null;
+          }}
+        >
           <button
             type="button"
             onClick={(e) => {
@@ -537,6 +554,10 @@ export function CardDetail({ card, selectedVariant = null, owned, onClose, onTog
           </button>
           <div
             className="relative inline-block overflow-hidden rounded-xl"
+            style={{
+              transform: zoomDragY > 0 ? `translateY(${zoomDragY}px)` : undefined,
+              transition: zoomDragY > 0 ? 'none' : 'transform 0.2s ease-out',
+            }}
             onClick={(e) => e.stopPropagation()}
           >
             <img
