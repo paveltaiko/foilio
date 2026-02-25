@@ -335,25 +335,6 @@ export function useCardCollection({ ownedCards, searchQuery = '', visibleSetIds,
     return cardsBySet[activeSet] ?? [];
   }, [activeSet, combinedCards, cardsBySet, visibleSetIds]);
 
-  // Keep owned-filter results complete even when "all" mode has only partially
-  // paged data loaded for some sets.
-  const scopedOwnedCards = useMemo(() => {
-    const result: ScryfallCard[] = [];
-    const seen = new Set<string>();
-
-    for (const cardId of scopedOwnedCardIds) {
-      const card = loadedCardsById[cardId] ?? ownedCardDetails[cardId];
-      if (!card) continue;
-      if (activeSet !== 'all' && card.set !== activeSet) continue;
-      if (activeSet === 'all' && visibleSetIds && !visibleSetIds.includes(card.set)) continue;
-      if (seen.has(card.id)) continue;
-      seen.add(card.id);
-      result.push(card);
-    }
-
-    return result;
-  }, [scopedOwnedCardIds, loadedCardsById, ownedCardDetails, activeSet, visibleSetIds]);
-
   const loadedCardsById = useMemo(() => {
     const map: Record<string, ScryfallCard> = {};
     for (const setId of allSetIds) {
@@ -397,6 +378,25 @@ export function useCardCollection({ ownedCards, searchQuery = '', visibleSetIds,
     }
     return ids;
   }, [ownedCards, activeSet, visibleSetIds]);
+
+  // Keep owned-filter results complete even when "all" mode has only partially
+  // paged data loaded for some sets.
+  const scopedOwnedCards = useMemo(() => {
+    const result: ScryfallCard[] = [];
+    const seen = new Set<string>();
+
+    for (const cardId of scopedOwnedCardIds) {
+      const card = loadedCardsById[cardId] ?? ownedCardDetails[cardId];
+      if (!card) continue;
+      if (activeSet !== 'all' && card.set !== activeSet) continue;
+      if (activeSet === 'all' && visibleSetIds && !visibleSetIds.includes(card.set)) continue;
+      if (seen.has(card.id)) continue;
+      seen.add(card.id);
+      result.push(card);
+    }
+
+    return result;
+  }, [scopedOwnedCardIds, loadedCardsById, ownedCardDetails, activeSet, visibleSetIds]);
 
   useEffect(() => {
     if (scopedOwnedCardIds.length === 0) {
