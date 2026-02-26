@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { LayoutGrid, LogOut, Settings, UserCircle2, X } from 'lucide-react';
+import { Home, LayoutGrid, LogOut, Settings, UserCircle2, X } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router';
 
 interface AvatarMenuProps {
@@ -69,6 +69,18 @@ export function AvatarMenu({ userName, userPhoto, onOpenSettings, onLogout }: Av
             type="button"
             onClick={() => {
               setIsOpen(false);
+              navigate('/dashboard');
+            }}
+            className={`flex w-full cursor-pointer items-center gap-3 sm:gap-2 rounded-lg px-4 py-3.5 sm:px-3 sm:py-2 text-base sm:text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-300 ${pathname === '/dashboard' ? 'bg-red-50 text-primary-500' : 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900'}`}
+            role="menuitem"
+          >
+            <Home className={`h-5 w-5 sm:h-4 sm:w-4 ${pathname === '/dashboard' ? 'text-primary-500' : 'text-neutral-700'}`} />
+            Home
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setIsOpen(false);
               navigate('/');
             }}
             className={`flex w-full cursor-pointer items-center gap-3 sm:gap-2 rounded-lg px-4 py-3.5 sm:px-3 sm:py-2 text-base sm:text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-300 ${pathname === '/' ? 'bg-red-50 text-primary-500' : 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900'}`}
@@ -95,7 +107,7 @@ export function AvatarMenu({ userName, userPhoto, onOpenSettings, onLogout }: Av
               setIsOpen(false);
               onLogout();
             }}
-            className="flex w-full cursor-pointer items-center gap-3 sm:gap-2 rounded-lg px-4 py-3.5 sm:px-3 sm:py-2 text-base sm:text-sm font-medium text-red-600 transition-colors hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-200"
+            className="flex w-full cursor-pointer items-center gap-3 sm:gap-2 rounded-lg px-4 py-3.5 sm:px-3 sm:py-2 text-base sm:text-sm font-medium text-neutral-700 transition-colors hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-200"
             role="menuitem"
           >
             <LogOut className="h-5 w-5 sm:h-4 sm:w-4" />

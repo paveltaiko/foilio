@@ -12,6 +12,7 @@ import { CollectionsV2LabPage } from './pages/lab/CollectionsV2LabPage';
 import { CollectionsSettingsPage } from './pages/lab/CollectionsSettingsPage';
 import { CollectionsSettingsProvider } from './pages/lab/CollectionsSettingsContext';
 import { SecretLairDropSettingsProvider } from './hooks/SecretLairDropSettingsContext';
+import { DashboardPage } from './pages/DashboardPage';
 
 const queryClient = new QueryClient();
 const isStandalone = window.matchMedia('(display-mode: standalone)').matches
@@ -68,6 +69,14 @@ function AppContent() {
               element={
                 <AuthGuard user={user} loading={loading} onLogin={login}>
                   {user && <HomePage user={user} isSearchOpen={isSearchOpen} onSearchClose={handleSearchClose} />}
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/dashboard"
+              element={
+                <AuthGuard user={user} loading={loading} onLogin={login}>
+                  {user && <DashboardPage />}
                 </AuthGuard>
               }
             />

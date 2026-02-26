@@ -1,5 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
-import { signInWithPopup, signOut, onAuthStateChanged, type User } from 'firebase/auth';
+import {
+  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
+  signOut,
+  onAuthStateChanged,
+  type User,
+} from 'firebase/auth';
 import { auth, googleProvider, isFirebaseConfigured } from '../config/firebase';
 import { createUserProfileIfNeeded } from '../services/userProfile';
 
@@ -12,6 +19,18 @@ interface AuthState {
 // Offline mode — no Firebase configured
 const OFFLINE_USER_ID = 'local-user';
 
+function shouldUseRedirectLogin() {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  const userAgent = navigator.userAgent ?? '';
+  const isMobileUA = /Android|iPhone|iPad|iPod|Mobile/i.test(userAgent);
+  const isCoarsePointer = window.matchMedia?.('(pointer: coarse)').matches ?? false;
+
+  return isMobileUA || isCoarsePointer;
+}
+
 export function useAuth() {
   const [state, setState] = useState<AuthState>({
     user: null,
@@ -19,6 +38,16 @@ export function useAuth() {
     error: null,
   });
   const profileCreatedRef = useRef<string | null>(null);
+
+  const syncUserProfile = (user: User | null) => {
+    if (!user || profileCreatedRef.current === user.uid) {
+      return;
+    }
+    profileCreatedRef.current = user.uid;
+    createUserProfileIfNeeded(user).catch(() => {
+      // Profile creation is non-critical, silently ignore errors
+    });
+  };
 
   useEffect(() => {
     if (!isFirebaseConfigured || !auth) {
@@ -30,18 +59,29 @@ export function useAuth() {
       });
       return;
     }
+    const firebaseAuth = auth;
 
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    let isMounted = true;
+
+    const unsubscribe = onAuthStateChanged(firebaseAuth, (user) => {
+      if (!isMounted) return;
       setState({ user, loading: false, error: null });
-      // Create/update user profile in Firestore on login
-      if (user && profileCreatedRef.current !== user.uid) {
-        profileCreatedRef.current = user.uid;
-        createUserProfileIfNeeded(user).catch(() => {
-          // Profile creation is non-critical, silently ignore errors
-        });
-      }
+      syncUserProfile(user);
     });
-    return unsubscribe;
+
+    // Resolve pending redirect result once during app init.
+    getRedirectResult(firebaseAuth).catch((err) => {
+      if (!isMounted) return;
+      setState((prev) => ({
+        ...prev,
+        error: err instanceof Error ? err.message : 'Sign in redirect failed',
+      }));
+    });
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
   }, []);
 
   const login = async () => {
@@ -54,11 +94,24 @@ export function useAuth() {
     }
     try {
       setState((prev) => ({ ...prev, error: null }));
+      if (shouldUseRedirectLogin()) {
+        await signInWithRedirect(auth, googleProvider);
+        return;
+      }
       await signInWithPopup(auth, googleProvider);
     } catch (err) {
+      const message = err instanceof Error ? err.message : 'Sign in failed';
+      const code = typeof err === 'object' && err !== null && 'code' in err ? String(err.code) : '';
+      const shouldFallbackToRedirect = code === 'auth/popup-blocked' || code === 'auth/cancelled-popup-request';
+
+      if (shouldFallbackToRedirect) {
+        await signInWithRedirect(auth, googleProvider);
+        return;
+      }
+
       setState((prev) => ({
         ...prev,
-        error: err instanceof Error ? err.message : 'Sign in failed',
+        error: message,
       }));
     }
   };

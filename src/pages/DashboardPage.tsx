@@ -1,0 +1,79 @@
+import { useState } from 'react';
+import { useAuth } from '../hooks/useAuth';
+import { useOwnedCards } from '../hooks/useOwnedCards';
+import { useCollectionsSettings } from './lab/useCollectionsSettings';
+import { useHomeStats } from '../hooks/useHomeStats';
+import { HeroWidget } from '../components/dashboard/HeroWidget';
+import { FoilBreakdownWidget } from '../components/dashboard/FoilBreakdownWidget';
+import { RarityBreakdownWidget } from '../components/dashboard/RarityBreakdownWidget';
+import { TopFranchisesWidget } from '../components/dashboard/TopFranchisesWidget';
+import { NearCompleteWidget } from '../components/dashboard/NearCompleteWidget';
+import { CardSpotlightWidget } from '../components/dashboard/CardSpotlightWidget';
+import { CardDetail } from '../components/cards/CardDetail';
+import type { ScryfallCard } from '../types/card';
+import type { CardVariant } from '../types/card';
+
+export function DashboardPage() {
+  const { user } = useAuth();
+  const { ownedCards } = useOwnedCards(user?.uid ?? null);
+  const { settings } = useCollectionsSettings();
+  const stats = useHomeStats(ownedCards, settings);
+
+  const [selectedCard, setSelectedCard] = useState<ScryfallCard | null>(null);
+  const [selectedVariant, setSelectedVariant] = useState<CardVariant>(null);
+
+  return (
+    <div className="app-container-padded py-3 sm:py-5">
+      <div className="flex flex-col gap-3 sm:gap-4">
+
+        {/* Hero */}
+        <HeroWidget
+          totalUniqueOwned={stats.totalUniqueOwned}
+          totalValueEur={stats.totalValueEur}
+          globalCompletionPct={stats.globalCompletionPct}
+        />
+
+        {/* Spotlight – Most Valuable + Recently Added */}
+        <CardSpotlightWidget
+          mostValuableCards={stats.mostValuableCards}
+          recentCards={stats.recentCards}
+          onCardClick={(card, variant) => {
+            setSelectedCard(card);
+            setSelectedVariant(variant);
+          }}
+        />
+
+        {/* Foil + Rarity – 2 sloupce */}
+        <div className="grid grid-cols-2 gap-3 sm:gap-4">
+          <FoilBreakdownWidget
+            nonFoilCount={stats.nonFoilCount}
+            foilCount={stats.foilCount}
+            nonFoilValue={stats.nonFoilValue}
+            foilValue={stats.foilValue}
+          />
+          <RarityBreakdownWidget rarityBreakdown={stats.rarityBreakdown} />
+        </div>
+
+        {/* Collection Progress + Almost Complete – 2 sloupce na desktopu */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+          <TopFranchisesWidget topFranchises={stats.topFranchises} />
+          <NearCompleteWidget nearCompleteSets={stats.nearCompleteSets} />
+        </div>
+
+      </div>
+
+      {/* Card detail modal */}
+      <CardDetail
+        card={selectedCard}
+        selectedVariant={selectedVariant}
+        owned={selectedCard ? ownedCards.get(selectedCard.id) : undefined}
+        onClose={() => {
+          setSelectedCard(null);
+          setSelectedVariant(null);
+        }}
+        onToggle={() => {}}
+        readOnly
+      />
+    </div>
+  );
+}
