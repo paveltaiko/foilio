@@ -1,8 +1,7 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
-import { Layers, LayoutGrid, SlidersHorizontal, RotateCcw, Settings } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import { Link } from 'react-router';
 import type { User } from 'firebase/auth';
-import { isFirebaseConfigured } from '../config/firebase';
 import { useOwnedCards } from '../hooks/useOwnedCards';
 import { useCardCollection } from '../hooks/useCardCollection';
 import { useSecretLairCollection } from '../hooks/useSecretLairCollection';
@@ -11,18 +10,16 @@ import { useCollectionsSettings } from './lab/useCollectionsSettings';
 import { getVisibleSets } from './lab/collectionsSettings';
 import { collectionSets } from '../config/collections';
 import { secretLairDrops } from '../config/secretLairDrops';
+import { isFirebaseConfigured } from '../config/firebase';
 import { toggleCardOwnership, updateCardQuantity } from '../services/firestore';
 import { getExistingShareToken } from '../services/sharing';
-import { SortControl } from '../components/filters/SortControl';
-import { OwnershipFilter } from '../components/filters/OwnershipFilter';
-import { BoosterFilter } from '../components/filters/BoosterFilter';
 import { FilterDrawer } from '../components/filters/FilterDrawer';
 import { SearchInput } from '../components/filters/SearchInput';
 import { CardGrid, CardGridSkeleton } from '../components/cards/CardGrid';
 import { CardDetail } from '../components/cards/CardDetail';
 import { PullToRefresh } from '../components/ui/PullToRefresh';
 import { Tabs } from '../components/ui/Tabs';
-import { ShareCollectionButton } from '../components/collection/ShareCollectionButton';
+import { CollectionToolbar } from '../components/collection/CollectionToolbar';
 import { ShareFeedbackToast } from '../components/collection/ShareFeedbackToast';
 import type { ShareToastType } from '../components/collection/ShareCollectionButton';
 import type { CardVariant } from '../types/card';
@@ -333,114 +330,30 @@ export function CollectionPage({ user, isSearchOpen, onSearchClose }: Collection
           />
 
           {/* Toolbar */}
-          <div className="pt-7 pb-4 space-y-2">
-            {/* Mobile toolbar: filter button + sort */}
-            <div className="flex items-center justify-between gap-2 md:hidden">
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setIsFilterDrawerOpen(true)}
-                  title="Open filters"
-                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-neutral-600 bg-white border border-surface-border rounded-lg hover:bg-neutral-50 transition-colors cursor-pointer"
-                >
-                  <SlidersHorizontal className="w-4 h-4" />
-                  <span>Filters</span>
-                  {activeFilterCount > 0 && (
-                    <span className="flex items-center justify-center w-5 h-5 text-[11px] font-bold bg-primary-500 text-white rounded-full">
-                      {activeFilterCount}
-                    </span>
-                  )}
-                </button>
-                {hasActiveFilters && (
-                  <button
-                    type="button"
-                    onClick={handleResetFilters}
-                    title="Reset filters"
-                    className="flex items-center justify-center h-[38px] w-[38px] cursor-pointer transition-colors duration-150 border rounded-lg bg-white text-neutral-500 border-surface-border hover:text-neutral-700 hover:bg-neutral-50"
-                  >
-                    <RotateCcw className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                {!isSLMode && activeTab === 'all' && (
-                  <button
-                    onClick={() => setGroupBySet(!groupBySet)}
-                    title={groupBySet ? 'Show all at once' : 'Group by set'}
-                    className={`
-                      flex items-center justify-center h-[38px] w-[38px] cursor-pointer transition-colors duration-150
-                      border rounded-lg
-                      ${groupBySet
-                        ? 'bg-primary-500 text-white border-primary-500'
-                        : 'bg-white text-neutral-500 border-neutral-200 hover:text-neutral-700 hover:bg-neutral-50'
-                      }
-                    `}
-                  >
-                    {groupBySet ? <Layers className="w-4 h-4" /> : <LayoutGrid className="w-4 h-4" />}
-                  </button>
-                )}
-                {isFirebaseConfigured && (
-                  <ShareCollectionButton
-                    user={user}
-                    onTokenReady={setShareToken}
-                    onFeedback={(message: string, type: ShareToastType) => {
-                      setShareToastType(type);
-                      setShareToastMessage(message);
-                    }}
-                  />
-                )}
-              </div>
-            </div>
-
-            {/* Desktop toolbar: ownership + sort + booster + groupby + reset */}
-            <div className="hidden md:flex items-center gap-4">
-              <OwnershipFilter value={activeOwnershipFilter} onChange={setActiveOwnershipFilter} />
-              <SortControl value={activeSortOption} onChange={setActiveSortOption} />
-              {!isSLMode && hasBoosterData && (
-                <BoosterFilter
-                  value={boosterFilter}
-                  onChange={setBoosterFilter}
-                  isLoading={boosterMapLoading}
-                />
-              )}
-              {!isSLMode && activeTab === 'all' && (
-                <button
-                  onClick={() => setGroupBySet(!groupBySet)}
-                  title={groupBySet ? 'Show all at once' : 'Group by set'}
-                  className={`
-                    p-2 cursor-pointer transition-colors duration-150 relative
-                    border rounded-lg text-sm font-medium
-                    ${groupBySet
-                      ? 'bg-primary-500 text-white border-primary-500 z-10'
-                      : 'bg-white text-neutral-500 border-neutral-200 hover:text-neutral-700 hover:bg-neutral-50 z-0'
-                    }
-                  `}
-                >
-                  {groupBySet ? <Layers className="w-4 h-4" /> : <LayoutGrid className="w-4 h-4" />}
-                </button>
-              )}
-              {hasActiveFilters && (
-                <button
-                  type="button"
-                  onClick={handleResetFilters}
-                  title="Reset filters"
-                  className="p-2 cursor-pointer transition-colors duration-150 border rounded-lg text-sm font-medium bg-white text-neutral-500 border-neutral-200 hover:text-neutral-700 hover:bg-neutral-50"
-                >
-                  <RotateCcw className="w-4 h-4" />
-                </button>
-              )}
-              {isFirebaseConfigured && (
-                <ShareCollectionButton
-                  user={user}
-                  onTokenReady={setShareToken}
-                  onFeedback={(message: string, type: ShareToastType) => {
-                    setShareToastType(type);
-                    setShareToastMessage(message);
-                  }}
-                />
-              )}
-            </div>
-          </div>
+          <CollectionToolbar
+            user={user}
+            isSLMode={isSLMode}
+            activeTab={activeTab}
+            sortOption={activeSortOption}
+            onSortChange={setActiveSortOption}
+            ownershipFilter={activeOwnershipFilter}
+            onOwnershipChange={setActiveOwnershipFilter}
+            boosterFilter={boosterFilter}
+            onBoosterChange={setBoosterFilter}
+            boosterMapLoading={boosterMapLoading}
+            hasBoosterData={hasBoosterData}
+            groupBySet={groupBySet}
+            onGroupBySetToggle={() => setGroupBySet(!groupBySet)}
+            activeFilterCount={activeFilterCount}
+            hasActiveFilters={hasActiveFilters}
+            onReset={handleResetFilters}
+            onFilterDrawerOpen={() => setIsFilterDrawerOpen(true)}
+            onTokenReady={setShareToken}
+            onShareFeedback={(message, type) => {
+              setShareToastType(type);
+              setShareToastMessage(message);
+            }}
+          />
 
           {/* Card grid */}
           {isCardsLoading ? (

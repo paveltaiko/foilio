@@ -9,10 +9,25 @@ import {
 
 const BASE_URL = 'https://api.scryfall.com';
 const RATE_LIMIT_MS = 100; // Scryfall asks for 50-100ms between requests
+const SET_COUNT_CACHE_MAX = 200;
+const CARD_BY_ID_CACHE_MAX = 500;
+
 const setCardCountCache = new Map<string, number>();
 const setCardCountInFlight = new Map<string, Promise<number | null>>();
 const cardByIdCache = new Map<string, ScryfallCard>();
 const missingCardIds = new Set<string>();
+
+function evictIfNeeded<K, V>(map: Map<K, V>, maxSize: number): void {
+  if (map.size <= maxSize) return;
+  // Map preserves insertion order — delete oldest entries first
+  const overflow = map.size - maxSize;
+  let deleted = 0;
+  for (const key of map.keys()) {
+    if (deleted >= overflow) break;
+    map.delete(key);
+    deleted++;
+  }
+}
 
 validateCacheVersion();
 
@@ -89,6 +104,7 @@ export async function fetchSetCardCount(setCode: SetCode): Promise<number | null
     const count = typeof data.card_count === 'number' ? data.card_count : null;
     if (count !== null) {
       setCardCountCache.set(key, count);
+      evictIfNeeded(setCardCountCache, SET_COUNT_CACHE_MAX);
       setCachedSetCount(key, count);
     }
     return count;
@@ -143,6 +159,7 @@ export async function fetchCardsByIds(cardIds: string[]): Promise<Record<string,
       cardByIdCache.set(card.id, card);
       setCachedCardById(card);
     }
+    evictIfNeeded(cardByIdCache, CARD_BY_ID_CACHE_MAX);
     for (const notFound of data.not_found ?? []) {
       if (notFound.id) missingCardIds.add(notFound.id);
     }
