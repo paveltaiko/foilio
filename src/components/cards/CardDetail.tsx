@@ -33,6 +33,49 @@ export function CardDetail({ card, selectedVariant = null, owned, onClose, onTog
   const [zoomedImageKey, setZoomedImageKey] = useState<string | null>(null);
   const [zoomDragY, setZoomDragY] = useState(0);
   const zoomDragStartY = useRef<number | null>(null);
+  // 'css' = fade+scale out, 'swipe' = inline transition following drag, false = not closing
+  const [zoomClosingMode, setZoomClosingMode] = useState<'css' | 'swipe' | false>(false);
+  const [zoomSwipeExitY, setZoomSwipeExitY] = useState(0);
+  const [zoomOverlayOpacity, setZoomOverlayOpacity] = useState(1);
+  const [isDraggingZoom, setIsDraggingZoom] = useState(false);
+  const zoomCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const resetZoomState = () => {
+    setZoomDragY(0);
+    setZoomSwipeExitY(0);
+    setZoomOverlayOpacity(1);
+    setIsDraggingZoom(false);
+    setZoomClosingMode(false);
+    zoomDragStartY.current = null;
+  };
+
+  const triggerZoomCssClose = () => {
+    if (zoomClosingMode) return;
+    setZoomClosingMode('css');
+    // bg-color transitions to 0 via inline style, scale-out animation plays
+    zoomCloseTimerRef.current = setTimeout(() => {
+      setZoomedImageKey(null);
+      resetZoomState();
+    }, 320);
+  };
+
+  const triggerZoomSwipeClose = (fromY: number) => {
+    if (zoomClosingMode) return;
+    const exitY = fromY + window.innerHeight;
+    setZoomClosingMode('swipe');
+    setZoomSwipeExitY(fromY);
+    setZoomOverlayOpacity(1);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setZoomSwipeExitY(exitY);
+        setZoomOverlayOpacity(0);
+      });
+    });
+    zoomCloseTimerRef.current = setTimeout(() => {
+      setZoomedImageKey(null);
+      resetZoomState();
+    }, 380);
+  };
 
   // Animation state machine: 'idle' | 'exiting' | 'repositioning' | 'entering'
   const [animPhase, setAnimPhase] = useState<'idle' | 'exiting' | 'repositioning' | 'entering'>('idle');
@@ -522,17 +565,28 @@ export function CardDetail({ card, selectedVariant = null, owned, onClose, onTog
           </a>
         )}
       </div>
-      {isImageZoomed && imageUrl && createPortal(
+      {(isImageZoomed || zoomClosingMode) && imageUrl && createPortal(
         <div
-          className="fixed inset-0 z-[90] flex items-center justify-center bg-black/85 p-3 sm:p-6"
-          onClick={() => setZoomedImageKey(null)}
+          className="fixed inset-0 z-[90] flex items-center justify-center p-3 sm:p-6"
+          style={{
+            backgroundColor: `rgba(0,0,0,${
+              zoomClosingMode === 'swipe'
+                ? zoomOverlayOpacity * 0.85
+                : isDraggingZoom
+                  ? Math.max(0.1, (1 - zoomDragY / 400) * 0.85)
+                  : 0.85
+            })`,
+            transition: zoomClosingMode === 'swipe'
+              ? 'background-color 380ms cubic-bezier(0.4,0,1,1)'
+              : zoomClosingMode === 'css'
+                ? 'background-color 320ms ease'
+                : undefined,
+          }}
+          onClick={triggerZoomCssClose}
         >
           <button
             type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setZoomedImageKey(null);
-            }}
+            onClick={(e) => { e.stopPropagation(); triggerZoomCssClose(); }}
             className="absolute top-3 right-3 sm:top-5 sm:right-5 rounded-full bg-white/15 p-2 text-white hover:bg-white/25 transition-colors cursor-pointer"
             aria-label="Close enlarged card image"
           >
@@ -541,15 +595,26 @@ export function CardDetail({ card, selectedVariant = null, owned, onClose, onTog
             </svg>
           </button>
           <div
-            className="relative inline-block overflow-hidden rounded-xl"
+            className={`relative inline-block overflow-hidden rounded-xl ${zoomClosingMode === 'css' ? 'animate-scale-out' : zoomClosingMode === false && !isDraggingZoom ? 'animate-scale-in' : ''}`}
             style={{
-              transform: zoomDragY > 0 ? `translateY(${zoomDragY}px)` : undefined,
-              transition: zoomDragY > 0 ? 'none' : 'transform 0.2s ease-out',
+              transform: zoomClosingMode === 'swipe'
+                ? `translateY(${zoomSwipeExitY}px)`
+                : zoomDragY > 0
+                  ? `translateY(${zoomDragY}px) scale(${Math.max(0.88, 1 - zoomDragY / 1200)})`
+                  : undefined,
+              transition: zoomClosingMode === 'swipe'
+                ? 'transform 380ms cubic-bezier(0.4,0,1,1)'
+                : isDraggingZoom
+                  ? 'none'
+                  : zoomDragY > 0
+                    ? 'transform 0.25s cubic-bezier(0.34,1.56,0.64,1)'
+                    : undefined,
             }}
             onClick={(e) => e.stopPropagation()}
             onTouchStart={(e) => {
               e.stopPropagation();
               zoomDragStartY.current = e.touches[0].clientY;
+              setIsDraggingZoom(true);
             }}
             onTouchMove={(e) => {
               e.stopPropagation();
@@ -559,9 +624,13 @@ export function CardDetail({ card, selectedVariant = null, owned, onClose, onTog
             }}
             onTouchEnd={(e) => {
               e.stopPropagation();
-              if (zoomDragY > 80) setZoomedImageKey(null);
-              setZoomDragY(0);
+              setIsDraggingZoom(false);
               zoomDragStartY.current = null;
+              if (zoomDragY > 80) {
+                triggerZoomSwipeClose(zoomDragY);
+              } else {
+                setZoomDragY(0);
+              }
             }}
           >
             <img
