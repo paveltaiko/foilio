@@ -18,7 +18,6 @@ import { OwnershipFilter } from '../components/filters/OwnershipFilter';
 import { BoosterFilter } from '../components/filters/BoosterFilter';
 import { FilterDrawer } from '../components/filters/FilterDrawer';
 import { SearchInput } from '../components/filters/SearchInput';
-import { CollectionSummary } from '../components/stats/CollectionSummary';
 import { CardGrid, CardGridSkeleton } from '../components/cards/CardGrid';
 import { CardDetail } from '../components/cards/CardDetail';
 import { PullToRefresh } from '../components/ui/PullToRefresh';
@@ -231,7 +230,7 @@ export function CollectionPage({ user, isSearchOpen, onSearchClose }: Collection
     selectedCard: ubSelectedCard, setSelectedCard: ubSetSelectedCard,
     groupBySet, setGroupBySet,
     currentCards: ubCurrentCards, isCardsLoading: ubIsCardsLoading,
-    cardCounts: ubCardCounts, stats: ubStats, sortedFilteredCards: ubSortedFilteredCards, visibleCards: ubVisibleCards,
+    cardCounts: ubCardCounts, sortedFilteredCards: ubSortedFilteredCards, visibleCards: ubVisibleCards,
     hasBoosterData,
     isFetchingNextPage,
     hasNextPage,
@@ -254,7 +253,7 @@ export function CollectionPage({ user, isSearchOpen, onSearchClose }: Collection
     ownershipFilter: slOwnershipFilter, setOwnershipFilter: slSetOwnershipFilter,
     selectedCard: slSelectedCard, setSelectedCard: slSetSelectedCard,
     currentCards: slCurrentCards, isCardsLoading: slIsCardsLoading,
-    cardCounts: slCardCounts, stats: slStats, sortedFilteredCards: slSortedFilteredCards, visibleCards: slVisibleCards,
+    cardCounts: slCardCounts, sortedFilteredCards: slSortedFilteredCards, visibleCards: slVisibleCards,
     hasNextPage: slHasNextPage, loadNextPage: slLoadNextPage,
     refreshCards: slRefreshCards,
   } = useSecretLairCollection({
@@ -311,20 +310,7 @@ export function CollectionPage({ user, isSearchOpen, onSearchClose }: Collection
     return ubVisibleCards;
   }, [isSLMode, isAllTab, ubVisibleCards, slVisibleCards]);
 
-  const stats = useMemo(() => {
-    if (isSLMode) return slStats;
-    if (isAllTab) return {
-      totalCards: ubStats.totalCards + slStats.totalCards,
-      ownedCount: ubStats.ownedCount + slStats.ownedCount,
-      totalValue: ubStats.totalValue + slStats.totalValue,
-      percentage: ubStats.totalCards + slStats.totalCards > 0
-        ? Math.round(((ubStats.ownedCount + slStats.ownedCount) / (ubStats.totalCards + slStats.totalCards)) * 100)
-        : 0,
-    };
-    return ubStats;
-  }, [isSLMode, isAllTab, ubStats, slStats]);
-
-  // Sloučené card counts pro lištu tabů
+  //Sloučené card counts pro lištu tabů
   const mergedCardCounts = useMemo(() => {
     const merged: Record<string, number> = { ...ubCardCounts };
     for (const drop of enabledDrops) {
@@ -477,18 +463,8 @@ export function CollectionPage({ user, isSearchOpen, onSearchClose }: Collection
             onChange={setActiveTab}
           />
 
-          {/* Stats */}
-          <div className="py-2">
-            <CollectionSummary
-              totalCards={stats.totalCards}
-              ownedCount={stats.ownedCount}
-              totalValue={stats.totalValue}
-              percentage={stats.percentage}
-            />
-          </div>
-
           {/* Toolbar */}
-          <div className="pb-4 space-y-2">
+          <div className="pt-7 pb-4 space-y-2">
             {/* Mobile toolbar: filter button + sort */}
             <div className="flex items-center justify-between gap-2 md:hidden">
               <div className="flex items-center gap-2">

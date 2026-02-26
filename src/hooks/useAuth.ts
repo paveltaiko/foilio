@@ -24,6 +24,12 @@ function shouldUseRedirectLogin() {
     return false;
   }
 
+  // On ngrok/tunnel URLs always use popup (redirect loses session context)
+  const hostname = window.location.hostname;
+  if (hostname.includes('ngrok')) {
+    return false;
+  }
+
   const userAgent = navigator.userAgent ?? '';
   const isMobileUA = /Android|iPhone|iPad|iPod|Mobile/i.test(userAgent);
   const isCoarsePointer = window.matchMedia?.('(pointer: coarse)').matches ?? false;
@@ -70,7 +76,13 @@ export function useAuth() {
     });
 
     // Resolve pending redirect result once during app init.
-    getRedirectResult(firebaseAuth).catch((err) => {
+    getRedirectResult(firebaseAuth).then((result) => {
+      if (!isMounted) return;
+      if (result?.user) {
+        setState({ user: result.user, loading: false, error: null });
+        syncUserProfile(result.user);
+      }
+    }).catch((err) => {
       if (!isMounted) return;
       setState((prev) => ({
         ...prev,

@@ -13,7 +13,7 @@ export function RarityBreakdownWidget({ rarityBreakdown }: RarityBreakdownWidget
   if (total === 0) {
     return (
       <WidgetCard title="Rarity">
-        <p className="text-xs text-neutral-400 py-1">
+        <p className="text-sm text-neutral-400 py-1">
           Browse your collection first
         </p>
       </WidgetCard>
@@ -22,7 +22,7 @@ export function RarityBreakdownWidget({ rarityBreakdown }: RarityBreakdownWidget
 
   return (
     <WidgetCard title="Rarity">
-      <div className="flex flex-col gap-2 sm:gap-2.5">
+      <div className="flex flex-col gap-2">
         {RARITY_ORDER.map((rarity) => {
           const count = rarityBreakdown[rarity] ?? 0;
           if (count === 0) return null;
@@ -31,16 +31,16 @@ export function RarityBreakdownWidget({ rarityBreakdown }: RarityBreakdownWidget
 
           return (
             <div key={rarity} className="flex items-center gap-2">
-              <span className={`text-2xs sm:text-xs font-bold w-3 shrink-0 font-mono ${info.colorClass}`}>
+              <span className={`text-sm font-bold w-5 shrink-0 font-mono ${info.colorClass}`}>
                 {info.short}
               </span>
-              <div className="flex-1 h-1.5 bg-neutral-100 rounded-full overflow-hidden">
+              <div className="flex-1 h-2 bg-neutral-100 rounded-full overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all duration-500 ${info.badgeClass}`}
                   style={{ width: `${pct}%`, minWidth: pct > 0 ? '4px' : '0' }}
                 />
               </div>
-              <span className="text-2xs sm:text-xs font-mono font-bold text-neutral-600 w-6 sm:w-7 text-right shrink-0">
+              <span className="text-sm font-mono font-bold text-neutral-600 w-8 text-right shrink-0">
                 {count}
               </span>
             </div>

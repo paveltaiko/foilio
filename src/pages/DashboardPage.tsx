@@ -23,7 +23,7 @@ export function DashboardPage() {
   const [selectedVariant, setSelectedVariant] = useState<CardVariant>(null);
 
   return (
-    <div className="app-container-padded py-3 sm:py-5">
+    <div className="app-container-padded pb-3 sm:py-5">
       <div className="flex flex-col gap-3 sm:gap-4">
 
         {/* Hero */}

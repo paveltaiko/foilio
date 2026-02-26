@@ -64,32 +64,32 @@ export function CardSpotlightWidget({ mostValuableCards, recentCards, onCardClic
   }
 
   return (
-    <div className="bg-surface-primary border border-surface-border rounded-lg overflow-hidden">
-      {/* Tab header */}
-      <div className="border-b border-surface-border flex">
-        {TABS.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => handleTabChange(tab.id)}
-            className={`
-              px-4 py-3 text-sm font-medium transition-colors duration-200 cursor-pointer
-              border-b-2 whitespace-nowrap -mb-px
-              ${activeTab === tab.id
-                ? 'text-primary-500 border-primary-500'
-                : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:bg-neutral-50 hover:border-neutral-300'
-              }
-            `}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+    <div className="bg-surface-primary border border-surface-border rounded-2xl overflow-hidden">
+      {/* Title */}
+      <p className="text-xs font-semibold uppercase tracking-wider text-neutral-600 px-4 pt-3 sm:px-4 sm:pt-4">Cards</p>
 
-      <div className="pt-8 px-3 pb-3 sm:p-4">
+      <div className="px-3 pb-8 sm:px-4 sm:pb-4">
+        {/* Tab header */}
+        <div className="flex gap-0 border-b border-surface-border mt-4 mb-8">
+          {TABS.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => handleTabChange(tab.id)}
+              className={[
+                'flex-1 sm:flex-none text-center px-4 py-2.5 text-sm font-semibold border-b-2 -mb-px transition-colors cursor-pointer',
+                activeTab === tab.id
+                  ? 'text-primary-500 border-primary-500'
+                  : 'text-neutral-500 border-transparent hover:text-neutral-700',
+              ].join(' ')}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
         {isEmpty ? (
           <p className="text-xs text-neutral-400 py-1">Browse your collection first</p>
         ) : (
-          <div className="flex flex-col sm:flex-row gap-8 sm:gap-8">
+          <div className="flex flex-col sm:flex-row gap-8">
             {/* Featured karta */}
             <div className="shrink-0 w-full max-w-[180px] mx-auto sm:mx-0 sm:w-[140px]">
               {featuredImageUrl ? (
@@ -113,11 +113,11 @@ export function CardSpotlightWidget({ mostValuableCards, recentCards, onCardClic
                   onMouseEnter={() => setActiveIndex(i)}
                   className={`flex items-center gap-1.5 w-full text-left px-2 py-1.5 rounded-md transition-colors ${i === safeIndex ? 'bg-neutral-100' : 'hover:bg-neutral-50'}`}
                 >
-                  <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${card.isFoil ? 'bg-violet-500' : 'bg-neutral-300'}`} />
-                  <span className="text-xs sm:text-sm font-medium text-neutral-700 truncate">
+                  <div className={`w-2 h-2 rounded-full shrink-0 ${card.isFoil ? 'bg-violet-500' : 'bg-neutral-300'}`} />
+                  <span className="text-sm font-medium text-neutral-700 truncate">
                     {card.name}
                   </span>
-                  <span className={`text-xs font-mono font-bold shrink-0 ml-auto ${card.isFoil ? 'text-violet-500' : 'text-neutral-700'}`}>
+                  <span className={`text-sm font-mono font-bold shrink-0 ml-auto ${card.isFoil ? 'text-violet-500' : 'text-neutral-700'}`}>
                     {formatPrice(card.priceEur)}
                   </span>
                 </button>
@@ -130,11 +130,11 @@ export function CardSpotlightWidget({ mostValuableCards, recentCards, onCardClic
                   onMouseEnter={() => setActiveIndex(i)}
                   className={`flex items-center gap-1.5 w-full text-left px-2 py-1.5 rounded-md transition-colors ${i === safeIndex ? 'bg-neutral-100' : 'hover:bg-neutral-50'}`}
                 >
-                  <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${card.ownedFoil ? 'bg-violet-500' : 'bg-neutral-300'}`} />
-                  <span className="text-xs sm:text-sm font-medium text-neutral-700 truncate">
+                  <div className={`w-2 h-2 rounded-full shrink-0 ${card.ownedFoil ? 'bg-violet-500' : 'bg-neutral-300'}`} />
+                  <span className="text-sm font-medium text-neutral-700 truncate">
                     {card.name}
                   </span>
-                  <span className="text-xs font-mono text-neutral-400 shrink-0 ml-auto">
+                  <span className="text-sm font-mono text-neutral-400 shrink-0 ml-auto">
                     {formatRelativeTime(card.updatedAt)}
                   </span>
                 </button>

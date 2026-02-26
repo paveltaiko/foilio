@@ -25,24 +25,26 @@ export function FoilBreakdownWidget({
 
   return (
     <WidgetCard title="Finish">
-      <div className="flex flex-col gap-2 sm:gap-2.5">
+      <div className="flex flex-col gap-2">
         {rows.map((row) => (
-          <div key={row.label} className="flex items-center gap-2">
-            <span className="text-2xs sm:text-xs font-bold w-3 shrink-0 font-mono text-neutral-500">
-              {row.label}
-            </span>
-            <div className="flex-1 h-1.5 bg-neutral-100 rounded-full overflow-hidden">
+          <div key={row.label} className="flex flex-col gap-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-bold font-mono text-neutral-500">
+                {row.label}
+              </span>
+              <span className="text-sm font-mono font-bold text-neutral-600 whitespace-nowrap">
+                {row.count}
+                {row.value > 0 && (
+                  <span className="font-normal text-neutral-400"> / {formatPrice(row.value)}</span>
+                )}
+              </span>
+            </div>
+            <div className="h-2 bg-neutral-100 rounded-full overflow-hidden">
               <div
                 className={`h-full rounded-full transition-all duration-500 ${row.barClass}`}
                 style={{ width: `${row.pct}%`, minWidth: row.pct > 0 ? '4px' : '0' }}
               />
             </div>
-            <span className="text-2xs sm:text-xs font-mono font-bold text-neutral-600 text-right shrink-0 whitespace-nowrap">
-              {row.count}
-              {row.value > 0 && (
-                <span className="font-normal text-neutral-400"> / {formatPrice(row.value)}</span>
-              )}
-            </span>
           </div>
         ))}
       </div>

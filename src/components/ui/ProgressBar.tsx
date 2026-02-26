@@ -6,9 +6,7 @@ interface ProgressBarProps {
 export function ProgressBar({ value, className = '' }: ProgressBarProps) {
   const clampedValue = Math.max(0, Math.min(100, value));
 
-  // Color changes based on completion
-  const barColor =
-    clampedValue >= 75 ? 'bg-owned' : 'bg-primary-500';
+  const barColor = 'bg-primary-500';
 
   return (
     <div className={`w-full ${className}`}>
