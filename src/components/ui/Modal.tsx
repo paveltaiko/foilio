@@ -41,11 +41,11 @@ function unlockBodyScroll() {
 }
 
 // Duration for CSS-based exit animations (button/overlay click, Escape)
-const CSS_EXIT_MOBILE_MS = 380;
-const CSS_EXIT_DESKTOP_MS = 250;
+const CSS_EXIT_MOBILE_MS = 300;
+const CSS_EXIT_DESKTOP_MS = 200;
 
 // Duration for swipe-based exit (inline transition)
-const SWIPE_EXIT_MS = 380;
+const SWIPE_EXIT_MS = 300;
 
 export function Modal({ isOpen, onClose, children }: ModalProps) {
   const overlayRef = useRef<HTMLDivElement>(null);

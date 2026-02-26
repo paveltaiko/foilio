@@ -56,7 +56,7 @@ export function CardDetail({ card, selectedVariant = null, owned, onClose, onTog
     zoomCloseTimerRef.current = setTimeout(() => {
       setZoomedImageKey(null);
       resetZoomState();
-    }, 320);
+    }, 250);
   };
 
   const triggerZoomSwipeClose = (fromY: number) => {
@@ -74,7 +74,7 @@ export function CardDetail({ card, selectedVariant = null, owned, onClose, onTog
     zoomCloseTimerRef.current = setTimeout(() => {
       setZoomedImageKey(null);
       resetZoomState();
-    }, 380);
+    }, 300);
   };
 
   // Animation state machine: 'idle' | 'exiting' | 'repositioning' | 'entering'
@@ -577,9 +577,9 @@ export function CardDetail({ card, selectedVariant = null, owned, onClose, onTog
                   : 0.85
             })`,
             transition: zoomClosingMode === 'swipe'
-              ? 'background-color 380ms cubic-bezier(0.4,0,1,1)'
+              ? 'background-color 300ms cubic-bezier(0.4,0,1,1)'
               : zoomClosingMode === 'css'
-                ? 'background-color 320ms ease'
+                ? 'background-color 250ms ease'
                 : undefined,
           }}
           onClick={triggerZoomCssClose}
@@ -603,7 +603,7 @@ export function CardDetail({ card, selectedVariant = null, owned, onClose, onTog
                   ? `translateY(${zoomDragY}px) scale(${Math.max(0.88, 1 - zoomDragY / 1200)})`
                   : undefined,
               transition: zoomClosingMode === 'swipe'
-                ? 'transform 380ms cubic-bezier(0.4,0,1,1)'
+                ? 'transform 300ms cubic-bezier(0.4,0,1,1)'
                 : isDraggingZoom
                   ? 'none'
                   : zoomDragY > 0
