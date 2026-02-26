@@ -61,7 +61,10 @@ export function CardDetail({ card, selectedVariant = null, owned, onClose, onTog
 
   const triggerZoomSwipeClose = (fromY: number) => {
     if (zoomClosingMode) return;
-    const exitY = fromY + window.innerHeight;
+    // fromY > 0 = swipe down, fromY < 0 = swipe up
+    const exitY = fromY > 0
+      ? fromY + window.innerHeight
+      : fromY - window.innerHeight;
     setZoomClosingMode('swipe');
     setZoomSwipeExitY(fromY);
     setZoomOverlayOpacity(1);
@@ -573,7 +576,7 @@ export function CardDetail({ card, selectedVariant = null, owned, onClose, onTog
               zoomClosingMode === 'swipe'
                 ? zoomOverlayOpacity * 0.85
                 : isDraggingZoom
-                  ? Math.max(0.1, (1 - zoomDragY / 400) * 0.85)
+                  ? Math.max(0.1, (1 - Math.abs(zoomDragY) / 400) * 0.85)
                   : 0.85
             })`,
             transition: zoomClosingMode === 'swipe'
@@ -599,14 +602,14 @@ export function CardDetail({ card, selectedVariant = null, owned, onClose, onTog
             style={{
               transform: zoomClosingMode === 'swipe'
                 ? `translateY(${zoomSwipeExitY}px)`
-                : zoomDragY > 0
-                  ? `translateY(${zoomDragY}px) scale(${Math.max(0.88, 1 - zoomDragY / 1200)})`
+                : zoomDragY !== 0
+                  ? `translateY(${zoomDragY}px) scale(${Math.max(0.88, 1 - Math.abs(zoomDragY) / 1200)})`
                   : undefined,
               transition: zoomClosingMode === 'swipe'
                 ? 'transform 300ms cubic-bezier(0.4,0,1,1)'
                 : isDraggingZoom
                   ? 'none'
-                  : zoomDragY > 0
+                  : zoomDragY !== 0
                     ? 'transform 0.25s cubic-bezier(0.34,1.56,0.64,1)'
                     : undefined,
             }}
@@ -620,13 +623,13 @@ export function CardDetail({ card, selectedVariant = null, owned, onClose, onTog
               e.stopPropagation();
               if (zoomDragStartY.current === null) return;
               const diff = e.touches[0].clientY - zoomDragStartY.current;
-              if (diff > 0) setZoomDragY(diff);
+              setZoomDragY(diff);
             }}
             onTouchEnd={(e) => {
               e.stopPropagation();
               setIsDraggingZoom(false);
               zoomDragStartY.current = null;
-              if (zoomDragY > 80) {
+              if (Math.abs(zoomDragY) > 80) {
                 triggerZoomSwipeClose(zoomDragY);
               } else {
                 setZoomDragY(0);
