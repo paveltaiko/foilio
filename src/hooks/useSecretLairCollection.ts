@@ -5,9 +5,7 @@ import { fetchCardsForSLDDrop } from '../services/scryfall';
 import { getCachedSLDDrop, setCachedSLDDrop, invalidateCachedSLDDrop } from '../utils/scryfallCache';
 import { useCollectionStats } from './useCollectionStats';
 import { parsePrice } from '../utils/formatPrice';
-
-const MOBILE_BATCH_SIZE = 24;
-const DESKTOP_BATCH_SIZE = 48;
+import { getBatchSize } from '../utils/responsive';
 
 interface DropState {
   cards: ScryfallCard[];
@@ -22,11 +20,6 @@ const EMPTY_DROP_STATE: DropState = {
   initialized: false,
   error: null,
 };
-
-function getBatchSize() {
-  if (typeof window === 'undefined') return DESKTOP_BATCH_SIZE;
-  return window.matchMedia('(max-width: 767px)').matches ? MOBILE_BATCH_SIZE : DESKTOP_BATCH_SIZE;
-}
 
 interface UseSecretLairCollectionOptions {
   ownedCards: Map<string, OwnedCard>;
@@ -49,6 +42,13 @@ export function useSecretLairCollection({
   const [dropStates, setDropStates] = useState<Record<string, DropState>>({});
 
   const inFlightRef = useRef<Set<string>>(new Set());
+
+  // Cleanup in-flight tracking on unmount to prevent stale state updates
+  useEffect(() => {
+    return () => {
+      inFlightRef.current.clear();
+    };
+  }, []);
 
   // Hydrate from localStorage cache on first activation
   useEffect(() => {

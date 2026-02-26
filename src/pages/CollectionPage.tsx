@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
-import { Share, Check, Layers, LayoutGrid, SlidersHorizontal, RotateCcw, Settings } from 'lucide-react';
+import { Layers, LayoutGrid, SlidersHorizontal, RotateCcw, Settings } from 'lucide-react';
 import { Link } from 'react-router';
 import type { User } from 'firebase/auth';
 import { isFirebaseConfigured } from '../config/firebase';
@@ -12,7 +12,7 @@ import { getVisibleSets } from './lab/collectionsSettings';
 import { collectionSets } from '../config/collections';
 import { secretLairDrops } from '../config/secretLairDrops';
 import { toggleCardOwnership, updateCardQuantity } from '../services/firestore';
-import { getExistingShareToken, getOrCreateShareToken } from '../services/sharing';
+import { getExistingShareToken } from '../services/sharing';
 import { SortControl } from '../components/filters/SortControl';
 import { OwnershipFilter } from '../components/filters/OwnershipFilter';
 import { BoosterFilter } from '../components/filters/BoosterFilter';
@@ -22,146 +22,15 @@ import { CardGrid, CardGridSkeleton } from '../components/cards/CardGrid';
 import { CardDetail } from '../components/cards/CardDetail';
 import { PullToRefresh } from '../components/ui/PullToRefresh';
 import { Tabs } from '../components/ui/Tabs';
+import { ShareCollectionButton } from '../components/collection/ShareCollectionButton';
+import { ShareFeedbackToast } from '../components/collection/ShareFeedbackToast';
+import type { ShareToastType } from '../components/collection/ShareCollectionButton';
 import type { CardVariant } from '../types/card';
 
 interface CollectionPageProps {
   user: User;
   isSearchOpen: boolean;
   onSearchClose: () => void;
-}
-
-type ShareToastType = 'success' | 'error';
-
-interface ShareFeedbackToastProps {
-  message: string | null;
-  type: ShareToastType;
-}
-
-function ShareFeedbackToast({ message, type }: ShareFeedbackToastProps) {
-  if (!message) return null;
-
-  return (
-    <div className="fixed bottom-5 left-1/2 z-50 -translate-x-1/2 px-2">
-      <div
-        className={`rounded-lg px-3 py-2 text-xs font-medium shadow-md ${
-          type === 'success'
-            ? 'bg-neutral-900 text-white'
-            : 'bg-red-600 text-white'
-        }`}
-        role="status"
-        aria-live="polite"
-      >
-        {message}
-      </div>
-    </div>
-  );
-}
-
-function ShareIconButton({
-  user,
-  onTokenReady,
-  onFeedback,
-}: {
-  user: User;
-  onTokenReady: (token: string) => void;
-  onFeedback: (message: string, type: ShareToastType) => void;
-}) {
-  const [succeeded, setSucceeded] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  const copyText = async (text: string): Promise<boolean> => {
-    // Modern clipboard API
-    if (navigator.clipboard && window.isSecureContext) {
-      try {
-        await navigator.clipboard.writeText(text);
-        return true;
-      } catch {
-        // fallback below
-      }
-    }
-
-    // Legacy fallback
-    try {
-      const textarea = document.createElement('textarea');
-      textarea.value = text;
-      textarea.style.position = 'fixed';
-      textarea.style.opacity = '0';
-      document.body.appendChild(textarea);
-      textarea.focus();
-      textarea.select();
-      const ok = document.execCommand('copy');
-      document.body.removeChild(textarea);
-      return ok;
-    } catch {
-      return false;
-    }
-  };
-
-  const isMobileDevice = () => {
-    const userAgent = navigator.userAgent ?? '';
-    const looksMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(userAgent);
-    return looksMobile || navigator.maxTouchPoints > 1;
-  };
-
-  const handleShare = async () => {
-    if (loading) return;
-    try {
-      setLoading(true);
-      const token = await getOrCreateShareToken({
-        uid: user.uid,
-        displayName: user.displayName ?? null,
-        photoURL: user.photoURL ?? null,
-      });
-      onTokenReady(token);
-      const url = `${window.location.origin}/share/${token}`;
-
-      const shouldUseNativeShare = isMobileDevice() && typeof navigator.share === 'function';
-      if (shouldUseNativeShare) {
-        await navigator.share({
-          title: 'Foilio collection',
-          text: 'Check out my MTG collection',
-          url,
-        });
-        onFeedback('Shared', 'success');
-      } else {
-        const copiedOk = await copyText(url);
-        if (!copiedOk) {
-          window.prompt('Copy this link:', url);
-        }
-        onFeedback('Link copied', 'success');
-      }
-      setSucceeded(true);
-      setTimeout(() => setSucceeded(false), 2000);
-    } catch (err) {
-      if (err instanceof DOMException && err.name === 'AbortError') {
-        return;
-      }
-      setSucceeded(false);
-      void err;
-      onFeedback('Could not create share link. Please try again.', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <button
-      type="button"
-      onClick={handleShare}
-      disabled={loading}
-      aria-label="Share collection"
-      title="Share collection"
-      className="flex items-center justify-center h-[38px] w-[38px] cursor-pointer transition-colors duration-150 border rounded-lg bg-white text-neutral-500 border-surface-border hover:text-neutral-700 hover:bg-neutral-50 disabled:opacity-60 disabled:cursor-not-allowed"
-    >
-      {loading ? (
-        <span className="w-4 h-4 border-2 border-neutral-300 border-t-neutral-500 rounded-full animate-spin" aria-hidden="true" />
-      ) : succeeded ? (
-        <Check className="w-[18px] h-[18px] text-owned" />
-      ) : (
-        <Share className="w-[18px] h-[18px]" />
-      )}
-    </button>
-  );
 }
 
 export function CollectionPage({ user, isSearchOpen, onSearchClose }: CollectionPageProps) {
@@ -511,10 +380,10 @@ export function CollectionPage({ user, isSearchOpen, onSearchClose }: Collection
                   </button>
                 )}
                 {isFirebaseConfigured && (
-                  <ShareIconButton
+                  <ShareCollectionButton
                     user={user}
                     onTokenReady={setShareToken}
-                    onFeedback={(message, type) => {
+                    onFeedback={(message: string, type: ShareToastType) => {
                       setShareToastType(type);
                       setShareToastMessage(message);
                     }}
@@ -561,10 +430,10 @@ export function CollectionPage({ user, isSearchOpen, onSearchClose }: Collection
                 </button>
               )}
               {isFirebaseConfigured && (
-                <ShareIconButton
+                <ShareCollectionButton
                   user={user}
                   onTokenReady={setShareToken}
-                  onFeedback={(message, type) => {
+                  onFeedback={(message: string, type: ShareToastType) => {
                     setShareToastType(type);
                     setShareToastMessage(message);
                   }}

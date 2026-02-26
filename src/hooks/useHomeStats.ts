@@ -64,6 +64,9 @@ export function useHomeStats(
     let foilValue = 0;
     const rarityBreakdown: Record<string, number> = {};
 
+    // Sety a franchizy – owned per setCode (sloučeno s hlavní smyčkou)
+    const ownedBySetCode: Record<string, number> = {};
+
     for (const card of cards) {
       const qty = card.quantityNonFoil + card.quantityFoil;
       totalQuantityOwned += qty;
@@ -97,11 +100,8 @@ export function useHomeStats(
           rarityBreakdown[rarity] = (rarityBreakdown[rarity] ?? 0) + 1;
         }
       }
-    }
 
-    // Sety a franchizy – owned per setCode
-    const ownedBySetCode: Record<string, number> = {};
-    for (const card of cards) {
+      // Owned per setCode
       if (card.ownedNonFoil || card.ownedFoil) {
         const code = card.set.toLowerCase();
         ownedBySetCode[code] = (ownedBySetCode[code] ?? 0) + 1;

@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import { useRenderBatch } from './useRenderBatch';
 import type {
   ScryfallCard,
   SetCode,
@@ -15,8 +16,6 @@ import { useCollectionStats } from './useCollectionStats';
 import { useBoosterMap } from './useBoosterMap';
 import { parsePrice } from '../utils/formatPrice';
 
-const MOBILE_BATCH_SIZE = 24;
-const DESKTOP_BATCH_SIZE = 48;
 const FETCH_DELAY_MS = 100;
 
 interface UseCardCollectionOptions {
@@ -44,11 +43,6 @@ const EMPTY_STATE: SetPaginationState = {
   error: null,
 };
 
-function getBatchSize() {
-  if (typeof window === 'undefined') return DESKTOP_BATCH_SIZE;
-  return window.matchMedia('(max-width: 767px)').matches ? MOBILE_BATCH_SIZE : DESKTOP_BATCH_SIZE;
-}
-
 function mergeCards(existing: ScryfallCard[], incoming: ScryfallCard[]) {
   if (incoming.length === 0) return existing;
   const seen = new Set(existing.map((card) => card.id));
@@ -72,14 +66,15 @@ export function useCardCollection({ ownedCards, searchQuery = '', visibleSetIds,
   const [boosterFilter, setBoosterFilter] = useState<BoosterFilter>('all');
   const [selectedCard, setSelectedCard] = useState<ScryfallCard | null>(null);
   const [groupBySet, setGroupBySet] = useState(true);
-  const [renderBatchSize, setRenderBatchSize] = useState(getBatchSize);
-  const [renderLimit, setRenderLimit] = useState(getBatchSize);
   const [setPages, setSetPages] = useState<Record<string, SetPaginationState>>({});
   const [setTotals, setSetTotals] = useState<Record<string, number>>({});
   const [ownedCardDetails, setOwnedCardDetails] = useState<Record<string, ScryfallCard>>({});
   const [isComputingTotalValue, setIsComputingTotalValue] = useState(false);
 
   const { data: boosterMap, isLoading: boosterMapLoading } = useBoosterMap();
+  // resetTrigger causes render limit to reset when active set or search changes
+  const renderResetKey = `${activeSet}:${searchQuery}`;
+  const { renderBatchSize, renderLimit, setRenderLimit } = useRenderBatch(renderResetKey);
   const inFlightRef = useRef<Set<string>>(new Set());
   const setPagesRef = useRef(setPages);
 
@@ -121,15 +116,11 @@ export function useCardCollection({ ownedCards, searchQuery = '', visibleSetIds,
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setOrder]);
 
+  // Cleanup in-flight tracking on unmount to prevent stale state updates
   useEffect(() => {
-    const onResize = () => {
-      const next = getBatchSize();
-      setRenderBatchSize(next);
-      setRenderLimit((prev) => (prev < next ? next : prev));
+    return () => {
+      inFlightRef.current.clear();
     };
-    onResize();
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
   }, []);
 
   useEffect(() => {
@@ -162,10 +153,6 @@ export function useCardCollection({ ownedCards, searchQuery = '', visibleSetIds,
       cancelled = true;
     };
   }, [setOrder, setTotals]);
-
-  useEffect(() => {
-    setRenderLimit(renderBatchSize);
-  }, [activeSet, renderBatchSize, searchQuery]);
 
   const fetchNextPageForSet = useCallback(async (setId: string): Promise<boolean> => {
     if (!setId) return false;
