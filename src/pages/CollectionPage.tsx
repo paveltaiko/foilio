@@ -25,7 +25,7 @@ import { PullToRefresh } from '../components/ui/PullToRefresh';
 import { Tabs } from '../components/ui/Tabs';
 import type { CardVariant } from '../types/card';
 
-interface HomePageProps {
+interface CollectionPageProps {
   user: User;
   isSearchOpen: boolean;
   onSearchClose: () => void;
@@ -165,7 +165,7 @@ function ShareIconButton({
   );
 }
 
-export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
+export function CollectionPage({ user, isSearchOpen, onSearchClose }: CollectionPageProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [shareToken, setShareToken] = useState<string | null>(null);
   const [shareToastMessage, setShareToastMessage] = useState<string | null>(null);

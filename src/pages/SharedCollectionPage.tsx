@@ -61,7 +61,7 @@ export function SharedCollectionPage({ currentUserId, isSearchOpen, onSearchClos
       <div className="app-container py-16 text-center">
         <p className="text-neutral-500 text-sm">{error}</p>
         <button
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/collection')}
           className="mt-4 text-sm text-primary-500 hover:text-primary-600 transition-colors cursor-pointer"
         >
           Back to home
@@ -77,7 +77,7 @@ export function SharedCollectionPage({ currentUserId, isSearchOpen, onSearchClos
           {/* Owner banner */}
           <div className="flex items-center gap-3 py-4">
             <button
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/collection')}
               className="text-neutral-400 hover:text-neutral-600 transition-colors cursor-pointer"
             >
               <ArrowLeft className="w-5 h-5" />

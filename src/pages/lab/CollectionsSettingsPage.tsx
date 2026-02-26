@@ -26,7 +26,7 @@ export function CollectionsSettingsPage() {
               navigate(-1);
               return;
             }
-            navigate('/');
+            navigate('/collection');
           }}
           className="hidden sm:inline-flex h-9 w-9 items-center justify-center rounded-lg text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-700 cursor-pointer"
           aria-label="Go back"

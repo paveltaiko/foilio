@@ -1,12 +1,12 @@
 import { useState, useCallback } from 'react';
-import { Routes, Route, useNavigate, useLocation } from 'react-router';
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuth } from './hooks/useAuth';
 import { Header } from './components/layout/Header';
 import { Footer } from './components/layout/Footer';
 import { BottomNav } from './components/layout/BottomNav';
 import { AuthGuard } from './components/auth/AuthGuard';
-import { HomePage } from './pages/HomePage';
+import { CollectionPage } from './pages/CollectionPage';
 import { SharedCollectionPage } from './pages/SharedCollectionPage';
 import { CollectionsV2LabPage } from './pages/lab/CollectionsV2LabPage';
 import { CollectionsSettingsPage } from './pages/lab/CollectionsSettingsPage';
@@ -40,12 +40,12 @@ function AppContent() {
       navigate(-1);
       return;
     }
-    navigate('/');
+    navigate('/collection');
   }, [navigate]);
 
   const handleLogout = useCallback(async () => {
     await logout();
-    navigate('/');
+    navigate('/collection');
   }, [logout, navigate]);
 
   return (
@@ -64,11 +64,12 @@ function AppContent() {
         />
         <main className={`flex-1 overflow-y-auto pt-3 sm:pb-8 ${user ? 'pb-nav' : 'pb-8'}`} style={{ scrollbarGutter: 'stable' }}>
           <Routes>
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route
-              path="/"
+              path="/collection"
               element={
                 <AuthGuard user={user} loading={loading} onLogin={login}>
-                  {user && <HomePage user={user} isSearchOpen={isSearchOpen} onSearchClose={handleSearchClose} />}
+                  {user && <CollectionPage user={user} isSearchOpen={isSearchOpen} onSearchClose={handleSearchClose} />}
                 </AuthGuard>
               }
             />

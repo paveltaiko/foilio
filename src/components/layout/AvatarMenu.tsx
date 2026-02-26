@@ -81,12 +81,12 @@ export function AvatarMenu({ userName, userPhoto, onOpenSettings, onLogout }: Av
             type="button"
             onClick={() => {
               setIsOpen(false);
-              navigate('/');
+              navigate('/collection');
             }}
-            className={`flex w-full cursor-pointer items-center gap-3 sm:gap-2 rounded-lg px-4 py-3.5 sm:px-3 sm:py-2 text-base sm:text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-300 ${pathname === '/' ? 'bg-red-50 text-primary-500' : 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900'}`}
+            className={`flex w-full cursor-pointer items-center gap-3 sm:gap-2 rounded-lg px-4 py-3.5 sm:px-3 sm:py-2 text-base sm:text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-300 ${pathname === '/collection' ? 'bg-red-50 text-primary-500' : 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900'}`}
             role="menuitem"
           >
-            <LayoutGrid className={`h-5 w-5 sm:h-4 sm:w-4 ${pathname === '/' ? 'text-primary-500' : 'text-neutral-700'}`} />
+            <LayoutGrid className={`h-5 w-5 sm:h-4 sm:w-4 ${pathname === '/collection' ? 'text-primary-500' : 'text-neutral-700'}`} />
             Collection
           </button>
           <button
