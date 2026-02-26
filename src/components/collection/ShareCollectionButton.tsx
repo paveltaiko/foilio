@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Share, Check } from 'lucide-react';
 import type { User } from 'firebase/auth';
 import { getOrCreateShareToken } from '../../services/sharing';
+import { IconButton } from '../ui/IconButton';
 
 export type ShareToastType = 'success' | 'error';
 
@@ -89,13 +90,11 @@ export function ShareCollectionButton({ user, onTokenReady, onFeedback }: ShareC
   };
 
   return (
-    <button
-      type="button"
+    <IconButton
       onClick={handleShare}
       disabled={loading}
       aria-label="Share collection"
       title="Share collection"
-      className="flex items-center justify-center h-[38px] w-[38px] cursor-pointer transition-colors duration-150 border rounded-lg bg-white text-neutral-500 border-surface-border hover:text-neutral-700 hover:bg-neutral-50 disabled:opacity-60 disabled:cursor-not-allowed"
     >
       {loading ? (
         <span className="w-4 h-4 border-2 border-neutral-300 border-t-neutral-500 rounded-full animate-spin" aria-hidden="true" />
@@ -104,6 +103,6 @@ export function ShareCollectionButton({ user, onTokenReady, onFeedback }: ShareC
       ) : (
         <Share className="w-[18px] h-[18px]" />
       )}
-    </button>
+    </IconButton>
   );
 }

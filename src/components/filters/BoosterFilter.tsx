@@ -1,4 +1,5 @@
 import type { BoosterFilter as BoosterFilterType } from '../../types/card';
+import { SegmentedControl } from '../ui/SegmentedControl';
 
 interface BoosterFilterProps {
   value: BoosterFilterType;
@@ -14,27 +15,8 @@ const OPTIONS: { id: BoosterFilterType; label: string; title: string }[] = [
 
 export function BoosterFilter({ value, onChange, isLoading }: BoosterFilterProps) {
   return (
-    <div className={`flex items-center ${isLoading ? 'opacity-50 pointer-events-none' : ''}`}>
-      <div className="flex text-sm">
-        {OPTIONS.map((option) => (
-          <button
-            key={option.id}
-            type="button"
-            onClick={() => onChange(option.id)}
-            title={option.title}
-            className={`
-              px-4 py-1.5 font-medium transition-colors duration-150 cursor-pointer relative
-              border first:rounded-l-lg last:rounded-r-lg -ml-px first:ml-0
-              ${value === option.id
-                ? 'bg-primary-500 text-white border-primary-500 z-10'
-                : 'bg-white text-neutral-500 border-neutral-200 hover:text-neutral-700 hover:bg-neutral-50 z-0'
-              }
-            `}
-          >
-            {option.label}
-          </button>
-        ))}
-      </div>
+    <div className={isLoading ? 'opacity-50 pointer-events-none' : undefined}>
+      <SegmentedControl options={OPTIONS} value={value} onChange={onChange} />
     </div>
   );
 }

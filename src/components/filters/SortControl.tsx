@@ -1,4 +1,5 @@
 import type { SortOption } from '../../types/card';
+import { SegmentedControl } from '../ui/SegmentedControl';
 
 interface SortControlProps {
   value: SortOption;
@@ -18,34 +19,22 @@ export function SortControl({ value, onChange }: SortControlProps) {
     }
   };
 
-  const isNumberActive = value === 'number-asc' || value === 'number-desc';
   const isPriceActive = value === 'price-asc' || value === 'price-desc';
   const numberLabel = `Number ${value === 'number-asc' ? '↑' : value === 'number-desc' ? '↓' : '↑'}`;
   const priceLabel = `Price ${value === 'price-asc' ? '↑' : value === 'price-desc' ? '↓' : '↑'}`;
 
+  const activeGroup: SortGroup = isPriceActive ? 'price' : 'number';
+
+  const options: { id: SortGroup; label: string; title: string }[] = [
+    { id: 'number', label: numberLabel, title: 'Sort by collector number' },
+    { id: 'price', label: priceLabel, title: 'Sort by price' },
+  ];
+
   return (
-    <div className="flex text-sm">
-      {([
-        { group: 'number' as SortGroup, label: numberLabel, active: isNumberActive, title: 'Sort by collector number' },
-        { group: 'price' as SortGroup, label: priceLabel, active: isPriceActive, title: 'Sort by price' },
-      ]).map((item) => (
-        <button
-          key={item.group}
-          type="button"
-          onClick={() => handleClick(item.group)}
-          title={item.title}
-          className={`
-            px-4 py-1.5 font-medium transition-colors duration-150 cursor-pointer relative
-            border first:rounded-l-lg last:rounded-r-lg -ml-px first:ml-0
-            ${item.active
-              ? 'bg-primary-500 text-white border-primary-500 z-10'
-              : 'bg-white text-neutral-500 border-neutral-200 hover:text-neutral-700 hover:bg-neutral-50 z-0'
-            }
-          `}
-        >
-          {item.label}
-        </button>
-      ))}
-    </div>
+    <SegmentedControl
+      options={options}
+      value={activeGroup}
+      onChange={handleClick}
+    />
   );
 }

@@ -7,6 +7,7 @@ import { OwnershipFilter as OwnershipFilterControl } from '../filters/OwnershipF
 import { BoosterFilter as BoosterFilterControl } from '../filters/BoosterFilter';
 import { ShareCollectionButton } from './ShareCollectionButton';
 import type { ShareToastType } from './ShareCollectionButton';
+import { IconButton } from '../ui/IconButton';
 
 interface CollectionToolbarProps {
   user: User;
@@ -62,17 +63,6 @@ export function CollectionToolbar({
     />
   ) : null;
 
-  const resetButton = hasActiveFilters ? (
-    <button
-      type="button"
-      onClick={onReset}
-      title="Reset filters"
-      className="flex items-center justify-center cursor-pointer transition-colors duration-150 border rounded-lg bg-white text-neutral-500 border-surface-border hover:text-neutral-700 hover:bg-neutral-50"
-    >
-      <RotateCcw className="w-4 h-4" />
-    </button>
-  ) : null;
-
   return (
     <div className="pt-7 pb-4 space-y-2">
       {/* Mobile toolbar */}
@@ -93,32 +83,20 @@ export function CollectionToolbar({
             )}
           </button>
           {hasActiveFilters && (
-            <button
-              type="button"
-              onClick={onReset}
-              title="Reset filters"
-              className="flex items-center justify-center h-[38px] w-[38px] cursor-pointer transition-colors duration-150 border rounded-lg bg-white text-neutral-500 border-surface-border hover:text-neutral-700 hover:bg-neutral-50"
-            >
+            <IconButton onClick={onReset} title="Reset filters">
               <RotateCcw className="w-4 h-4" />
-            </button>
+            </IconButton>
           )}
         </div>
         <div className="flex items-center gap-2">
           {showGroupBySet && (
-            <button
+            <IconButton
               onClick={onGroupBySetToggle}
               title={groupBySet ? 'Show all at once' : 'Group by set'}
-              className={`
-                flex items-center justify-center h-[38px] w-[38px] cursor-pointer transition-colors duration-150
-                border rounded-lg
-                ${groupBySet
-                  ? 'bg-primary-500 text-white border-primary-500'
-                  : 'bg-white text-neutral-500 border-neutral-200 hover:text-neutral-700 hover:bg-neutral-50'
-                }
-              `}
+              active={groupBySet}
             >
               {groupBySet ? <Layers className="w-4 h-4" /> : <LayoutGrid className="w-4 h-4" />}
-            </button>
+            </IconButton>
           )}
           {shareButton}
         </div>
@@ -136,30 +114,18 @@ export function CollectionToolbar({
           />
         )}
         {showGroupBySet && (
-          <button
+          <IconButton
             onClick={onGroupBySetToggle}
             title={groupBySet ? 'Show all at once' : 'Group by set'}
-            className={`
-              p-2 cursor-pointer transition-colors duration-150 relative
-              border rounded-lg text-sm font-medium
-              ${groupBySet
-                ? 'bg-primary-500 text-white border-primary-500 z-10'
-                : 'bg-white text-neutral-500 border-neutral-200 hover:text-neutral-700 hover:bg-neutral-50 z-0'
-              }
-            `}
+            active={groupBySet}
           >
             {groupBySet ? <Layers className="w-4 h-4" /> : <LayoutGrid className="w-4 h-4" />}
-          </button>
+          </IconButton>
         )}
-        {resetButton && (
-          <button
-            type="button"
-            onClick={onReset}
-            title="Reset filters"
-            className="p-2 cursor-pointer transition-colors duration-150 border rounded-lg text-sm font-medium bg-white text-neutral-500 border-neutral-200 hover:text-neutral-700 hover:bg-neutral-50"
-          >
+        {hasActiveFilters && (
+          <IconButton onClick={onReset} title="Reset filters">
             <RotateCcw className="w-4 h-4" />
-          </button>
+          </IconButton>
         )}
         {shareButton}
       </div>
