@@ -3,6 +3,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useOwnedCards } from '../hooks/useOwnedCards';
 import { useCollectionsSettings } from './lab/useCollectionsSettings';
 import { useHomeStats } from '../hooks/useHomeStats';
+import { useDashboardCardLoader } from '../hooks/useDashboardCardLoader';
 import { HeroWidget } from '../components/dashboard/HeroWidget';
 import { FoilBreakdownWidget } from '../components/dashboard/FoilBreakdownWidget';
 import { RarityBreakdownWidget } from '../components/dashboard/RarityBreakdownWidget';
@@ -17,7 +18,8 @@ export function DashboardPage() {
   const { user } = useAuth();
   const { ownedCards } = useOwnedCards(user?.uid ?? null);
   const { settings } = useCollectionsSettings();
-  const stats = useHomeStats(ownedCards, settings);
+  const { cacheVersion } = useDashboardCardLoader(ownedCards, settings);
+  const stats = useHomeStats(ownedCards, settings, cacheVersion);
 
   const [selectedCard, setSelectedCard] = useState<ScryfallCard | null>(null);
   const [selectedVariant, setSelectedVariant] = useState<CardVariant>(null);

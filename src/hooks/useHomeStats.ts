@@ -49,7 +49,9 @@ export interface HomeStats {
 
 export function useHomeStats(
   ownedCards: Map<string, OwnedCard>,
-  settings: CollectionSettings
+  settings: CollectionSettings,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _cacheVersion = 0
 ): HomeStats {
   return useMemo(() => {
     const cards = Array.from(ownedCards.values());
@@ -208,5 +210,5 @@ export function useHomeStats(
       recentCards,
       mostValuableCards,
     };
-  }, [ownedCards, settings]);
+  }, [ownedCards, settings, _cacheVersion]);
 }
