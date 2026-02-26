@@ -350,11 +350,12 @@ export function useCardCollection({ ownedCards, searchQuery = '', visibleSetIds,
     if (activeSet === 'all') {
       if (setOrder.length === 0) return false;
       const first = getStateForSet(setPages, setOrder[0]);
-      return !first.initialized && first.isFetching;
+      // !isFetching && !initialized = přechodný stav těsně před spuštěním fetche
+      return !first.initialized;
     }
 
     const state = getStateForSet(setPages, activeSet);
-    return !state.initialized && state.isFetching;
+    return !state.initialized;
   }, [activeSet, setOrder, setPages]);
 
   const baseStats = useCollectionStats(currentCards, ownedCards, activeSet);

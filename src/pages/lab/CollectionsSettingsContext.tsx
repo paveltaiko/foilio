@@ -33,10 +33,13 @@ export function CollectionsSettingsProvider({ userId, children }: CollectionsSet
       ? createDefaultCollectionSettings(franchises, collectionSets)
       : loadFromLocalStorage()
   );
+  // Firebase: čekáme na první odpověď z Firestore před tím, než zobrazíme empty state
+  const [isLoading, setIsLoading] = useState(isFirebaseConfigured && !!userId);
 
   useEffect(() => {
     if (!userId || !isFirebaseConfigured) return;
 
+    setIsLoading(true);
     const unsubscribe = subscribeToCollectionSettings(userId, (raw) => {
       if (raw === null) {
         // Firestore nemá data — migruj z localStorage pokud existuje
@@ -53,6 +56,7 @@ export function CollectionsSettingsProvider({ userId, children }: CollectionsSet
       } else {
         setSettings(normalizeCollectionSettings(raw, franchises, collectionSets));
       }
+      setIsLoading(false);
     });
 
     return unsubscribe;
@@ -72,6 +76,7 @@ export function CollectionsSettingsProvider({ userId, children }: CollectionsSet
 
   const value = useMemo<CollectionsSettingsContextValue>(() => ({
     settings,
+    isLoading,
     setCollectionEnabled: (franchiseId, enabled) => {
       const current = settings.collections[franchiseId];
       const setVisibility = enabled
@@ -102,7 +107,7 @@ export function CollectionsSettingsProvider({ userId, children }: CollectionsSet
       persist(next);
     },
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [settings, userId]);
+  }), [settings, isLoading, userId]);
 
   return (
     <CollectionsSettingsContext.Provider value={value}>

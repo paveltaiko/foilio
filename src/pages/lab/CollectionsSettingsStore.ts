@@ -4,6 +4,7 @@ import type { CollectionSettings } from './collectionsSettings';
 
 export interface CollectionsSettingsContextValue {
   settings: CollectionSettings;
+  isLoading: boolean;
   setCollectionEnabled: (franchiseId: FranchiseId, enabled: boolean) => void;
   setSetVisibility: (franchiseId: FranchiseId, setId: string, visible: boolean) => void;
 }

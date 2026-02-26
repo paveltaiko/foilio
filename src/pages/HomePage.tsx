@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Share, Check, Layers, LayoutGrid, SlidersHorizontal, RotateCcw, Settings } from 'lucide-react';
 import { Link } from 'react-router';
 import type { User } from 'firebase/auth';
@@ -202,7 +202,7 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
   }, [user.uid]);
 
   // UB settings
-  const { settings: collectionSettings } = useCollectionsSettings();
+  const { settings: collectionSettings, isLoading: isSettingsLoading } = useCollectionsSettings();
   const visibleCollectionSets = getVisibleSets(collectionSettings, collectionSets);
   const settingsInitialized = Object.keys(collectionSettings.collections).length > 0;
   const visibleSetIds: string[] | undefined = settingsInitialized
@@ -275,7 +275,18 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
   const isAllTab = activeTab === 'all';
   const selectedCard = isSLMode ? slSelectedCard : ubSelectedCard;
   const setSelectedCard = isSLMode ? slSetSelectedCard : ubSetSelectedCard;
-  const isCardsLoading = isSLMode ? slIsCardsLoading : ubIsCardsLoading || (isAllTab && slIsCardsLoading);
+  const isCardsLoading = isSettingsLoading || (isSLMode ? slIsCardsLoading : ubIsCardsLoading || (isAllTab && slIsCardsLoading));
+
+  // Fade-in přechod: inkrementuje se pokaždé když loading přejde true → false
+  const prevLoadingRef = useRef(isCardsLoading);
+  const [gridKey, setGridKey] = useState(0);
+  useEffect(() => {
+    if (prevLoadingRef.current && !isCardsLoading) {
+      setGridKey((k) => k + 1);
+    }
+    prevLoadingRef.current = isCardsLoading;
+  }, [isCardsLoading]);
+
   const activeSortOption = isSLMode ? slSortOption : sortOption;
   const setActiveSortOption = isSLMode ? slSetSortOption : setSortOption;
   const activeOwnershipFilter = isSLMode ? slOwnershipFilter : ownershipFilter;
@@ -453,7 +464,7 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
     else slRefreshCards();
   }, [isSLMode, refreshCards, slRefreshCards]);
 
-  const noUBCollectionSelected = !isSLMode && settingsInitialized && visibleSetIds !== undefined && visibleSetIds.length === 0;
+  const noUBCollectionSelected = !isSLMode && !isSettingsLoading && settingsInitialized && visibleSetIds !== undefined && visibleSetIds.length === 0;
 
   return (
     <>
@@ -590,7 +601,7 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
           {isCardsLoading ? (
             <CardGridSkeleton />
           ) : noUBCollectionSelected ? (
-            <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
+            <div key={gridKey} className="animate-fade-in flex flex-col items-center justify-center py-20 px-6 text-center">
               <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-neutral-100 mb-4">
                 <Settings className="w-7 h-7 text-neutral-400" />
               </div>
@@ -607,7 +618,7 @@ export function HomePage({ user, isSearchOpen, onSearchClose }: HomePageProps) {
               </Link>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div key={gridKey} className="animate-fade-in space-y-3">
               {!isSLMode && (isCompletingSearch || isFetchingNextPage || isComputingTotalValue) && (
                 <p className="text-xs text-neutral-500">
                   {isComputingTotalValue

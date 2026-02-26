@@ -1,5 +1,5 @@
 import type { CardProduct } from '../types/card';
-import type { CollectionSet } from '../config/collections';
+import { type CollectionSet, skipsMtgjson } from '../config/collections';
 
 const MTGJSON_BASE = 'https://mtgjson.com/api/v5';
 
@@ -79,11 +79,13 @@ export interface BoosterEntry {
 export type BoosterMap = Map<string, BoosterEntry>;
 
 export async function fetchBoosterMap(sets: CollectionSet[]): Promise<BoosterMap> {
+  const filteredSets = sets.filter((s) => !skipsMtgjson(s));
+
   // Fetch all set data in parallel. If a set file is missing in MTGJSON,
   // keep going so booster filtering still works for the remaining sets.
-  const setResults = await Promise.allSettled(sets.map((s) => fetchMtgjsonSet(s.id)));
+  const setResults = await Promise.allSettled(filteredSets.map((s) => fetchMtgjsonSet(s.id)));
   const setDataById: Record<string, MtgjsonSetData> = {};
-  sets.forEach((s, i) => {
+  filteredSets.forEach((s, i) => {
     const result = setResults[i];
     if (result.status === 'fulfilled') {
       setDataById[s.id] = result.value;
@@ -93,7 +95,7 @@ export async function fetchBoosterMap(sets: CollectionSet[]): Promise<BoosterMap
   });
 
   // Build a product map per franchise (from the master set of each franchise)
-  const franchiseIds = [...new Set(sets.map((s) => s.franchiseId))];
+  const franchiseIds = [...new Set(filteredSets.map((s) => s.franchiseId))];
   const productMapByFranchise: Record<string, Map<string, MtgjsonSealedProduct>> = {};
   for (const franchiseId of franchiseIds) {
     const franchiseSets = sets
@@ -143,7 +145,7 @@ export async function fetchBoosterMap(sets: CollectionSet[]): Promise<BoosterMap
     }
   };
 
-  for (const set of sets) {
+  for (const set of filteredSets) {
     const data = setDataById[set.id];
     if (data) processCards(data.cards, set.id, set.franchiseId);
   }
@@ -158,6 +160,7 @@ export async function fetchCardProducts(
 ): Promise<CardProduct[]> {
   // Find which franchise this set belongs to, then get its master set
   const matchedSet = sets.find((s) => s.id === setCode.toLowerCase());
+  if (matchedSet && skipsMtgjson(matchedSet)) return [];
   const franchiseId = matchedSet?.franchiseId;
   const masterId = franchiseId ? getMasterSetId(franchiseId, sets) : setCode.toLowerCase();
 
