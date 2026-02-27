@@ -1,6 +1,6 @@
 import { createContext } from 'react';
-import type { FranchiseId } from '../../config/collections';
-import type { CollectionSettings } from './collectionsSettings';
+import type { FranchiseId } from '../config/collections';
+import type { CollectionSettings } from '../utils/collectionsSettings';
 
 export interface CollectionsSettingsContextValue {
   settings: CollectionSettings;

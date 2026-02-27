@@ -1,4 +1,4 @@
-import type { CollectionSettings } from '../../pages/lab/collectionsSettings';
+import type { CollectionSettings } from '../../utils/collectionsSettings';
 import type { Franchise, CollectionSet, FranchiseId } from '../../config/collections';
 
 interface CollectionsSettingsPanelProps {

@@ -1,4 +1,4 @@
-import type { Franchise, CollectionSet, FranchiseId } from '../../config/collections';
+import type { Franchise, CollectionSet, FranchiseId } from '../config/collections';
 
 export interface CollectionConfig {
   enabled: boolean;

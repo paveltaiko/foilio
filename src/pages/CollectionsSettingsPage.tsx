@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router';
-import { CollectionsSettingsPanel } from '../../components/lab/CollectionsSettingsPanel';
-import { SecretLairSettingsPanel } from '../../components/lab/SecretLairSettingsPanel';
-import { CollectionModeTabs } from '../../components/ui/CollectionModeTabs';
-import type { CollectionMode } from '../../components/ui/CollectionModeTabs';
-import { franchises, collectionSets } from '../../config/collections';
-import { secretLairDrops } from '../../config/secretLairDrops';
-import { useCollectionsSettings } from './useCollectionsSettings';
-import { useSecretLairDropSettings } from '../../hooks/useSecretLairDropSettings';
+import { CollectionsSettingsPanel } from '../components/settings/CollectionsSettingsPanel';
+import { SecretLairSettingsPanel } from '../components/settings/SecretLairSettingsPanel';
+import { CollectionModeTabs } from '../components/ui/CollectionModeTabs';
+import type { CollectionMode } from '../components/ui/CollectionModeTabs';
+import { franchises, collectionSets } from '../config/collections';
+import { secretLairDrops } from '../config/secretLairDrops';
+import { useCollectionsSettings } from '../hooks/useCollectionsSettings';
+import { useSecretLairDropSettings } from '../hooks/useSecretLairDropSettings';
 
 export function CollectionsSettingsPage() {
   const navigate = useNavigate();

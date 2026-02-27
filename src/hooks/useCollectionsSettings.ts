@@ -1,5 +1,5 @@
 import { useContext } from 'react';
-import { CollectionsSettingsContext } from './CollectionsSettingsStore';
+import { CollectionsSettingsContext } from '../providers/CollectionsSettingsStore';
 
 export function useCollectionsSettings() {
   const context = useContext(CollectionsSettingsContext);

@@ -3,8 +3,8 @@ import type { OwnedCard } from '../types/card';
 import { getCachedCardById } from '../utils/scryfallCache';
 import { parsePrice } from '../utils/formatPrice';
 import { franchises, collectionSets } from '../config/collections';
-import type { CollectionSettings } from '../pages/lab/collectionsSettings';
-import { getVisibleSets } from '../pages/lab/collectionsSettings';
+import type { CollectionSettings } from '../utils/collectionsSettings';
+import { getVisibleSets } from '../utils/collectionsSettings';
 import { getCachedSetCount } from '../utils/scryfallCache';
 
 export interface FranchiseStat {

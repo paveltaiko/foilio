@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useOwnedCards } from '../hooks/useOwnedCards';
-import { useCollectionsSettings } from './lab/useCollectionsSettings';
+import { useCollectionsSettings } from '../hooks/useCollectionsSettings';
 import { useHomeStats } from '../hooks/useHomeStats';
 import { useDashboardCardLoader } from '../hooks/useDashboardCardLoader';
 import { HeroWidget } from '../components/dashboard/HeroWidget';

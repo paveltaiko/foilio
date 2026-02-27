@@ -1,5 +1,5 @@
 import { useContext } from 'react';
-import { SecretLairDropSettingsContext } from './SecretLairDropSettingsContext';
+import { SecretLairDropSettingsContext } from '../providers/SecretLairDropSettingsContext';
 
 export function useSecretLairDropSettings() {
   const context = useContext(SecretLairDropSettingsContext);

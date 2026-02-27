@@ -3,8 +3,8 @@ import { getCachedCardById, getCachedSetCount, setCachedSetCount } from '../util
 import { fetchCardsByIds, fetchSetCardCount } from '../services/scryfall';
 import { collectionSets } from '../config/collections';
 import type { OwnedCard } from '../types/card';
-import type { CollectionSettings } from '../pages/lab/collectionsSettings';
-import { getVisibleSets } from '../pages/lab/collectionsSettings';
+import type { CollectionSettings } from '../utils/collectionsSettings';
+import { getVisibleSets } from '../utils/collectionsSettings';
 
 /**
  * Loads missing Scryfall card data and set counts for the dashboard.

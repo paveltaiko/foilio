@@ -8,11 +8,11 @@ import { BottomNav } from './components/layout/BottomNav';
 import { AuthGuard } from './components/auth/AuthGuard';
 import { CollectionPage } from './pages/CollectionPage';
 import { SharedCollectionPage } from './pages/SharedCollectionPage';
-import { CollectionsV2LabPage } from './pages/lab/CollectionsV2LabPage';
-import { CollectionsSettingsPage } from './pages/lab/CollectionsSettingsPage';
-import { CollectionsSettingsProvider } from './pages/lab/CollectionsSettingsContext';
-import { SecretLairDropSettingsProvider } from './hooks/SecretLairDropSettingsContext';
+import { CollectionsSettingsPage } from './pages/CollectionsSettingsPage';
+import { CollectionsSettingsProvider } from './providers/CollectionsSettingsContext';
+import { SecretLairDropSettingsProvider } from './providers/SecretLairDropSettingsContext';
 import { DashboardPage } from './pages/DashboardPage';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 const queryClient = new QueryClient();
 const isStandalone = window.matchMedia('(display-mode: standalone)').matches
@@ -63,6 +63,7 @@ function AppContent() {
           onMobileBack={pathname === '/settings' ? handleBack : undefined}
         />
         <main className={`flex-1 overflow-y-auto pt-3 sm:pb-8 ${user ? 'pb-nav' : 'pb-8'}`} style={{ scrollbarGutter: 'stable' }}>
+          <ErrorBoundary>
           <Routes>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route
@@ -86,14 +87,11 @@ function AppContent() {
               element={<SharedCollectionPage currentUserId={user?.uid ?? null} isSearchOpen={isSearchOpen} onSearchClose={handleSearchClose} />}
             />
             <Route
-              path="/lab/collections-v2"
-              element={<CollectionsV2LabPage />}
-            />
-            <Route
               path="/settings"
               element={<CollectionsSettingsPage />}
             />
           </Routes>
+          </ErrorBoundary>
           {error && (
             <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-96 bg-primary-50 border border-primary-200 text-primary-700 text-sm rounded-lg px-4 py-3 animate-fade-in z-50">
               {error}

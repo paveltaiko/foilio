@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { franchises, collectionSets } from '../../config/collections';
-import { isFirebaseConfigured } from '../../config/firebase';
-import { subscribeToCollectionSettings, saveCollectionSettings } from '../../services/firestore';
+import { franchises, collectionSets } from '../config/collections';
+import { isFirebaseConfigured } from '../config/firebase';
+import { subscribeToCollectionSettings, saveCollectionSettings } from '../services/firestore';
 import {
   createDefaultCollectionSettings,
   normalizeCollectionSettings,
   type CollectionSettings,
-} from './collectionsSettings';
+} from '../utils/collectionsSettings';
 import { CollectionsSettingsContext, type CollectionsSettingsContextValue } from './CollectionsSettingsStore';
 
 const STORAGE_KEY = 'foilio-collections-settings-v1';
