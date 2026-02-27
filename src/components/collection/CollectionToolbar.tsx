@@ -64,7 +64,7 @@ export function CollectionToolbar({
   ) : null;
 
   return (
-    <div className="pt-7 pb-4 space-y-2">
+    <div className="pt-3 pb-4 md:pt-8 md:pb-10 space-y-2">
       {/* Mobile toolbar */}
       <div className="flex items-center justify-between gap-2 md:hidden">
         <div className="flex items-center gap-2">
