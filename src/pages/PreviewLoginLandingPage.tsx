@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import { Sparkles, ShieldCheck, Share2, ChartColumnIncreasing } from 'lucide-react';
 import { franchises } from '../config/collections';
@@ -225,6 +225,15 @@ export function PreviewLoginLandingPage({ onLogin, isLoggedIn }: PreviewLoginLan
           <FaqAccordion items={[...FAQ_ITEMS]} />
         </div>
       </section>
+
+      <div className="flex items-center justify-center gap-4 text-xs text-neutral-400 pb-2">
+        <Link to="/privacy" className="hover:text-neutral-600 transition-colors">
+          Privacy Policy
+        </Link>
+        <Link to="/terms" className="hover:text-neutral-600 transition-colors">
+          Terms of Service
+        </Link>
+      </div>
 
       <CardDetail
         card={selectedCard}

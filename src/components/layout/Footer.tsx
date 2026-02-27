@@ -1,3 +1,5 @@
+import { Link } from 'react-router';
+
 export function Footer() {
   const currentYear = new Date().getFullYear();
 
@@ -11,6 +13,16 @@ export function Footer() {
             <span className="text-xs text-neutral-500">
               © {currentYear} Foilio. All rights reserved.
             </span>
+          </div>
+
+          {/* Legal links */}
+          <div className="flex items-center gap-4 text-xs text-neutral-500">
+            <Link to="/privacy" className="hover:text-primary-500 underline underline-offset-2 transition-colors">
+              Privacy Policy
+            </Link>
+            <Link to="/terms" className="hover:text-primary-500 underline underline-offset-2 transition-colors">
+              Terms of Service
+            </Link>
           </div>
 
         </div>

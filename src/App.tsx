@@ -12,6 +12,8 @@ import { CollectionsSettingsPage } from './pages/CollectionsSettingsPage';
 import { CollectionsSettingsProvider } from './providers/CollectionsSettingsContext';
 import { SecretLairDropSettingsProvider } from './providers/SecretLairDropSettingsContext';
 import { DashboardPage } from './pages/DashboardPage';
+import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
+import { TermsOfServicePage } from './pages/TermsOfServicePage';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
 const queryClient = new QueryClient();
@@ -89,6 +91,14 @@ function AppContent() {
             <Route
               path="/settings"
               element={<CollectionsSettingsPage />}
+            />
+            <Route
+              path="/privacy"
+              element={<PrivacyPolicyPage />}
+            />
+            <Route
+              path="/terms"
+              element={<TermsOfServicePage />}
             />
           </Routes>
           </ErrorBoundary>
