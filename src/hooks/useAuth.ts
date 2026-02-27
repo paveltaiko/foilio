@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import {
   signInWithPopup,
-  signInWithRedirect,
-  getRedirectResult,
   signOut,
   onAuthStateChanged,
   type User,
@@ -18,24 +16,6 @@ interface AuthState {
 
 // Offline mode — no Firebase configured
 const OFFLINE_USER_ID = 'local-user';
-
-function shouldUseRedirectLogin() {
-  if (typeof window === 'undefined') {
-    return false;
-  }
-
-  // On ngrok/tunnel URLs always use popup (redirect loses session context)
-  const hostname = window.location.hostname;
-  if (hostname.includes('ngrok')) {
-    return false;
-  }
-
-  const userAgent = navigator.userAgent ?? '';
-  const isMobileUA = /Android|iPhone|iPad|iPod|Mobile/i.test(userAgent);
-  const isCoarsePointer = window.matchMedia?.('(pointer: coarse)').matches ?? false;
-
-  return isMobileUA || isCoarsePointer;
-}
 
 export function useAuth() {
   const [state, setState] = useState<AuthState>({
@@ -75,21 +55,6 @@ export function useAuth() {
       syncUserProfile(user);
     });
 
-    // Resolve pending redirect result once during app init.
-    getRedirectResult(firebaseAuth).then((result) => {
-      if (!isMounted) return;
-      if (result?.user) {
-        setState({ user: result.user, loading: false, error: null });
-        syncUserProfile(result.user);
-      }
-    }).catch((err) => {
-      if (!isMounted) return;
-      setState((prev) => ({
-        ...prev,
-        error: err instanceof Error ? err.message : 'Sign in redirect failed',
-      }));
-    });
-
     return () => {
       isMounted = false;
       unsubscribe();
@@ -106,21 +71,9 @@ export function useAuth() {
     }
     try {
       setState((prev) => ({ ...prev, error: null }));
-      if (shouldUseRedirectLogin()) {
-        await signInWithRedirect(auth, googleProvider);
-        return;
-      }
       await signInWithPopup(auth, googleProvider);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Sign in failed';
-      const code = typeof err === 'object' && err !== null && 'code' in err ? String(err.code) : '';
-      const shouldFallbackToRedirect = code === 'auth/popup-blocked' || code === 'auth/cancelled-popup-request';
-
-      if (shouldFallbackToRedirect) {
-        await signInWithRedirect(auth, googleProvider);
-        return;
-      }
-
       setState((prev) => ({
         ...prev,
         error: message,
