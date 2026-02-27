@@ -10,22 +10,29 @@ declare global {
   interface Window {
     dataLayer: unknown[]
     gtag: (...args: unknown[]) => void
+    grantAnalyticsConsent: () => void
   }
 }
 
-if (import.meta.env.PROD) {
+function initAnalytics() {
   window.dataLayer = window.dataLayer || []
   window.gtag = (...args: unknown[]) => {
     window.dataLayer.push(args)
   }
-
   window.gtag('js', new Date())
   window.gtag('config', GA_MEASUREMENT_ID)
-
   const script = document.createElement('script')
   script.async = true
   script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`
   document.head.appendChild(script)
+}
+
+window.grantAnalyticsConsent = () => {
+  if (import.meta.env.PROD) initAnalytics()
+}
+
+if (import.meta.env.PROD && localStorage.getItem('cookie_consent') === 'accepted') {
+  initAnalytics()
 }
 
 createRoot(document.getElementById('root')!).render(

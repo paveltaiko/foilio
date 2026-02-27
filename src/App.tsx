@@ -15,6 +15,7 @@ import { DashboardPage } from './pages/DashboardPage';
 import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
 import { TermsOfServicePage } from './pages/TermsOfServicePage';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { CookieBanner } from './components/ui/CookieBanner';
 
 const queryClient = new QueryClient();
 const isStandalone = window.matchMedia('(display-mode: standalone)').matches
@@ -113,6 +114,7 @@ function AppContent() {
           onSearchClick={pathname === '/settings' ? undefined : handleSearchClick}
         />
         {!isStandalone && <Footer />}
+        <CookieBanner />
       </div>
     </CollectionsSettingsProvider>
     </SecretLairDropSettingsProvider>
