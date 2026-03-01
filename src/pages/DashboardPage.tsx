@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useOwnedCards } from '../hooks/useOwnedCards';
 import { useCollectionsSettings } from '../hooks/useCollectionsSettings';
 import { useHomeStats } from '../hooks/useHomeStats';
 import { useDashboardCardLoader } from '../hooks/useDashboardCardLoader';
+import { isFirebaseConfigured } from '../config/firebase';
+import { toggleCardOwnership, updateCardQuantity } from '../services/firestore';
 import { HeroWidget } from '../components/dashboard/HeroWidget';
 import { FoilBreakdownWidget } from '../components/dashboard/FoilBreakdownWidget';
 import { RarityBreakdownWidget } from '../components/dashboard/RarityBreakdownWidget';
@@ -23,6 +25,32 @@ export function DashboardPage() {
 
   const [selectedCard, setSelectedCard] = useState<ScryfallCard | null>(null);
   const [selectedVariant, setSelectedVariant] = useState<CardVariant>(null);
+
+  const handleToggle = useCallback(
+    (cardId: string, variant: 'nonfoil' | 'foil') => {
+      if (!selectedCard || selectedCard.id !== cardId) return;
+      if (isFirebaseConfigured) {
+        void toggleCardOwnership(user?.uid ?? '', cardId, {
+          set: selectedCard.set,
+          collectorNumber: selectedCard.collector_number,
+          name: selectedCard.name,
+        }, variant, ownedCards.get(cardId));
+      }
+    },
+    [selectedCard, ownedCards, user?.uid]
+  );
+
+  const handleQuantityChange = useCallback(
+    (cardId: string, variant: 'nonfoil' | 'foil', quantity: number) => {
+      if (!selectedCard || selectedCard.id !== cardId) return;
+      const existing = ownedCards.get(cardId);
+      if (!existing) return;
+      if (isFirebaseConfigured) {
+        void updateCardQuantity(user?.uid ?? '', cardId, variant, quantity, existing);
+      }
+    },
+    [selectedCard, ownedCards, user?.uid]
+  );
 
   return (
     <div className="app-container-padded pb-3 sm:py-5">
@@ -73,8 +101,8 @@ export function DashboardPage() {
           setSelectedCard(null);
           setSelectedVariant(null);
         }}
-        onToggle={() => {}}
-        readOnly
+        onToggle={handleToggle}
+        onQuantityChange={handleQuantityChange}
       />
     </div>
   );
