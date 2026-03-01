@@ -251,16 +251,11 @@ body {
 /* Card hover lift — desktop only */
 @media (hover: hover) {
   .card-hover-lift {
-    transition: transform 250ms ease, box-shadow 250ms ease, border-color 250ms ease;
+    transition: transform 250ms ease;
   }
 
   .card-hover-lift:hover {
     transform: translateY(-5px);
-    box-shadow:
-      0 2px 8px rgba(0, 0, 0, 0.06),
-      0 8px 24px rgba(0, 0, 0, 0.10),
-      0 20px 60px 4px rgba(0, 0, 0, 0.16);
-    border-color: transparent !important;
   }
 }
 
