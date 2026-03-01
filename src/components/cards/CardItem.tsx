@@ -146,6 +146,7 @@ export function CardItem({ card, owned, displayVariant, onToggle, onClick, readO
                 isOwned={isOwnedFoil}
                 label="Foil"
                 onClick={readOnly ? undefined : (e) => handleToggle(e, 'foil')}
+                readOnly={readOnly}
               />
             ) : displayVariant === 'nonfoil' ? (
               <OwnershipBadge className="h-8 text-xs"
@@ -153,6 +154,7 @@ export function CardItem({ card, owned, displayVariant, onToggle, onClick, readO
                 isOwned={isOwnedNonFoil}
                 label="Non-Foil"
                 onClick={readOnly ? undefined : (e) => handleToggle(e, 'nonfoil')}
+                readOnly={readOnly}
               />
             ) : (
               <>
@@ -162,6 +164,7 @@ export function CardItem({ card, owned, displayVariant, onToggle, onClick, readO
                     isOwned={isOwnedNonFoil}
                     label="Non-Foil"
                     onClick={readOnly ? undefined : (e) => handleToggle(e, 'nonfoil')}
+                    readOnly={readOnly}
                   />
                 )}
                 {hasFoil && (
@@ -170,6 +173,7 @@ export function CardItem({ card, owned, displayVariant, onToggle, onClick, readO
                     isOwned={isOwnedFoil}
                     label="Foil"
                     onClick={readOnly ? undefined : (e) => handleToggle(e, 'foil')}
+                    readOnly={readOnly}
                   />
                 )}
               </>

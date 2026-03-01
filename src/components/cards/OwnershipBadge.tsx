@@ -7,9 +7,10 @@ export interface OwnershipBadgeProps {
   onClick?: (e: React.MouseEvent) => void;
   children?: React.ReactNode;
   className?: string;
+  readOnly?: boolean;
 }
 
-export function OwnershipBadge({ variant, isOwned, label, onClick, children, className = '' }: OwnershipBadgeProps) {
+export function OwnershipBadge({ variant, isOwned, label, onClick, children, className = '', readOnly = false }: OwnershipBadgeProps) {
   const baseClass = `flex flex-1 items-center justify-center gap-0.5 leading-none font-semibold rounded-image-sm transition-all duration-200 ${className}`;
 
   const colorClass = variant === 'foil'
@@ -22,7 +23,7 @@ export function OwnershipBadge({ variant, isOwned, label, onClick, children, cla
 
   const content = children ?? (
     <>
-      {isOwned && !onClick && <Check className="w-3 h-3 shrink-0" strokeWidth={3} />}
+      {isOwned && !onClick && !readOnly && <Check className="w-3 h-3 shrink-0" strokeWidth={3} />}
       {label}
     </>
   );

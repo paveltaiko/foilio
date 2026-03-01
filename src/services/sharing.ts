@@ -127,6 +127,15 @@ export async function mirrorOwnedCardToShared(token: string, cardId: string, dat
   }, { merge: true });
 }
 
+export async function syncVisibleSetsToShared(token: string, visibleSetIds: string[]): Promise<void> {
+  const firestore = getDb();
+  await setDoc(
+    doc(firestore, 'sharedCollections', token),
+    { visibleSetIds, updatedAt: serverTimestamp() },
+    { merge: true }
+  );
+}
+
 export async function removeMirroredOwnedCard(token: string, cardId: string): Promise<void> {
   const firestore = getDb();
   const batch = writeBatch(firestore);

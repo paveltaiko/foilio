@@ -432,6 +432,7 @@ export function CardDetail({ card, selectedVariant = null, owned, onClose, onTog
               isOwned={isOwnedNonFoil}
               label={isOwnedNonFoil && readOnly ? `${owned?.quantityNonFoil || 1}× Non-Foil` : 'Non-Foil'}
               onClick={readOnly || isOwnedNonFoil ? undefined : () => onToggle(card.id, 'nonfoil')}
+              readOnly={readOnly}
             >
               {!readOnly && isOwnedNonFoil && onQuantityChange ? (
                 <div className="flex items-center gap-1">
@@ -465,6 +466,7 @@ export function CardDetail({ card, selectedVariant = null, owned, onClose, onTog
               isOwned={isOwnedFoil}
               label={isOwnedFoil && readOnly ? `${owned?.quantityFoil || 1}× Foil` : 'Foil'}
               onClick={readOnly || isOwnedFoil ? undefined : () => onToggle(card.id, 'foil')}
+              readOnly={readOnly}
             >
               {!readOnly && isOwnedFoil && onQuantityChange ? (
                 <div className="flex items-center gap-1">

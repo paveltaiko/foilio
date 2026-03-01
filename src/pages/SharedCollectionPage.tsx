@@ -1,13 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router';
-import { ArrowLeft, Layers, LayoutGrid } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useSharedCollection } from '../hooks/useSharedCollection';
 import { useCardCollection } from '../hooks/useCardCollection';
 import { SetTabs } from '../components/filters/SetTabs';
-import { SortControl } from '../components/filters/SortControl';
-import { OwnershipFilter } from '../components/filters/OwnershipFilter';
+import { CollectionToolbar } from '../components/collection/CollectionToolbar';
 import { SearchInput } from '../components/filters/SearchInput';
-import { CollectionSummary } from '../components/stats/CollectionSummary';
 import { CardGrid, CardGridSkeleton } from '../components/cards/CardGrid';
 import { CardDetail } from '../components/cards/CardDetail';
 import { PullToRefresh } from '../components/ui/PullToRefresh';
@@ -27,7 +25,7 @@ export function SharedCollectionPage({ currentUserId, isSearchOpen, onSearchClos
   const navigate = useNavigate();
 
   // Fetch shared collection
-  const { ownedCards, ownerUserId, profile, loading: collectionLoading, error, refresh } = useSharedCollection(token);
+  const { ownedCards, ownerUserId, profile, visibleSetIds, loading: collectionLoading, error, refresh } = useSharedCollection(token);
 
   useEffect(() => {
     if (ownerUserId && currentUserId && ownerUserId === currentUserId) {
@@ -35,17 +33,23 @@ export function SharedCollectionPage({ currentUserId, isSearchOpen, onSearchClos
     }
   }, [ownerUserId, currentUserId, navigate]);
 
+  const visibleSets = useMemo(() => {
+    if (collectionLoading || visibleSetIds === undefined) return collectionSets;
+    const allowed = new Set(visibleSetIds);
+    return collectionSets.filter((s) => allowed.has(s.id));
+  }, [collectionLoading, visibleSetIds]);
+
   const {
     activeSet, setActiveSet,
     sortOption, setSortOption,
     ownershipFilter, setOwnershipFilter,
     selectedCard, setSelectedCard,
     groupBySet, setGroupBySet,
-    isCardsLoading, cardCounts, stats, sortedFilteredCards, visibleCards,
+    isCardsLoading, cardCounts, sortedFilteredCards, visibleCards,
     isFetchingNextPage, hasNextPage, loadNextPage, loadMoreError, isCompletingSearch,
     isComputingTotalValue,
     refreshCards,
-  } = useCardCollection({ ownedCards, searchQuery, sets: collectionSets });
+  } = useCardCollection({ ownedCards, searchQuery, sets: visibleSets });
 
   const isLoading = collectionLoading || isCardsLoading;
   const handleRefresh = async () => {
@@ -53,7 +57,6 @@ export function SharedCollectionPage({ currentUserId, isSearchOpen, onSearchClos
     refreshCards();
   };
 
-  // No-op toggle for read-only mode
   const noop = () => {};
 
   if (error) {
@@ -99,36 +102,19 @@ export function SharedCollectionPage({ currentUserId, isSearchOpen, onSearchClos
           </div>
 
           {/* Set tabs */}
-          <SetTabs activeSet={activeSet} onChange={setActiveSet} sets={collectionSets} cardCounts={cardCounts} />
-
-          {/* Stats */}
-          <div className="py-4">
-            <CollectionSummary
-              totalCards={stats.totalCards}
-              ownedCount={stats.ownedCount}
-              totalValue={stats.totalValue}
-              percentage={stats.percentage}
-            />
-          </div>
+          <SetTabs activeSet={activeSet} onChange={setActiveSet} sets={visibleSets} cardCounts={cardCounts} />
 
           {/* Toolbar */}
-          <div className="flex items-center justify-between gap-2 sm:gap-3 pb-4">
-            <OwnershipFilter value={ownershipFilter} onChange={setOwnershipFilter} />
-            <div className="flex items-center gap-4">
-              {activeSet === 'all' && (
-                <button
-                  onClick={() => setGroupBySet(!groupBySet)}
-                  className={`cursor-pointer transition-colors duration-150 ${
-                    groupBySet ? 'text-primary-500' : 'text-neutral-400 hover:text-neutral-600'
-                  }`}
-                  title={groupBySet ? 'Show all at once' : 'Group by set'}
-                >
-                  {groupBySet ? <Layers className="w-5 h-5" /> : <LayoutGrid className="w-5 h-5" />}
-                </button>
-              )}
-              <SortControl value={sortOption} onChange={setSortOption} />
-            </div>
-          </div>
+          <CollectionToolbar
+            readOnly
+            activeTab={activeSet}
+            sortOption={sortOption}
+            onSortChange={setSortOption}
+            ownershipFilter={ownershipFilter}
+            onOwnershipChange={setOwnershipFilter}
+            groupBySet={groupBySet}
+            onGroupBySetToggle={() => setGroupBySet(!groupBySet)}
+          />
 
           {/* Card grid */}
           {isLoading ? (
@@ -154,7 +140,7 @@ export function SharedCollectionPage({ currentUserId, isSearchOpen, onSearchClos
                 }}
                 readOnly
                 groupBySet={activeSet === 'all' && groupBySet && searchQuery.trim().length === 0}
-                sets={collectionSets}
+                sets={visibleSets}
                 onLoadMore={loadNextPage}
                 hasMore={hasNextPage}
                 isLoadingMore={isFetchingNextPage}

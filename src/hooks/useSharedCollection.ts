@@ -8,9 +8,20 @@ interface SharedCollectionState {
   ownedCards: Map<string, OwnedCard>;
   profile: UserProfile | null;
   ownerUserId: string | null;
+  // undefined = ještě se načítá, string[] = načteno (může být prázdné)
+  visibleSetIds: string[] | undefined;
   loading: boolean;
   error: string | null;
 }
+
+const EMPTY_ERROR_STATE = (error: string): SharedCollectionState => ({
+  ownedCards: new Map(),
+  profile: null,
+  ownerUserId: null,
+  visibleSetIds: [],
+  loading: false,
+  error,
+});
 
 export function useSharedCollection(token: string | undefined) {
   const isAvailable = !!token && isFirebaseConfigured && !!db;
@@ -19,6 +30,7 @@ export function useSharedCollection(token: string | undefined) {
     ownedCards: new Map(),
     profile: null,
     ownerUserId: null,
+    visibleSetIds: undefined,
     loading: isAvailable,
     error: isAvailable ? null : 'Collection is not available.',
   });
@@ -40,36 +52,33 @@ export function useSharedCollection(token: string | undefined) {
         if (cancelled) return;
 
         if (!sharedSnap.exists()) {
-          setState({
-            ownedCards: new Map(),
-            profile: null,
-            ownerUserId: null,
-            loading: false,
-            error: 'Shared collection not found.',
-          });
+          setState(EMPTY_ERROR_STATE('Shared collection not found.'));
           return;
         }
 
         const sharedData = sharedSnap.data();
         if (sharedData.enabled === false) {
-          setState({
-            ownedCards: new Map(),
-            profile: null,
-            ownerUserId: null,
-            loading: false,
-            error: 'Shared collection is disabled.',
-          });
+          setState(EMPTY_ERROR_STATE('Shared collection is disabled.'));
           return;
         }
+
+        const ownerId = sharedData.userId as string | undefined;
+
+        // visibleSetIds are stored directly in the sharedCollections document
+        // and synced by the owner's CollectionPage when settings change.
+        const rawVisibleSetIds = sharedData.visibleSetIds;
+        const visibleSetIds: string[] = Array.isArray(rawVisibleSetIds)
+          ? rawVisibleSetIds.filter((v): v is string => typeof v === 'string')
+          : [];
 
         const snapshot = await getDocs(collection(firestore, 'sharedCollections', shareToken, 'ownedCards'));
         if (cancelled) return;
 
         const cards = new Map<string, OwnedCard>();
-        snapshot.forEach((doc) => {
-          const data = doc.data();
-          cards.set(doc.id, {
-            scryfallId: doc.id,
+        snapshot.forEach((docSnap) => {
+          const data = docSnap.data();
+          cards.set(docSnap.id, {
+            scryfallId: docSnap.id,
             set: data.set,
             collectorNumber: data.collectorNumber,
             name: data.name,
@@ -90,19 +99,14 @@ export function useSharedCollection(token: string | undefined) {
             photoURL: sharedData.photoURL ?? null,
             createdAt: sharedData.createdAt?.toDate?.() ?? new Date(),
           },
-          ownerUserId: sharedData.userId ?? null,
+          ownerUserId: ownerId ?? null,
+          visibleSetIds,
           loading: false,
           error: null,
         });
       } catch {
         if (!cancelled) {
-          setState({
-            ownedCards: new Map(),
-            profile: null,
-            ownerUserId: null,
-            loading: false,
-            error: 'Failed to load collection.',
-          });
+          setState(EMPTY_ERROR_STATE('Failed to load collection.'));
         }
       }
     }

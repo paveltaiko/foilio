@@ -9,57 +9,68 @@ import { ShareCollectionButton } from './ShareCollectionButton';
 import type { ShareToastType } from './ShareCollectionButton';
 import { IconButton } from '../ui/IconButton';
 
-interface CollectionToolbarProps {
+type WriteProps = {
+  readOnly?: false;
   user: User;
   isSLMode: boolean;
-  activeTab: string;
-  sortOption: SortOption;
-  onSortChange: (v: SortOption) => void;
-  ownershipFilter: OwnershipFilter;
-  onOwnershipChange: (v: OwnershipFilter) => void;
   boosterFilter: BoosterFilter;
   onBoosterChange: (v: BoosterFilter) => void;
   boosterMapLoading: boolean;
   hasBoosterData: boolean;
-  groupBySet: boolean;
-  onGroupBySetToggle: () => void;
   activeFilterCount: number;
   hasActiveFilters: boolean;
   onReset: () => void;
   onFilterDrawerOpen: () => void;
   onTokenReady: (token: string) => void;
   onShareFeedback: (message: string, type: ShareToastType) => void;
-}
+};
+
+type ReadOnlyProps = {
+  readOnly: true;
+  user?: never;
+  isSLMode?: never;
+  boosterFilter?: never;
+  onBoosterChange?: never;
+  boosterMapLoading?: never;
+  hasBoosterData?: never;
+  activeFilterCount?: never;
+  hasActiveFilters?: never;
+  onReset?: never;
+  onFilterDrawerOpen?: never;
+  onTokenReady?: never;
+  onShareFeedback?: never;
+};
+
+type CollectionToolbarProps = {
+  activeTab: string;
+  sortOption: SortOption;
+  onSortChange: (v: SortOption) => void;
+  ownershipFilter: OwnershipFilter;
+  onOwnershipChange: (v: OwnershipFilter) => void;
+  groupBySet: boolean;
+  onGroupBySetToggle: () => void;
+} & (WriteProps | ReadOnlyProps);
 
 export function CollectionToolbar({
-  user,
-  isSLMode,
   activeTab,
   sortOption,
   onSortChange,
   ownershipFilter,
   onOwnershipChange,
-  boosterFilter,
-  onBoosterChange,
-  boosterMapLoading,
-  hasBoosterData,
   groupBySet,
   onGroupBySetToggle,
-  activeFilterCount,
-  hasActiveFilters,
-  onReset,
-  onFilterDrawerOpen,
-  onTokenReady,
-  onShareFeedback,
+  readOnly = false,
+  ...rest
 }: CollectionToolbarProps) {
+  const isSLMode = readOnly ? false : (rest as WriteProps).isSLMode;
   const showGroupBySet = !isSLMode && activeTab === 'all';
-  const showBoosterFilter = !isSLMode && hasBoosterData;
+  const showBoosterFilter = !readOnly && !isSLMode && (rest as WriteProps).hasBoosterData;
 
-  const shareButton = isFirebaseConfigured ? (
+  const shareButton = !readOnly && isFirebaseConfigured ? (
     <ShareCollectionButton
-      user={user}
-      onTokenReady={onTokenReady}
-      onFeedback={onShareFeedback}
+      user={(rest as WriteProps).user}
+      onTokenReady={(rest as WriteProps).onTokenReady}
+      onFeedback={(rest as WriteProps).onShareFeedback}
     />
   ) : null;
 
@@ -68,24 +79,30 @@ export function CollectionToolbar({
       {/* Mobile toolbar */}
       <div className="flex items-center justify-between gap-2 md:hidden">
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={onFilterDrawerOpen}
-            title="Open filters"
-            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-neutral-600 bg-white border border-surface-border rounded-lg hover:bg-neutral-50 transition-colors cursor-pointer"
-          >
-            <SlidersHorizontal className="w-4 h-4" />
-            <span>Filters</span>
-            {activeFilterCount > 0 && (
-              <span className="flex items-center justify-center w-5 h-5 text-[11px] font-bold bg-primary-500 text-white rounded-full">
-                {activeFilterCount}
-              </span>
-            )}
-          </button>
-          {hasActiveFilters && (
-            <IconButton onClick={onReset} title="Reset filters">
-              <RotateCcw className="w-4 h-4" />
-            </IconButton>
+          {readOnly ? (
+            <OwnershipFilterControl value={ownershipFilter} onChange={onOwnershipChange} />
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={(rest as WriteProps).onFilterDrawerOpen}
+                title="Open filters"
+                className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-neutral-600 bg-white border border-surface-border rounded-lg hover:bg-neutral-50 transition-colors cursor-pointer"
+              >
+                <SlidersHorizontal className="w-4 h-4" />
+                <span>Filters</span>
+                {(rest as WriteProps).activeFilterCount > 0 && (
+                  <span className="flex items-center justify-center w-5 h-5 text-[11px] font-bold bg-primary-500 text-white rounded-full">
+                    {(rest as WriteProps).activeFilterCount}
+                  </span>
+                )}
+              </button>
+              {(rest as WriteProps).hasActiveFilters && (
+                <IconButton onClick={(rest as WriteProps).onReset} title="Reset filters">
+                  <RotateCcw className="w-4 h-4" />
+                </IconButton>
+              )}
+            </>
           )}
         </div>
         <div className="flex items-center gap-2">
@@ -98,7 +115,11 @@ export function CollectionToolbar({
               {groupBySet ? <Layers className="w-4 h-4" /> : <LayoutGrid className="w-4 h-4" />}
             </IconButton>
           )}
-          {shareButton}
+          {readOnly ? (
+            <SortControl value={sortOption} onChange={onSortChange} />
+          ) : (
+            shareButton
+          )}
         </div>
       </div>
 
@@ -108,9 +129,9 @@ export function CollectionToolbar({
         <SortControl value={sortOption} onChange={onSortChange} />
         {showBoosterFilter && (
           <BoosterFilterControl
-            value={boosterFilter}
-            onChange={onBoosterChange}
-            isLoading={boosterMapLoading}
+            value={(rest as WriteProps).boosterFilter}
+            onChange={(rest as WriteProps).onBoosterChange}
+            isLoading={(rest as WriteProps).boosterMapLoading}
           />
         )}
         {showGroupBySet && (
@@ -122,8 +143,8 @@ export function CollectionToolbar({
             {groupBySet ? <Layers className="w-4 h-4" /> : <LayoutGrid className="w-4 h-4" />}
           </IconButton>
         )}
-        {hasActiveFilters && (
-          <IconButton onClick={onReset} title="Reset filters">
+        {!readOnly && (rest as WriteProps).hasActiveFilters && (
+          <IconButton onClick={(rest as WriteProps).onReset} title="Reset filters">
             <RotateCcw className="w-4 h-4" />
           </IconButton>
         )}

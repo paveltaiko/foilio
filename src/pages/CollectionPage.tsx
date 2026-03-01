@@ -12,7 +12,7 @@ import { collectionSets } from '../config/collections';
 import { secretLairDrops } from '../config/secretLairDrops';
 import { isFirebaseConfigured } from '../config/firebase';
 import { toggleCardOwnership, updateCardQuantity } from '../services/firestore';
-import { getExistingShareToken } from '../services/sharing';
+import { getExistingShareToken, syncVisibleSetsToShared } from '../services/sharing';
 import { FilterDrawer } from '../components/filters/FilterDrawer';
 import { SearchInput } from '../components/filters/SearchInput';
 import { CardGrid, CardGridSkeleton } from '../components/cards/CardGrid';
@@ -73,6 +73,12 @@ export function CollectionPage({ user, isSearchOpen, onSearchClose }: Collection
   const visibleSetIds: string[] | undefined = settingsInitialized
     ? visibleCollectionSets.map((s) => s.id)
     : undefined;
+
+  // Sync visible sets to shared collection when settings change
+  useEffect(() => {
+    if (!shareToken || !isFirebaseConfigured || visibleSetIds === undefined) return;
+    void syncVisibleSetsToShared(shareToken, visibleSetIds);
+  }, [shareToken, visibleSetIds]);
 
   // SL drop settings
   const { enabledDropIds } = useSecretLairDropSettings();
