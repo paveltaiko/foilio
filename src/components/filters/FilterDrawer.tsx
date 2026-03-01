@@ -4,8 +4,8 @@ import type { BoosterFilter, OwnershipFilter, SortOption } from '../../types/car
 interface FilterDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  boosterFilter: BoosterFilter;
-  onBoosterChange: (v: BoosterFilter) => void;
+  boosterFilter?: BoosterFilter;
+  onBoosterChange?: (v: BoosterFilter) => void;
   ownershipFilter: OwnershipFilter;
   onOwnershipChange: (v: OwnershipFilter) => void;
   sortOption: SortOption;
@@ -133,7 +133,7 @@ export function FilterDrawer({
           </div>
         </div>
 
-        {showBoosterFilter && (
+        {showBoosterFilter && boosterFilter !== undefined && onBoosterChange && (
           <DrawerSegmented
             label="Booster"
             options={BOOSTER_OPTIONS}

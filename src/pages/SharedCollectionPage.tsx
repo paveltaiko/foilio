@@ -5,6 +5,7 @@ import { useSharedCollection } from '../hooks/useSharedCollection';
 import { useCardCollection } from '../hooks/useCardCollection';
 import { SetTabs } from '../components/filters/SetTabs';
 import { CollectionToolbar } from '../components/collection/CollectionToolbar';
+import { FilterDrawer } from '../components/filters/FilterDrawer';
 import { SearchInput } from '../components/filters/SearchInput';
 import { CardGrid, CardGridSkeleton } from '../components/cards/CardGrid';
 import { CardDetail } from '../components/cards/CardDetail';
@@ -21,10 +22,10 @@ interface SharedCollectionPageProps {
 export function SharedCollectionPage({ currentUserId, isSearchOpen, onSearchClose }: SharedCollectionPageProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedVariant, setSelectedVariant] = useState<CardVariant>(null);
+  const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
 
-  // Fetch shared collection
   const { ownedCards, ownerUserId, profile, visibleSetIds, loading: collectionLoading, error, refresh } = useSharedCollection(token);
 
   useEffect(() => {
@@ -52,9 +53,17 @@ export function SharedCollectionPage({ currentUserId, isSearchOpen, onSearchClos
   } = useCardCollection({ ownedCards, searchQuery, sets: visibleSets });
 
   const isLoading = collectionLoading || isCardsLoading;
+  const hasActiveFilters = ownershipFilter !== 'all' || sortOption !== 'number-asc';
+  const activeFilterCount = ownershipFilter !== 'all' ? 1 : 0;
+
   const handleRefresh = async () => {
     refresh();
     refreshCards();
+  };
+
+  const handleResetFilters = () => {
+    setOwnershipFilter('all');
+    setSortOption('number-asc');
   };
 
   const noop = () => {};
@@ -75,7 +84,7 @@ export function SharedCollectionPage({ currentUserId, isSearchOpen, onSearchClos
 
   return (
     <>
-      <PullToRefresh onRefresh={handleRefresh} disabled={isSearchOpen || !!selectedCard}>
+      <PullToRefresh onRefresh={handleRefresh} disabled={isSearchOpen || !!selectedCard || isFilterDrawerOpen}>
         <div className="app-container-padded safe-bottom touch-pan-y">
           {/* Owner banner */}
           <div className="flex items-center gap-3 py-4">
@@ -114,6 +123,10 @@ export function SharedCollectionPage({ currentUserId, isSearchOpen, onSearchClos
             onOwnershipChange={setOwnershipFilter}
             groupBySet={groupBySet}
             onGroupBySetToggle={() => setGroupBySet(!groupBySet)}
+            activeFilterCount={activeFilterCount}
+            hasActiveFilters={hasActiveFilters}
+            onReset={handleResetFilters}
+            onFilterDrawerOpen={() => setIsFilterDrawerOpen(true)}
           />
 
           {/* Card grid */}
@@ -150,6 +163,19 @@ export function SharedCollectionPage({ currentUserId, isSearchOpen, onSearchClos
           )}
         </div>
       </PullToRefresh>
+
+      {/* Mobile filter drawer */}
+      <FilterDrawer
+        isOpen={isFilterDrawerOpen}
+        onClose={() => setIsFilterDrawerOpen(false)}
+        ownershipFilter={ownershipFilter}
+        onOwnershipChange={setOwnershipFilter}
+        sortOption={sortOption}
+        onSortChange={setSortOption}
+        showBoosterFilter={false}
+        hasActiveFilters={hasActiveFilters}
+        onReset={handleResetFilters}
+      />
 
       {/* Card detail modal */}
       <CardDetail
