@@ -3,6 +3,7 @@ import type { RefObject } from 'react';
 import type { ScryfallCard, OwnedCard, CardWithVariant, CardVariant } from '../../types/card';
 import type { CollectionSet } from '../../config/collections';
 import { CardItem } from './CardItem';
+import { Button } from '../ui/Button';
 
 interface CardGridProps {
   cards: CardWithVariant[];
@@ -163,14 +164,16 @@ export function CardGridSkeleton() {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
       {Array.from({ length: 20 }).map((_, i) => (
-        <div key={i} className="rounded-lg sm:rounded-card-sm border border-neutral-200 overflow-hidden">
-          <div className="aspect-[488/680] skeleton rounded-md sm:rounded-lg" />
-          <div className="p-1.5 sm:p-2.5 space-y-1.5 sm:space-y-2">
+        <div key={i} className="overflow-hidden rounded-card-sm sm:rounded-card-lg border border-neutral-200 bg-white">
+          <div className="p-1.5 sm:p-2 pb-0 sm:pb-0">
+            <div className="aspect-[488/680] skeleton rounded-image-sm sm:rounded-image-lg" />
+          </div>
+          <div className="p-1.5 sm:p-2 space-y-1.5 sm:space-y-2.5">
             <div className="h-3 skeleton w-3/4" />
             <div className="h-3 skeleton w-1/2" />
-            <div className="flex gap-1 sm:gap-1.5">
-              <div className="h-7 sm:h-6 skeleton flex-1" />
-              <div className="h-7 sm:h-6 skeleton flex-1" />
+            <div className="flex gap-1 sm:gap-1.5 pt-0 sm:pt-0.5">
+              <div className="h-8 skeleton flex-1 rounded-image-sm" />
+              <div className="h-8 skeleton flex-1 rounded-image-sm" />
             </div>
           </div>
         </div>
@@ -199,9 +202,11 @@ function LoadMoreFooter({
       {isLoadingMore && (
         <div className="grid w-full grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4 xl:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="rounded-lg sm:rounded-card-sm border border-neutral-200 overflow-hidden">
-              <div className="aspect-[488/680] skeleton rounded-md sm:rounded-lg" />
-              <div className="p-1.5 sm:p-2.5 space-y-1.5 sm:space-y-2">
+            <div key={i} className="overflow-hidden rounded-card-sm sm:rounded-card-lg border border-neutral-200 bg-white">
+              <div className="p-1.5 sm:p-2 pb-0 sm:pb-0">
+                <div className="aspect-[488/680] skeleton rounded-image-sm sm:rounded-image-lg" />
+              </div>
+              <div className="p-1.5 sm:p-2 space-y-1.5 sm:space-y-2.5">
                 <div className="h-3 skeleton w-3/4" />
                 <div className="h-3 skeleton w-1/2" />
               </div>
@@ -211,14 +216,13 @@ function LoadMoreFooter({
       )}
 
       {(hasMore || loadMoreError) && onLoadMore && (
-        <button
-          type="button"
+        <Button
+          variant="secondary"
           onClick={onLoadMore}
           disabled={isLoadingMore}
-          className="inline-flex items-center justify-center rounded-lg border border-surface-border bg-white px-4 py-2 text-sm font-medium text-neutral-600 transition-colors hover:bg-neutral-50 hover:text-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loadMoreError ? 'Retry loading cards' : 'Load more cards'}
-        </button>
+        </Button>
       )}
       {loadMoreError && (
         <p className="text-center text-xs text-red-500">{loadMoreError}</p>

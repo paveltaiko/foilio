@@ -1,9 +1,9 @@
 import { useCallback } from 'react';
-import { Check } from 'lucide-react';
 import type { ScryfallCard, OwnedCard, CardVariant } from '../../types/card';
 import { getCardImage } from '../../services/scryfall';
 import { formatPrice, parsePrice } from '../../utils/formatPrice';
 import { getRarityInfo } from '../../utils/rarity';
+import { OwnershipBadge } from './OwnershipBadge';
 
 interface CardItemProps {
   card: ScryfallCard;
@@ -65,7 +65,7 @@ export function CardItem({ card, owned, displayVariant, onToggle, onClick, readO
   };
 
   const cardClass = `
-    overflow-hidden rounded-lg sm:rounded-card-sm border card-hover-lift cursor-pointer
+    overflow-hidden rounded-card-sm sm:rounded-card-lg border card-hover-lift cursor-pointer
     ${getBorderClass()}
   `;
 
@@ -73,8 +73,8 @@ export function CardItem({ card, owned, displayVariant, onToggle, onClick, readO
     <div>
       <div className={cardClass} onClick={() => onClick(card, displayVariant ?? null)}>
         {/* Card image */}
-        <div className="p-1.5 sm:p-2.5 pb-0 sm:pb-0">
-          <div className="aspect-[488/680] overflow-hidden rounded-md sm:rounded-lg bg-neutral-100 relative">
+        <div className="p-1.5 sm:p-2 pb-0 sm:pb-0">
+          <div className="aspect-[488/680] overflow-hidden rounded-image-sm sm:rounded-image-lg bg-neutral-100 relative">
             {imageUrl && (
               <img
                 src={imageUrl}
@@ -93,7 +93,7 @@ export function CardItem({ card, owned, displayVariant, onToggle, onClick, readO
         </div>
 
         {/* Card info */}
-        <div className="p-1.5 sm:p-2.5 space-y-1.5 sm:space-y-2.5">
+        <div className="p-1.5 sm:p-2 space-y-1.5 sm:space-y-2.5">
           {/* Name */}
           <p className="text-2xs sm:text-xs font-semibold text-neutral-800 truncate leading-tight">
             {card.name}
@@ -139,106 +139,42 @@ export function CardItem({ card, owned, displayVariant, onToggle, onClick, readO
           </div>
 
           {/* Ownership toggle badges */}
-          {readOnly ? (
-            <div className="flex gap-1 sm:gap-1.5 pt-0 sm:pt-0.5">
-              {displayVariant === 'foil' ? (
-                <div className={`flex flex-1 h-6 items-center justify-center gap-0.5 text-2xs leading-none font-medium tracking-wide uppercase rounded-sm border ${isOwnedFoil ? 'bg-foil-bg text-foil-purple border-foil-border' : 'bg-neutral-50 text-neutral-400 border-neutral-200'}`}>
-                  {isOwnedFoil && <Check className="w-3 h-3 shrink-0" strokeWidth={3} />}
-                  Foil
-                </div>
-              ) : displayVariant === 'nonfoil' ? (
-                <div className={`flex flex-1 h-6 items-center justify-center gap-0.5 text-2xs leading-none font-medium tracking-wide uppercase rounded-sm border ${isOwnedNonFoil ? 'bg-owned-bg text-owned border-owned-border' : 'bg-neutral-50 text-neutral-400 border-neutral-200'}`}>
-                  {isOwnedNonFoil && <Check className="w-3 h-3 shrink-0" strokeWidth={3} />}
-                  Non-Foil
-                </div>
-              ) : (
-                <>
-                  {hasNonFoil && (
-                    <div className={`flex flex-1 h-6 items-center justify-center gap-0.5 text-2xs leading-none font-medium tracking-wide uppercase rounded-sm border ${isOwnedNonFoil ? 'bg-owned-bg text-owned border-owned-border' : 'bg-neutral-50 text-neutral-400 border-neutral-200'}`}>
-                      {isOwnedNonFoil && <Check className="w-3 h-3 shrink-0" strokeWidth={3} />}
-                      NF
-                    </div>
-                  )}
-                  {hasFoil && (
-                    <div className={`flex flex-1 h-6 items-center justify-center gap-0.5 text-2xs leading-none font-medium tracking-wide uppercase rounded-sm border ${isOwnedFoil ? 'bg-foil-bg text-foil-purple border-foil-border' : 'bg-neutral-50 text-neutral-400 border-neutral-200'}`}>
-                      {isOwnedFoil && <Check className="w-3 h-3 shrink-0" strokeWidth={3} />}
-                      F
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          ) : (
-            <div className="flex gap-1 sm:gap-1.5 pt-0 sm:pt-0.5">
-              {/* Při zobrazení jedné varianty, zobrazit jen jedno tlačítko */}
-              {displayVariant === 'foil' ? (
-                <button
-                  onClick={(e) => handleToggle(e, 'foil')}
-                  className={`
-                    flex flex-1 h-6 items-center justify-center gap-0.5 text-2xs leading-none font-medium tracking-wide uppercase rounded-sm border cursor-pointer
-                    transition-all duration-200 active:scale-95
-                    ${isOwnedFoil
-                      ? 'bg-foil-bg text-foil-purple border-foil-border hover:bg-purple-100'
-                      : 'bg-neutral-50 text-neutral-400 border-neutral-200 hover:border-neutral-300 hover:bg-neutral-100'
-                    }
-                  `}
-                >
-                  {isOwnedFoil && <Check className="w-3 h-3 shrink-0" strokeWidth={3} />}
-                  Foil
-                </button>
-              ) : displayVariant === 'nonfoil' ? (
-                <button
-                  onClick={(e) => handleToggle(e, 'nonfoil')}
-                  className={`
-                    flex flex-1 h-6 items-center justify-center gap-0.5 text-2xs leading-none font-medium tracking-wide uppercase rounded-sm border cursor-pointer
-                    transition-all duration-200 active:scale-95
-                    ${isOwnedNonFoil
-                      ? 'bg-owned-bg text-owned border-owned-border hover:bg-green-100'
-                      : 'bg-neutral-50 text-neutral-400 border-neutral-200 hover:border-neutral-300 hover:bg-neutral-100'
-                    }
-                  `}
-                >
-                  {isOwnedNonFoil && <Check className="w-3 h-3 shrink-0" strokeWidth={3} />}
-                  Non-Foil
-                </button>
-              ) : (
-                <>
-                  {hasNonFoil && (
-                    <button
-                      onClick={(e) => handleToggle(e, 'nonfoil')}
-                      className={`
-                        flex flex-1 h-6 items-center justify-center gap-0.5 text-2xs leading-none font-medium tracking-wide uppercase rounded-sm border cursor-pointer
-                        transition-all duration-200 active:scale-95
-                        ${isOwnedNonFoil
-                          ? 'bg-owned-bg text-owned border-owned-border hover:bg-green-100'
-                          : 'bg-neutral-50 text-neutral-400 border-neutral-200 hover:border-neutral-300 hover:bg-neutral-100'
-                        }
-                      `}
-                    >
-                      {isOwnedNonFoil && <Check className="w-3 h-3 shrink-0" strokeWidth={3} />}
-                      NF
-                    </button>
-                  )}
-                  {hasFoil && (
-                    <button
-                      onClick={(e) => handleToggle(e, 'foil')}
-                      className={`
-                        flex flex-1 h-6 items-center justify-center gap-0.5 text-2xs leading-none font-medium tracking-wide uppercase rounded-sm border cursor-pointer
-                        transition-all duration-200 active:scale-95
-                        ${isOwnedFoil
-                          ? 'bg-foil-bg text-foil-purple border-foil-border hover:bg-purple-100'
-                          : 'bg-neutral-50 text-neutral-400 border-neutral-200 hover:border-neutral-300 hover:bg-neutral-100'
-                        }
-                      `}
-                    >
-                      {isOwnedFoil && <Check className="w-3 h-3 shrink-0" strokeWidth={3} />}
-                      F
-                    </button>
-                  )}
-                </>
-              )}
-            </div>
-          )}
+          <div className="flex gap-1 sm:gap-1.5 pt-0 sm:pt-0.5">
+            {displayVariant === 'foil' ? (
+              <OwnershipBadge className="h-8 text-xs"
+                variant="foil"
+                isOwned={isOwnedFoil}
+                label="Foil"
+                onClick={readOnly ? undefined : (e) => handleToggle(e, 'foil')}
+              />
+            ) : displayVariant === 'nonfoil' ? (
+              <OwnershipBadge className="h-8 text-xs"
+                variant="nonfoil"
+                isOwned={isOwnedNonFoil}
+                label="Non-Foil"
+                onClick={readOnly ? undefined : (e) => handleToggle(e, 'nonfoil')}
+              />
+            ) : (
+              <>
+                {hasNonFoil && (
+                  <OwnershipBadge className="h-8 text-xs"
+                    variant="nonfoil"
+                    isOwned={isOwnedNonFoil}
+                    label="Non-Foil"
+                    onClick={readOnly ? undefined : (e) => handleToggle(e, 'nonfoil')}
+                  />
+                )}
+                {hasFoil && (
+                  <OwnershipBadge className="h-8 text-xs"
+                    variant="foil"
+                    isOwned={isOwnedFoil}
+                    label="Foil"
+                    onClick={readOnly ? undefined : (e) => handleToggle(e, 'foil')}
+                  />
+                )}
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>
