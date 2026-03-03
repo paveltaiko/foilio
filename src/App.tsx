@@ -27,8 +27,9 @@ function AppContent() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   const handleSearchClick = useCallback(() => {
+    if (pathname !== '/collection') navigate('/collection');
     setIsSearchOpen(true);
-  }, []);
+  }, [pathname, navigate]);
 
   const handleSearchClose = useCallback(() => {
     setIsSearchOpen(false);
@@ -62,7 +63,7 @@ function AppContent() {
           onLogout={handleLogout}
           onOpenSettings={handleOpenSettings}
           isLoggedIn={!!user}
-          onSearchClick={isStandalone || pathname === '/settings' ? undefined : handleSearchClick}
+          onSearchClick={isStandalone ? undefined : handleSearchClick}
           onMobileBack={pathname === '/settings' ? handleBack : undefined}
         />
         <main className={`flex-1 overflow-y-auto pt-3 sm:pb-8 ${user ? 'pb-nav' : 'pb-8'}`} style={{ scrollbarGutter: 'stable' }}>
@@ -111,7 +112,7 @@ function AppContent() {
         </main>
         <BottomNav
           isLoggedIn={!!user}
-          onSearchClick={pathname === '/settings' ? undefined : handleSearchClick}
+          onSearchClick={handleSearchClick}
         />
         {!isStandalone && <Footer />}
         <CookieBanner />
