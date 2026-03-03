@@ -19,6 +19,8 @@ export function useDashboardCardLoader(
   settings: CollectionSettings,
   isOwnedCardsLoading: boolean,
   isSettingsLoading: boolean,
+  refreshKey: number = 0,
+  onRefreshConsumed?: () => void,
 ): { isLoading: boolean; cacheVersion: number } {
   const [isLoading, setIsLoading] = useState(false);
   const [cacheVersion, setCacheVersion] = useState(0);
@@ -29,17 +31,23 @@ export function useDashboardCardLoader(
     if (isOwnedCardsLoading || isSettingsLoading) return;
     if (ownedCards.size === 0) return;
 
+    const forceRefresh = refreshKey > 0;
+
+    // Consume the refresh token immediately so repeated Firestore updates
+    // don't trigger another force-refresh while the fetch is still in flight.
+    if (forceRefresh) onRefreshConsumed?.();
+
     const missingCardIds = Array.from(ownedCards.keys()).filter(
-      (id) => !getCachedCardById(id)
+      (id) => forceRefresh || !getCachedCardById(id)
     );
 
     const visibleSets = getVisibleSets(settings, collectionSets);
     const COUNTED_TYPES = new Set(['main', 'commander', 'eternal']);
     const missingSets = visibleSets
-      .filter((s) => COUNTED_TYPES.has(s.type) && getCachedSetCount(s.code) === null)
+      .filter((s) => COUNTED_TYPES.has(s.type) && (forceRefresh || getCachedSetCount(s.code) === null))
       .map((s) => s.code);
 
-    if (missingCardIds.length === 0 && missingSets.length === 0) return;
+    if (!forceRefresh && missingCardIds.length === 0 && missingSets.length === 0) return;
 
     // Cancel any previous in-flight fetch (e.g. settings changed mid-fetch)
     abortRef.current?.abort();
@@ -87,7 +95,7 @@ export function useDashboardCardLoader(
       controller.abort();
       setIsLoading(false);
     };
-  }, [ownedCards, settings, isOwnedCardsLoading, isSettingsLoading]);
+  }, [ownedCards, settings, isOwnedCardsLoading, isSettingsLoading, refreshKey]);
 
   return { isLoading, cacheVersion };
 }

@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { PullToRefresh } from '../components/ui/PullToRefresh';
 import { useAuth } from '../hooks/useAuth';
 import { useOwnedCards } from '../hooks/useOwnedCards';
 import { useCollectionsSettings } from '../hooks/useCollectionsSettings';
@@ -20,7 +21,14 @@ export function DashboardPage() {
   const { user } = useAuth();
   const { ownedCards, loading: isOwnedCardsLoading } = useOwnedCards(user?.uid ?? null);
   const { settings, isLoading: isSettingsLoading } = useCollectionsSettings();
-  const { cacheVersion } = useDashboardCardLoader(ownedCards, settings, isOwnedCardsLoading, isSettingsLoading);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const handleRefresh = useCallback(() => {
+    setRefreshKey((k) => k + 1);
+  }, []);
+  const handleRefreshConsumed = useCallback(() => {
+    setRefreshKey(0);
+  }, []);
+  const { cacheVersion } = useDashboardCardLoader(ownedCards, settings, isOwnedCardsLoading, isSettingsLoading, refreshKey, handleRefreshConsumed);
   const stats = useHomeStats(ownedCards, settings, cacheVersion);
 
   const [selectedCard, setSelectedCard] = useState<ScryfallCard | null>(null);
@@ -53,6 +61,7 @@ export function DashboardPage() {
   );
 
   return (
+    <PullToRefresh onRefresh={handleRefresh} disabled={!!selectedCard}>
     <div className="app-container-padded pb-3 sm:py-5">
       <div className="flex flex-col gap-3 sm:gap-4">
 
@@ -105,5 +114,6 @@ export function DashboardPage() {
         onQuantityChange={handleQuantityChange}
       />
     </div>
+    </PullToRefresh>
   );
 }
