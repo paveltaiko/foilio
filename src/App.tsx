@@ -14,6 +14,7 @@ import { SecretLairDropSettingsProvider } from './providers/SecretLairDropSettin
 import { DashboardPage } from './pages/DashboardPage';
 import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
 import { TermsOfServicePage } from './pages/TermsOfServicePage';
+import { SupportPage } from './pages/SupportPage';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { CookieBanner } from './components/ui/CookieBanner';
 import { SearchInput } from './components/filters/SearchInput';
@@ -109,6 +110,10 @@ function AppContent() {
             <Route
               path="/terms"
               element={<TermsOfServicePage />}
+            />
+            <Route
+              path="/support"
+              element={<SupportPage />}
             />
           </Routes>
           </ErrorBoundary>
