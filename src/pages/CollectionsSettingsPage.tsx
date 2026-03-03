@@ -3,8 +3,7 @@ import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { CollectionsSettingsPanel } from '../components/settings/CollectionsSettingsPanel';
 import { SecretLairSettingsPanel } from '../components/settings/SecretLairSettingsPanel';
-import { CollectionModeTabs } from '../components/ui/CollectionModeTabs';
-import type { CollectionMode } from '../components/ui/CollectionModeTabs';
+import { Tabs } from '../components/ui/Tabs';
 import { franchises, collectionSets } from '../config/collections';
 import { secretLairDrops } from '../config/secretLairDrops';
 import { useCollectionsSettings } from '../hooks/useCollectionsSettings';
@@ -14,7 +13,16 @@ export function CollectionsSettingsPage() {
   const navigate = useNavigate();
   const { settings, setCollectionEnabled, setSetVisibility } = useCollectionsSettings();
   const { enabledDropIds, toggleDrop } = useSecretLairDropSettings();
-  const [activeMode, setActiveMode] = useState<CollectionMode>('ub');
+  const [activeMode, setActiveMode] = useState('ub');
+
+  const ubActiveCount = franchises.filter((f) => settings.collections[f.id]?.enabled).length;
+  const slActiveCount = enabledDropIds.size;
+
+  const modeTabs = [
+    { id: 'ub',          label: 'Universes Beyond', count: ubActiveCount || undefined },
+    { id: 'secret-lair', label: 'Secret Lair',       count: slActiveCount || undefined },
+    { id: 'custom',      label: 'Custom' },
+  ];
 
   return (
     <div className="app-container-padded py-3 sm:py-4 min-h-screen">
@@ -45,7 +53,7 @@ export function CollectionsSettingsPage() {
           </p>
         </div>
 
-        <CollectionModeTabs activeMode={activeMode} onChange={setActiveMode} />
+        <Tabs tabs={modeTabs} activeTab={activeMode} onChange={setActiveMode} />
 
         <div className="mt-5">
           {activeMode === 'ub' && (

@@ -93,12 +93,17 @@ export function CardSpotlightWidget({ mostValuableCards, recentCards, onCardClic
             {/* Featured karta */}
             <div className="shrink-0 w-full max-w-[180px] mx-auto sm:mx-0 sm:w-[140px]">
               {featuredImageUrl ? (
-                <img
-                  src={featuredImageUrl}
-                  alt={featuredCached?.name ?? ''}
+                <div
+                  className="relative w-full rounded-lg overflow-hidden aspect-[488/680] shadow-md cursor-pointer hover:opacity-90 transition-opacity"
                   onClick={() => featuredCached && handleRowClick(featuredCached.id, featuredIsFoil)}
-                  className={`w-full rounded-lg aspect-[488/680] object-cover shadow-md cursor-pointer hover:opacity-90 transition-opacity ${featuredIsFoil ? 'ring-1 ring-violet-400' : ''}`}
-                />
+                >
+                  <img
+                    src={featuredImageUrl}
+                    alt={featuredCached?.name ?? ''}
+                    className={`w-full h-full object-cover ${featuredIsFoil ? 'foil-image' : ''}`}
+                  />
+                  {featuredIsFoil && <div className="foil-overlay rounded-lg" />}
+                </div>
               ) : (
                 <div className="w-full rounded-lg aspect-[488/680] bg-neutral-100" />
               )}
