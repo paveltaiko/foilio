@@ -82,7 +82,7 @@ function AppContent() {
               path="/collection"
               element={
                 <AuthGuard user={user} loading={loading} onLogin={login}>
-                  {user && <CollectionPage user={user} isSearchOpen={isSearchOpen} searchQuery={searchQuery} onSearchClose={handleSearchClose} />}
+                  {user && <CollectionPage user={user} isSearchOpen={isSearchOpen} searchQuery={searchQuery} />}
                 </AuthGuard>
               }
             />
@@ -96,7 +96,7 @@ function AppContent() {
             />
             <Route
               path="/share/:token"
-              element={<SharedCollectionPage currentUserId={user?.uid ?? null} isSearchOpen={isSearchOpen} searchQuery={searchQuery} onSearchClose={handleSearchClose} />}
+              element={<SharedCollectionPage currentUserId={user?.uid ?? null} isSearchOpen={isSearchOpen} searchQuery={searchQuery} />}
             />
             <Route
               path="/settings"

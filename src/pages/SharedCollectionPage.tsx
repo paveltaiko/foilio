@@ -16,10 +16,9 @@ interface SharedCollectionPageProps {
   currentUserId: string | null;
   isSearchOpen: boolean;
   searchQuery: string;
-  onSearchClose: () => void;
 }
 
-export function SharedCollectionPage({ currentUserId, isSearchOpen, searchQuery, onSearchClose }: SharedCollectionPageProps) {
+export function SharedCollectionPage({ currentUserId, isSearchOpen, searchQuery }: SharedCollectionPageProps) {
   const [selectedVariant, setSelectedVariant] = useState<CardVariant>(null);
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
   const { token } = useParams<{ token: string }>();

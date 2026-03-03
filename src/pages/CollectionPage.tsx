@@ -27,10 +27,9 @@ interface CollectionPageProps {
   user: User;
   isSearchOpen: boolean;
   searchQuery: string;
-  onSearchClose: () => void;
 }
 
-export function CollectionPage({ user, isSearchOpen, searchQuery, onSearchClose }: CollectionPageProps) {
+export function CollectionPage({ user, isSearchOpen, searchQuery }: CollectionPageProps) {
   const [shareToken, setShareToken] = useState<string | null>(null);
   const [shareToastMessage, setShareToastMessage] = useState<string | null>(null);
   const [shareToastType, setShareToastType] = useState<ShareToastType>('success');
