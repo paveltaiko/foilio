@@ -6,7 +6,6 @@ import { useCardCollection } from '../hooks/useCardCollection';
 import { SetTabs } from '../components/filters/SetTabs';
 import { CollectionToolbar } from '../components/collection/CollectionToolbar';
 import { FilterDrawer } from '../components/filters/FilterDrawer';
-import { SearchInput } from '../components/filters/SearchInput';
 import { CardGrid, CardGridSkeleton } from '../components/cards/CardGrid';
 import { CardDetail } from '../components/cards/CardDetail';
 import { PullToRefresh } from '../components/ui/PullToRefresh';
@@ -16,11 +15,11 @@ import { collectionSets } from '../config/collections';
 interface SharedCollectionPageProps {
   currentUserId: string | null;
   isSearchOpen: boolean;
+  searchQuery: string;
   onSearchClose: () => void;
 }
 
-export function SharedCollectionPage({ currentUserId, isSearchOpen, onSearchClose }: SharedCollectionPageProps) {
-  const [searchQuery, setSearchQuery] = useState('');
+export function SharedCollectionPage({ currentUserId, isSearchOpen, searchQuery, onSearchClose }: SharedCollectionPageProps) {
   const [selectedVariant, setSelectedVariant] = useState<CardVariant>(null);
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
   const { token } = useParams<{ token: string }>();
@@ -195,13 +194,6 @@ export function SharedCollectionPage({ currentUserId, isSearchOpen, onSearchClos
         readOnly
       />
 
-      {/* Search overlay */}
-      <SearchInput
-        value={searchQuery}
-        onChange={setSearchQuery}
-        isOpen={isSearchOpen}
-        onClose={onSearchClose}
-      />
     </>
   );
 }

@@ -14,7 +14,6 @@ import { isFirebaseConfigured } from '../config/firebase';
 import { toggleCardOwnership, updateCardQuantity } from '../services/firestore';
 import { getExistingShareToken, syncVisibleSetsToShared } from '../services/sharing';
 import { FilterDrawer } from '../components/filters/FilterDrawer';
-import { SearchInput } from '../components/filters/SearchInput';
 import { CardGrid, CardGridSkeleton } from '../components/cards/CardGrid';
 import { CardDetail } from '../components/cards/CardDetail';
 import { PullToRefresh } from '../components/ui/PullToRefresh';
@@ -27,11 +26,11 @@ import type { CardVariant } from '../types/card';
 interface CollectionPageProps {
   user: User;
   isSearchOpen: boolean;
+  searchQuery: string;
   onSearchClose: () => void;
 }
 
-export function CollectionPage({ user, isSearchOpen, onSearchClose }: CollectionPageProps) {
-  const [searchQuery, setSearchQuery] = useState('');
+export function CollectionPage({ user, isSearchOpen, searchQuery, onSearchClose }: CollectionPageProps) {
   const [shareToken, setShareToken] = useState<string | null>(null);
   const [shareToastMessage, setShareToastMessage] = useState<string | null>(null);
   const [shareToastType, setShareToastType] = useState<ShareToastType>('success');
@@ -444,14 +443,6 @@ export function CollectionPage({ user, isSearchOpen, onSearchClose }: Collection
           setSelectedCard(card);
           setSelectedVariant(variant);
         }}
-      />
-
-      {/* Search overlay */}
-      <SearchInput
-        value={searchQuery}
-        onChange={setSearchQuery}
-        isOpen={isSearchOpen}
-        onClose={onSearchClose}
       />
 
       <ShareFeedbackToast message={shareToastMessage} type={shareToastType} />

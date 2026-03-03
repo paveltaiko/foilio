@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuth } from './hooks/useAuth';
@@ -16,6 +16,7 @@ import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
 import { TermsOfServicePage } from './pages/TermsOfServicePage';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { CookieBanner } from './components/ui/CookieBanner';
+import { SearchInput } from './components/filters/SearchInput';
 
 const queryClient = new QueryClient();
 const isStandalone = window.matchMedia('(display-mode: standalone)').matches
@@ -25,6 +26,12 @@ function AppContent() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isSearchOpen) searchInputRef.current?.focus();
+  }, [isSearchOpen]);
 
   const handleSearchClick = useCallback(() => {
     if (pathname !== '/collection') navigate('/collection');
@@ -33,6 +40,7 @@ function AppContent() {
 
   const handleSearchClose = useCallback(() => {
     setIsSearchOpen(false);
+    setSearchQuery('');
   }, []);
 
   const handleOpenSettings = useCallback(() => {
@@ -74,7 +82,7 @@ function AppContent() {
               path="/collection"
               element={
                 <AuthGuard user={user} loading={loading} onLogin={login}>
-                  {user && <CollectionPage user={user} isSearchOpen={isSearchOpen} onSearchClose={handleSearchClose} />}
+                  {user && <CollectionPage user={user} isSearchOpen={isSearchOpen} searchQuery={searchQuery} onSearchClose={handleSearchClose} />}
                 </AuthGuard>
               }
             />
@@ -88,7 +96,7 @@ function AppContent() {
             />
             <Route
               path="/share/:token"
-              element={<SharedCollectionPage currentUserId={user?.uid ?? null} isSearchOpen={isSearchOpen} onSearchClose={handleSearchClose} />}
+              element={<SharedCollectionPage currentUserId={user?.uid ?? null} isSearchOpen={isSearchOpen} searchQuery={searchQuery} onSearchClose={handleSearchClose} />}
             />
             <Route
               path="/settings"
@@ -110,6 +118,13 @@ function AppContent() {
             </div>
           )}
         </main>
+        <SearchInput
+          inputRef={searchInputRef}
+          value={searchQuery}
+          onChange={setSearchQuery}
+          isOpen={isSearchOpen}
+          onClose={handleSearchClose}
+        />
         <BottomNav
           isLoggedIn={!!user}
           onSearchClick={handleSearchClick}
