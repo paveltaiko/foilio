@@ -216,18 +216,19 @@ export function CollectionPage({ user, isSearchOpen, searchQuery }: CollectionPa
   }, [hasBoosterData, boosterFilter, setBoosterFilter]);
 
   const activeFilterCount = (boosterFilter !== 'all' && hasBoosterData && !isSLMode ? 1 : 0) + (activeOwnershipFilter !== 'all' ? 1 : 0);
-  const hasActiveFilters = (boosterFilter !== 'all' && hasBoosterData && !isSLMode) || activeOwnershipFilter !== 'all' || activeSortOption !== 'number-asc';
+  const hasActiveFilters = (boosterFilter !== 'all' && hasBoosterData && !isSLMode) || activeOwnershipFilter !== 'all' || activeSortOption !== 'number-asc' || (!isSLMode && !groupBySet);
 
   const handleResetFilters = useCallback(() => {
     if (!isSLMode) {
       setBoosterFilter('all');
       setOwnershipFilter('all');
       setSortOption('number-asc');
+      setGroupBySet(true);
     } else {
       slSetOwnershipFilter('all');
       slSetSortOption('number-asc');
     }
-  }, [isSLMode, setBoosterFilter, setOwnershipFilter, setSortOption, slSetOwnershipFilter, slSetSortOption]);
+  }, [isSLMode, setBoosterFilter, setOwnershipFilter, setSortOption, setGroupBySet, slSetOwnershipFilter, slSetSortOption]);
 
   // Handlers
   const handleToggle = useCallback(
