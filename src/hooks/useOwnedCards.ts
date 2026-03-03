@@ -34,19 +34,18 @@ export function useOwnedCards(userId: string | null) {
     }
     return new Map();
   });
-  const [loading, setLoading] = useState(!!userId);
+  const [loading, setLoading] = useState(isFirebaseConfigured && !!userId);
 
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || !isFirebaseConfigured) return;
 
-    // Use Firestore when configured, localStorage otherwise
-    if (isFirebaseConfigured) {
-      const unsubscribe = subscribeToOwnedCards(userId, (cards) => {
-        setOwnedCards(cards);
-        setLoading(false);
-      });
-      return unsubscribe;
-    }
+    // Mark as loading whenever userId changes (e.g. after sign-in)
+    setLoading(true);
+    const unsubscribe = subscribeToOwnedCards(userId, (cards) => {
+      setOwnedCards(cards);
+      setLoading(false);
+    });
+    return unsubscribe;
   }, [userId]);
 
   // Save to localStorage when cards change (offline mode)
