@@ -48,7 +48,7 @@ function AppContent() {
 
   const handleLogout = useCallback(async () => {
     await logout();
-    navigate('/collection');
+    navigate('/dashboard');
   }, [logout, navigate]);
 
   return (

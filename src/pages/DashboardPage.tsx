@@ -18,9 +18,9 @@ import type { CardVariant } from '../types/card';
 
 export function DashboardPage() {
   const { user } = useAuth();
-  const { ownedCards } = useOwnedCards(user?.uid ?? null);
-  const { settings } = useCollectionsSettings();
-  const { cacheVersion } = useDashboardCardLoader(ownedCards, settings);
+  const { ownedCards, loading: isOwnedCardsLoading } = useOwnedCards(user?.uid ?? null);
+  const { settings, isLoading: isSettingsLoading } = useCollectionsSettings();
+  const { cacheVersion } = useDashboardCardLoader(ownedCards, settings, isOwnedCardsLoading, isSettingsLoading);
   const stats = useHomeStats(ownedCards, settings, cacheVersion);
 
   const [selectedCard, setSelectedCard] = useState<ScryfallCard | null>(null);

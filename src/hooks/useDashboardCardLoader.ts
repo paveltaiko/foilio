@@ -10,18 +10,24 @@ import { getVisibleSets } from '../utils/collectionsSettings';
  * Loads missing Scryfall card data and set counts for the dashboard.
  * Returns cacheVersion that increments each time new data arrives,
  * which allows useHomeStats (useMemo) to recompute.
+ *
+ * Waits for both ownedCards and settings to finish loading from Firestore
+ * before starting the fetch, to avoid race conditions with stale data.
  */
 export function useDashboardCardLoader(
   ownedCards: Map<string, OwnedCard>,
-  settings: CollectionSettings
+  settings: CollectionSettings,
+  isOwnedCardsLoading: boolean,
+  isSettingsLoading: boolean,
 ): { isLoading: boolean; cacheVersion: number } {
   const [isLoading, setIsLoading] = useState(false);
   const [cacheVersion, setCacheVersion] = useState(0);
-  const loadingRef = useRef(false);
+  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
+    // Wait for stable Firestore data before starting any fetch
+    if (isOwnedCardsLoading || isSettingsLoading) return;
     if (ownedCards.size === 0) return;
-    if (loadingRef.current) return;
 
     const missingCardIds = Array.from(ownedCards.keys()).filter(
       (id) => !getCachedCardById(id)
@@ -35,7 +41,11 @@ export function useDashboardCardLoader(
 
     if (missingCardIds.length === 0 && missingSets.length === 0) return;
 
-    loadingRef.current = true;
+    // Cancel any previous in-flight fetch (e.g. settings changed mid-fetch)
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     setIsLoading(true);
 
     const load = async () => {
@@ -47,6 +57,7 @@ export function useDashboardCardLoader(
 
         // Load missing set counts
         for (const code of missingSets) {
+          if (controller.signal.aborted) return;
           const count = await fetchSetCardCount(code);
           if (count !== null) {
             setCachedSetCount(code, count);
@@ -54,18 +65,29 @@ export function useDashboardCardLoader(
         }
 
         // Trigger re-computation in useHomeStats
-        setCacheVersion((v) => v + 1);
+        if (!controller.signal.aborted) {
+          setCacheVersion((v) => v + 1);
+        }
       } catch {
         // Partial data is fine – dashboard degrades gracefully
-        setCacheVersion((v) => v + 1);
+        if (!controller.signal.aborted) {
+          setCacheVersion((v) => v + 1);
+        }
       } finally {
-        loadingRef.current = false;
-        setIsLoading(false);
+        if (!controller.signal.aborted) {
+          setIsLoading(false);
+        }
       }
     };
 
     void load();
-  }, [ownedCards, settings]);
+
+    // Cleanup: cancel fetch on unmount or when dependencies change
+    return () => {
+      controller.abort();
+      setIsLoading(false);
+    };
+  }, [ownedCards, settings, isOwnedCardsLoading, isSettingsLoading]);
 
   return { isLoading, cacheVersion };
 }
