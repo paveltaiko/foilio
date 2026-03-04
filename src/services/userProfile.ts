@@ -4,13 +4,7 @@ import {
   setDoc,
   serverTimestamp,
 } from 'firebase/firestore';
-import { db } from '../config/firebase';
-import type { UserProfile } from '../types/user';
-
-function getDb() {
-  if (!db) throw new Error('Firebase is not configured');
-  return db;
-}
+import { getDb } from './db';
 
 export async function createUserProfileIfNeeded(user: {
   uid: string;
@@ -38,17 +32,4 @@ export async function createUserProfileIfNeeded(user: {
   }
 }
 
-export async function getUserProfile(userId: string): Promise<UserProfile | null> {
-  const ref = doc(getDb(), 'userProfiles', userId);
-  const snap = await getDoc(ref);
 
-  if (!snap.exists()) return null;
-
-  const data = snap.data();
-  return {
-    userId,
-    displayName: data.displayName ?? 'User',
-    photoURL: data.photoURL ?? null,
-    createdAt: data.createdAt?.toDate?.() ?? new Date(),
-  };
-}

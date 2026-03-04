@@ -7,12 +7,7 @@ import {
   writeBatch,
   serverTimestamp,
 } from 'firebase/firestore';
-import { db } from '../config/firebase';
-
-function getDb() {
-  if (!db) throw new Error('Firebase is not configured');
-  return db;
-}
+import { getDb } from './db';
 
 function randomToken() {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {

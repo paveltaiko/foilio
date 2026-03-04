@@ -221,19 +221,6 @@ export async function fetchCardsForSLDDrop(releasedAt: string): Promise<Scryfall
   return allCards;
 }
 
-export async function fetchAllSets(setCodes: string[]): Promise<Record<string, ScryfallCard[]>> {
-  const results: Record<string, ScryfallCard[]> = {};
-
-  for (const set of setCodes) {
-    results[set] = await fetchCardsForSet(set);
-    if (set !== setCodes[setCodes.length - 1]) {
-      await delay(RATE_LIMIT_MS);
-    }
-  }
-
-  return results;
-}
-
 export function getCardImage(card: ScryfallCard, size: 'small' | 'normal' | 'large' | 'png' = 'large'): string {
   if (card.image_uris) {
     return card.image_uris[size];

@@ -7,14 +7,9 @@ import {
   serverTimestamp,
   type Unsubscribe,
 } from 'firebase/firestore';
-import { db } from '../config/firebase';
 import type { OwnedCard } from '../types/card';
 import { mirrorOwnedCardToShared, removeMirroredOwnedCard } from './sharing';
-
-function getDb() {
-  if (!db) throw new Error('Firebase is not configured');
-  return db;
-}
+import { getDb } from './db';
 
 function ownedCardsCollection(userId: string) {
   return collection(getDb(), 'users', userId, 'ownedCards');

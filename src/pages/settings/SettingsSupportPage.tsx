@@ -4,7 +4,7 @@ import { SettingsLayout } from '../../components/settings/SettingsLayout';
 
 type FormStatus = 'idle' | 'loading' | 'success' | 'error';
 
-const ACCESS_KEY = import.meta.env.VITE_WEB3FORMS_KEY ?? 'fdb8b894-a688-48a3-ba5c-2976b92ddbc1';
+const ACCESS_KEY = import.meta.env.VITE_WEB3FORMS_KEY ?? '';
 
 export function SettingsSupportPage() {
   const [name, setName] = useState('');
