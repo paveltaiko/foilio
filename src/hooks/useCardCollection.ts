@@ -1,5 +1,11 @@
-import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useRenderBatch } from './useRenderBatch';
+import { useSetPagination } from './useSetPagination';
+import { useCollectionStats } from './useCollectionStats';
+import { useBoosterMap } from './useBoosterMap';
+import { filterAndSortCards } from '../utils/cardFiltering';
+import { fetchCardsByIds } from '../services/scryfall';
+import { parsePrice } from '../utils/formatPrice';
 import type {
   ScryfallCard,
   SetCode,
@@ -7,16 +13,8 @@ import type {
   OwnershipFilter,
   BoosterFilter,
   OwnedCard,
-  CardWithVariant,
 } from '../types/card';
 import type { CollectionSet } from '../config/collections';
-import { fetchCardsByIds, fetchCardsPageForSet, fetchSetCardCount } from '../services/scryfall';
-import { getCachedSetPage, setCachedSetPage, invalidateCachedSetPage } from '../utils/scryfallCache';
-import { useCollectionStats } from './useCollectionStats';
-import { useBoosterMap } from './useBoosterMap';
-import { parsePrice } from '../utils/formatPrice';
-
-const FETCH_DELAY_MS = 100;
 
 interface UseCardCollectionOptions {
   ownedCards: Map<string, OwnedCard>;
@@ -25,326 +23,54 @@ interface UseCardCollectionOptions {
   sets: CollectionSet[];
 }
 
-interface SetPaginationState {
-  cards: ScryfallCard[];
-  nextPage: string | null;
-  hasMore: boolean;
-  isFetching: boolean;
-  initialized: boolean;
-  error: string | null;
-}
-
-const EMPTY_STATE: SetPaginationState = {
-  cards: [],
-  nextPage: null,
-  hasMore: true,
-  isFetching: false,
-  initialized: false,
-  error: null,
-};
-
-function mergeCards(existing: ScryfallCard[], incoming: ScryfallCard[]) {
-  if (incoming.length === 0) return existing;
-  const seen = new Set(existing.map((card) => card.id));
-  const merged = [...existing];
-  for (const card of incoming) {
-    if (seen.has(card.id)) continue;
-    merged.push(card);
-    seen.add(card.id);
-  }
-  return merged;
-}
-
-function getStateForSet(map: Record<string, SetPaginationState>, setId: string): SetPaginationState {
-  return map[setId] ?? EMPTY_STATE;
-}
-
 export function useCardCollection({ ownedCards, searchQuery = '', visibleSetIds, sets }: UseCardCollectionOptions) {
+  // ── UI state ──────────────────────────────────────────────────────────
   const [activeSet, setActiveSet] = useState<SetCode>('all');
   const [sortOption, setSortOption] = useState<SortOption>('number-asc');
   const [ownershipFilter, setOwnershipFilter] = useState<OwnershipFilter>('all');
   const [boosterFilter, setBoosterFilter] = useState<BoosterFilter>('all');
   const [selectedCard, setSelectedCard] = useState<ScryfallCard | null>(null);
   const [groupBySet, setGroupBySet] = useState(true);
-  const [setPages, setSetPages] = useState<Record<string, SetPaginationState>>({});
-  const [setTotals, setSetTotals] = useState<Record<string, number>>({});
+
+  // ── Value resolution state ────────────────────────────────────────────
   const [ownedCardDetails, setOwnedCardDetails] = useState<Record<string, ScryfallCard>>({});
   const [isComputingTotalValue, setIsComputingTotalValue] = useState(false);
 
+  // ── Booster data ──────────────────────────────────────────────────────
   const { data: boosterMap, isLoading: boosterMapLoading } = useBoosterMap();
-  // resetTrigger causes render limit to reset when active set or search changes
+
+  // ── Render batching ───────────────────────────────────────────────────
   const renderResetKey = `${activeSet}:${searchQuery}`;
   const { renderBatchSize, renderLimit, setRenderLimit } = useRenderBatch(renderResetKey);
-  const inFlightRef = useRef<Set<string>>(new Set());
-  const setPagesRef = useRef(setPages);
 
-  useEffect(() => {
-    setPagesRef.current = setPages;
-  }, [setPages]);
+  // ── Pagination (delegated to useSetPagination) ────────────────────────
+  const {
+    setOrder,
+    currentCards,
+    loadedCardsById,
+    isCardsLoading,
+    isNetworkFetching,
+    networkHasMore,
+    loadMoreError,
+    isCompletingSearch,
+    cardCounts,
+    fetchNextPageForSet,
+    fetchNextForAll,
+    refreshCards: refreshPagination,
+  } = useSetPagination({ sets, visibleSetIds, activeSet, searchQuery });
 
-  const setOrder = useMemo(() => {
-    const ordered = [...sets].sort((a, b) => a.order - b.order).map((s) => s.id);
-    if (!visibleSetIds) return ordered;
-    const allowed = new Set(visibleSetIds);
-    return ordered.filter((id) => allowed.has(id));
-  }, [sets, visibleSetIds]);
-
-  const allSetIds = useMemo(() => sets.map((s) => s.id), [sets]);
-
-  // Hydrate setPages from localStorage on first load
-  useEffect(() => {
-    if (setOrder.length === 0) return;
-    setSetPages((prev) => {
-      let changed = false;
-      const next = { ...prev };
-      for (const setId of setOrder) {
-        if (next[setId]?.initialized) continue;
-        const cached = getCachedSetPage(setId);
-        if (!cached) continue;
-        next[setId] = {
-          cards: cached.cards,
-          nextPage: cached.nextPage,
-          hasMore: cached.hasMore,
-          isFetching: false,
-          initialized: true,
-          error: null,
-        };
-        changed = true;
-      }
-      return changed ? next : prev;
-    });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [setOrder]);
-
-  // Cleanup in-flight tracking on unmount to prevent stale state updates
-  useEffect(() => {
-    return () => {
-      inFlightRef.current.clear();
-    };
-  }, []);
-
+  // Reset activeSet if it's no longer in the visible set order
   useEffect(() => {
     if (activeSet !== 'all' && !setOrder.includes(activeSet)) {
       setActiveSet('all');
     }
   }, [activeSet, setOrder]);
 
-  useEffect(() => {
-    if (setOrder.length === 0) return;
-    let cancelled = false;
-
-    const loadTotals = async () => {
-      for (const setId of setOrder) {
-        if (cancelled) break;
-        if (setTotals[setId] !== undefined) continue;
-        try {
-          const count = await fetchSetCardCount(setId);
-          if (!cancelled && count !== null) {
-            setSetTotals((prev) => (prev[setId] === undefined ? { ...prev, [setId]: count } : prev));
-          }
-        } catch {
-          // Keep fallback to loaded cards count when set metadata fails.
-        }
-      }
-    };
-
-    void loadTotals();
-    return () => {
-      cancelled = true;
-    };
-  }, [setOrder, setTotals]);
-
-  const fetchNextPageForSet = useCallback(async (setId: string): Promise<boolean> => {
-    if (!setId) return false;
-    if (inFlightRef.current.has(setId)) return false;
-
-    const snapshot = getStateForSet(setPagesRef.current, setId);
-    if (snapshot.initialized && !snapshot.hasMore && !snapshot.error) return false;
-
-    inFlightRef.current.add(setId);
-    setSetPages((prev) => ({
-      ...prev,
-      [setId]: {
-        ...getStateForSet(prev, setId),
-        isFetching: true,
-        error: null,
-      },
-    }));
-
-    try {
-      const page = await fetchCardsPageForSet(setId, snapshot.initialized ? snapshot.nextPage : undefined);
-
-      setSetPages((prev) => {
-        const current = getStateForSet(prev, setId);
-        const mergedCards = mergeCards(current.cards, page.cards);
-        // Persist to localStorage after each successful fetch
-        setCachedSetPage(setId, {
-          cards: mergedCards,
-          nextPage: page.nextPage,
-          hasMore: page.hasMore,
-        });
-        return {
-          ...prev,
-          [setId]: {
-            ...current,
-            cards: mergedCards,
-            nextPage: page.nextPage,
-            hasMore: page.hasMore,
-            initialized: true,
-            isFetching: false,
-            error: null,
-          },
-        };
-      });
-      return true;
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to load cards';
-      setSetPages((prev) => ({
-        ...prev,
-        [setId]: {
-          ...getStateForSet(prev, setId),
-          initialized: true,
-          isFetching: false,
-          error: message,
-        },
-      }));
-      return false;
-    } finally {
-      inFlightRef.current.delete(setId);
-    }
-  }, []);
-
-  const allNetworkTargetSet = useMemo(() => {
-    for (const setId of setOrder) {
-      const state = getStateForSet(setPages, setId);
-      if (!state.initialized || state.hasMore || state.error) {
-        return setId;
-      }
-    }
-    return null;
-  }, [setOrder, setPages]);
-
-  const fetchNextForAll = useCallback(async () => {
-    if (!allNetworkTargetSet) return false;
-    return fetchNextPageForSet(allNetworkTargetSet);
-  }, [allNetworkTargetSet, fetchNextPageForSet]);
-
-  useEffect(() => {
-    if (setOrder.length === 0) return;
-    if (activeSet === 'all') {
-      const first = setOrder[0];
-      const state = getStateForSet(setPagesRef.current, first);
-      if (!state.initialized && !state.isFetching) {
-        void fetchNextPageForSet(first);
-      }
-      return;
-    }
-
-    const state = getStateForSet(setPagesRef.current, activeSet);
-    if (!state.initialized && !state.isFetching) {
-      void fetchNextPageForSet(activeSet);
-    }
-  }, [activeSet, setOrder, fetchNextPageForSet]);
-
+  // ── Derived search / group state ──────────────────────────────────────
   const isSearchActive = searchQuery.trim().length > 0;
   const shouldGroupBySet = activeSet === 'all' && groupBySet && !isSearchActive;
 
-  useEffect(() => {
-    if (!isSearchActive || activeSet === 'all') return;
-    let cancelled = false;
-
-    const completeSearchData = async () => {
-      while (!cancelled) {
-        const state = getStateForSet(setPagesRef.current, activeSet);
-        if (!state.initialized || state.isFetching || !state.hasMore) break;
-        const loaded = await fetchNextPageForSet(activeSet);
-        if (!loaded) break;
-        await new Promise((resolve) => setTimeout(resolve, FETCH_DELAY_MS));
-      }
-    };
-
-    void completeSearchData();
-    return () => {
-      cancelled = true;
-    };
-  }, [isSearchActive, activeSet, fetchNextPageForSet, setPages]);
-
-  useEffect(() => {
-    if (!isSearchActive || activeSet !== 'all') return;
-    let cancelled = false;
-
-    const completeSearchDataForAll = async () => {
-      while (!cancelled) {
-        let foundTarget: string | null = null;
-        for (const setId of setOrder) {
-          const state = getStateForSet(setPagesRef.current, setId);
-          if (!state.initialized || state.hasMore || state.error) {
-            foundTarget = setId;
-            break;
-          }
-        }
-        if (!foundTarget) break;
-        const state = getStateForSet(setPagesRef.current, foundTarget);
-        if (state.isFetching) {
-          await new Promise((resolve) => setTimeout(resolve, FETCH_DELAY_MS));
-          continue;
-        }
-        const loaded = await fetchNextPageForSet(foundTarget);
-        if (!loaded) break;
-        await new Promise((resolve) => setTimeout(resolve, FETCH_DELAY_MS));
-      }
-    };
-
-    void completeSearchDataForAll();
-    return () => {
-      cancelled = true;
-    };
-  }, [isSearchActive, activeSet, setOrder, fetchNextPageForSet, setPages]);
-
-  const cardsBySet = useMemo(() => {
-    const map: Record<string, ScryfallCard[]> = {};
-    for (const setId of allSetIds) {
-      map[setId] = getStateForSet(setPages, setId).cards;
-    }
-    return map;
-  }, [allSetIds, setPages]);
-
-  const combinedCards = useMemo(() => {
-    const all = setOrder.flatMap((id) => cardsBySet[id] ?? []);
-    if (!visibleSetIds) return all;
-    const allowed = new Set(visibleSetIds);
-    return all.filter((c) => allowed.has(c.set));
-  }, [setOrder, cardsBySet, visibleSetIds]);
-
-  const currentCards = useMemo(() => {
-    if (activeSet === 'all') return combinedCards;
-    if (visibleSetIds && !visibleSetIds.includes(activeSet)) return [];
-    return cardsBySet[activeSet] ?? [];
-  }, [activeSet, combinedCards, cardsBySet, visibleSetIds]);
-
-  const loadedCardsById = useMemo(() => {
-    const map: Record<string, ScryfallCard> = {};
-    for (const setId of allSetIds) {
-      const cards = cardsBySet[setId] ?? [];
-      for (const card of cards) {
-        map[card.id] = card;
-      }
-    }
-    return map;
-  }, [allSetIds, cardsBySet]);
-
-  const isCardsLoading = useMemo(() => {
-    if (activeSet === 'all') {
-      if (setOrder.length === 0) return false;
-      const first = getStateForSet(setPages, setOrder[0]);
-      // !isFetching && !initialized = přechodný stav těsně před spuštěním fetche
-      return !first.initialized;
-    }
-
-    const state = getStateForSet(setPages, activeSet);
-    return !state.initialized;
-  }, [activeSet, setOrder, setPages]);
-
+  // ── Stats: base stats from loaded cards ───────────────────────────────
   const baseStats = useCollectionStats(currentCards, ownedCards, activeSet);
 
   const ownedCountBySet = useMemo(() => {
@@ -356,6 +82,7 @@ export function useCardCollection({ ownedCards, searchQuery = '', visibleSetIds,
     return result;
   }, [ownedCards]);
 
+  // ── Scoped owned cards (for owned-filter completeness) ────────────────
   const scopedOwnedCardIds = useMemo(() => {
     const ids: string[] = [];
     for (const [cardId, owned] of ownedCards.entries()) {
@@ -386,6 +113,7 @@ export function useCardCollection({ ownedCards, searchQuery = '', visibleSetIds,
     return result;
   }, [scopedOwnedCardIds, loadedCardsById, ownedCardDetails, activeSet, visibleSetIds]);
 
+  // ── Resolve missing card details for value calculation ────────────────
   useEffect(() => {
     if (scopedOwnedCardIds.length === 0) {
       setIsComputingTotalValue(false);
@@ -425,6 +153,7 @@ export function useCardCollection({ ownedCards, searchQuery = '', visibleSetIds,
     };
   }, [scopedOwnedCardIds, loadedCardsById, ownedCardDetails]);
 
+  // ── Total value from owned cards in current scope ─────────────────────
   const totalValueFromOwnedScope = useMemo(() => {
     let sum = 0;
     for (const cardId of scopedOwnedCardIds) {
@@ -447,11 +176,12 @@ export function useCardCollection({ ownedCards, searchQuery = '', visibleSetIds,
     return sum;
   }, [scopedOwnedCardIds, ownedCards, loadedCardsById, ownedCardDetails]);
 
+  // ── Aggregated stats ──────────────────────────────────────────────────
   const stats = useMemo(() => {
-    const getTotalForSet = (setId: string) => setTotals[setId] ?? (cardsBySet[setId]?.length ?? 0);
+    const getTotalForSet = (setId: string) => cardCounts[setId] ?? 0;
 
     const totalCards = activeSet === 'all'
-      ? setOrder.reduce((sum, setId) => sum + getTotalForSet(setId), 0)
+      ? cardCounts['all'] ?? 0
       : getTotalForSet(activeSet);
 
     const ownedCount = activeSet === 'all'
@@ -464,169 +194,39 @@ export function useCardCollection({ ownedCards, searchQuery = '', visibleSetIds,
       totalValue: totalValueFromOwnedScope || baseStats.totalValue,
       percentage: totalCards > 0 ? Math.round((ownedCount / totalCards) * 100) : 0,
     };
-  }, [activeSet, setOrder, setTotals, cardsBySet, ownedCountBySet, totalValueFromOwnedScope, baseStats.totalValue]);
+  }, [activeSet, setOrder, cardCounts, ownedCountBySet, totalValueFromOwnedScope, baseStats.totalValue]);
 
+  // ── Booster data availability ─────────────────────────────────────────
   const hasBoosterData = useMemo(() => {
     if (!boosterMap || boosterMap.size === 0) return false;
     return currentCards.some((c) => boosterMap.has(`${c.set}:${c.collector_number}`));
   }, [boosterMap, currentCards]);
 
-  const cardCounts = useMemo(() => {
-    const counts: Record<string, number> = {
-      all: setOrder.reduce((sum, setId) => sum + (setTotals[setId] ?? (cardsBySet[setId]?.length ?? 0)), 0),
-    };
-    for (const id of allSetIds) {
-      counts[id] = visibleSetIds && !visibleSetIds.includes(id)
-        ? 0
-        : (setTotals[id] ?? (cardsBySet[id]?.length ?? 0));
-    }
-    return counts;
-  }, [setOrder, setTotals, allSetIds, cardsBySet, visibleSetIds]);
+  // ── Filtering & sorting (delegated to utility) ────────────────────────
+  const sortedFilteredCards = useMemo(
+    () => filterAndSortCards({
+      currentCards,
+      scopedOwnedCards,
+      ownedCards,
+      ownershipFilter,
+      boosterFilter,
+      boosterMap,
+      sortOption,
+      searchQuery,
+      shouldGroupBySet,
+      setOrder,
+    }),
+    [currentCards, scopedOwnedCards, ownershipFilter, boosterFilter, boosterMap, sortOption, ownedCards, searchQuery, shouldGroupBySet, setOrder]
+  );
 
-  const sortedFilteredCards: CardWithVariant[] = useMemo(() => {
-    let cards = ownershipFilter === 'owned'
-      ? mergeCards(currentCards, scopedOwnedCards)
-      : [...currentCards];
-
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase().trim();
-      const isExactNumber = /^\d+$/.test(query);
-      cards = cards.filter((c) =>
-        c.name.toLowerCase().includes(query) ||
-        (isExactNumber
-          ? c.collector_number.toLowerCase() === query
-          : c.collector_number.toLowerCase().includes(query))
-      );
-    }
-
-    const getBoosterVariants = boosterFilter !== 'all' && boosterMap
-      ? (c: ScryfallCard): Set<'foil' | 'nonfoil'> | null => {
-          const entry = boosterMap.get(`${c.set}:${c.collector_number}`);
-          if (!entry) return null;
-          const bucket = boosterFilter === 'play' ? entry.play : entry.collector;
-          return bucket.size > 0 ? bucket : null;
-        }
-      : null;
-
-    if (getBoosterVariants) {
-      cards = cards.filter((c) => getBoosterVariants(c) !== null);
-    }
-
-    const isPriceSorting = sortOption === 'price-asc' || sortOption === 'price-desc';
-    if (!isPriceSorting) {
-      if (ownershipFilter === 'owned') {
-        cards = cards.filter((c) => {
-          const o = ownedCards.get(c.id);
-          return o && (o.ownedNonFoil || o.ownedFoil);
-        });
-      } else if (ownershipFilter === 'missing') {
-        cards = cards.filter((c) => {
-          const o = ownedCards.get(c.id);
-          return !o || (!o.ownedNonFoil && !o.ownedFoil);
-        });
-      }
-    }
-
-    if (sortOption === 'number-asc' || sortOption === 'number-desc') {
-      cards.sort((a, b) => {
-        if (shouldGroupBySet) {
-          const setDiff = setOrder.indexOf(a.set) - setOrder.indexOf(b.set);
-          if (setDiff !== 0) return setDiff;
-        }
-        const aNum = parseInt(a.collector_number, 10) || 0;
-        const bNum = parseInt(b.collector_number, 10) || 0;
-        return sortOption === 'number-asc' ? aNum - bNum : bNum - aNum;
-      });
-      if (getBoosterVariants) {
-        const result: CardWithVariant[] = [];
-        for (const card of cards) {
-          const variants = getBoosterVariants(card)!;
-          if (variants.has('nonfoil') && card.finishes.includes('nonfoil')) {
-            result.push({ card, variant: 'nonfoil', sortPrice: null });
-          }
-          if (variants.has('foil') && card.finishes.includes('foil')) {
-            result.push({ card, variant: 'foil', sortPrice: null });
-          }
-        }
-        return result;
-      }
-      return cards.map((card) => ({ card, variant: null, sortPrice: null }));
-    }
-
-    const expanded: CardWithVariant[] = [];
-
-    for (const card of cards) {
-      const boosterVariants = getBoosterVariants ? getBoosterVariants(card) : null;
-      const showNonFoil = card.finishes.includes('nonfoil') && (!boosterVariants || boosterVariants.has('nonfoil'));
-      const showFoil = card.finishes.includes('foil') && (!boosterVariants || boosterVariants.has('foil'));
-
-      if (showNonFoil) {
-        expanded.push({ card, variant: 'nonfoil', sortPrice: parsePrice(card.prices.eur) });
-      }
-      if (showFoil) {
-        expanded.push({ card, variant: 'foil', sortPrice: parsePrice(card.prices.eur_foil) });
-      }
-    }
-
-    let filtered = expanded;
-    if (ownershipFilter === 'owned') {
-      filtered = expanded.filter(({ card, variant }) => {
-        const o = ownedCards.get(card.id);
-        return variant === 'nonfoil' ? o?.ownedNonFoil : o?.ownedFoil;
-      });
-    } else if (ownershipFilter === 'missing') {
-      filtered = expanded.filter(({ card, variant }) => {
-        const o = ownedCards.get(card.id);
-        return variant === 'nonfoil' ? !o?.ownedNonFoil : !o?.ownedFoil;
-      });
-    }
-
-    filtered.sort((a, b) => {
-      const aPrice = a.sortPrice ?? 0;
-      const bPrice = b.sortPrice ?? 0;
-      return sortOption === 'price-asc' ? aPrice - bPrice : bPrice - aPrice;
-    });
-
-    return filtered;
-  }, [currentCards, scopedOwnedCards, ownershipFilter, boosterFilter, boosterMap, sortOption, ownedCards, searchQuery, shouldGroupBySet, setOrder]);
-
+  // ── Render-limited visible cards ──────────────────────────────────────
   const visibleCards = useMemo(
     () => sortedFilteredCards.slice(0, renderLimit),
     [sortedFilteredCards, renderLimit]
   );
 
+  // ── Pagination controls ───────────────────────────────────────────────
   const canExpandRender = renderLimit < sortedFilteredCards.length;
-  const isNetworkFetching = useMemo(() => {
-    if (activeSet === 'all') {
-      return setOrder.some((id) => getStateForSet(setPages, id).isFetching);
-    }
-    return getStateForSet(setPages, activeSet).isFetching;
-  }, [activeSet, setOrder, setPages]);
-
-  const networkHasMore = useMemo(() => {
-    if (activeSet === 'all') return allNetworkTargetSet !== null;
-    return getStateForSet(setPages, activeSet).hasMore || !!getStateForSet(setPages, activeSet).error;
-  }, [activeSet, allNetworkTargetSet, setPages]);
-
-  const loadMoreError = useMemo(() => {
-    if (activeSet === 'all') {
-      return allNetworkTargetSet ? getStateForSet(setPages, allNetworkTargetSet).error : null;
-    }
-    return getStateForSet(setPages, activeSet).error;
-  }, [activeSet, allNetworkTargetSet, setPages]);
-
-  const isCompletingSearch = useMemo(() => {
-    if (!isSearchActive) return false;
-    if (activeSet === 'all') {
-      return setOrder.some((setId) => {
-        const state = getStateForSet(setPages, setId);
-        return state.initialized && (state.hasMore || state.isFetching);
-      });
-    }
-    const state = getStateForSet(setPages, activeSet);
-    return state.initialized && (state.hasMore || state.isFetching);
-  }, [isSearchActive, activeSet, setPages, setOrder]);
-
   const hasNextPage = canExpandRender || networkHasMore;
 
   const loadNextPage = useCallback(() => {
@@ -643,13 +243,9 @@ export function useCardCollection({ ownedCards, searchQuery = '', visibleSetIds,
   }, [canExpandRender, renderBatchSize, isNetworkFetching, activeSet, fetchNextForAll, fetchNextPageForSet]);
 
   const refreshCards = useCallback(() => {
-    inFlightRef.current.clear();
-    setSetPages({});
+    refreshPagination();
     setRenderLimit(renderBatchSize);
-    for (const setId of setOrder) {
-      invalidateCachedSetPage(setId);
-    }
-  }, [renderBatchSize, setOrder]);
+  }, [refreshPagination, renderBatchSize]);
 
   return {
     activeSet,
