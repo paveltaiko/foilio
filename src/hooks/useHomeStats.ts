@@ -165,7 +165,7 @@ export function useHomeStats(
         const code = set.code.toLowerCase();
         const owned = ownedBySetCode[code] ?? 0;
         const total = getCachedSetCount(set.code) ?? 0;
-        if (total === 0) return null;
+        if (total === 0 || owned === 0) return null;
         const pct = Math.round((owned / total) * 100);
         return { setId: set.id, name: set.name, owned, total, pct };
       })

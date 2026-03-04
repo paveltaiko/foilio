@@ -49,7 +49,7 @@ export function SetProgressWidget({ setProgress }: SetProgressWidgetProps) {
         {hasMore && (
           <button
             onClick={() => setExpanded((prev) => !prev)}
-            className="mt-2 flex items-center gap-1 text-xs font-mono font-bold text-neutral-400 hover:text-neutral-600 transition-colors cursor-pointer"
+            className="mt-2 flex items-center gap-1 text-sm font-mono font-bold text-neutral-400 hover:text-neutral-600 transition-colors cursor-pointer"
           >
             <span>{expanded ? 'Show less' : `Show all (${setProgress.length})`}</span>
             <svg
