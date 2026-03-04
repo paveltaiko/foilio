@@ -15,6 +15,14 @@ export interface FranchiseStat {
   pct: number;
 }
 
+export interface SetProgressStat {
+  setId: string;
+  name: string;
+  owned: number;
+  total: number;
+  pct: number;
+}
+
 export interface NearCompleteSet {
   setId: string;
   name: string;
@@ -43,6 +51,7 @@ export interface HomeStats {
   rarityBreakdown: Record<string, number>;
   topFranchises: FranchiseStat[];
   nearCompleteSets: NearCompleteSet[];
+  setProgress: SetProgressStat[];
   recentCards: OwnedCard[];
   mostValuableCards: ValuableCard[];
 }
@@ -149,6 +158,20 @@ export function useHomeStats(
     const grandTotal = Object.values(franchiseTotal).reduce((a, b) => a + b, 0);
     const globalCompletionPct = grandTotal > 0 ? Math.round((totalOwned / grandTotal) * 100) : 0;
 
+    // Progress všech visible setů (vše kromě tokenů)
+    const setProgress: SetProgressStat[] = visibleSets
+      .filter((set) => set.type !== 'tokens')
+      .map((set) => {
+        const code = set.code.toLowerCase();
+        const owned = ownedBySetCode[code] ?? 0;
+        const total = getCachedSetCount(set.code) ?? 0;
+        if (total === 0) return null;
+        const pct = Math.round((owned / total) * 100);
+        return { setId: set.id, name: set.name, owned, total, pct };
+      })
+      .filter((s): s is SetProgressStat => s !== null)
+      .sort((a, b) => b.pct - a.pct);
+
     // Sety blízko dokončení (≥70% ale ne 100%)
     const nearCompleteSets: NearCompleteSet[] = visibleSets
       .filter((set) => COUNTED_TYPES.has(set.type))
@@ -179,16 +202,12 @@ export function useHomeStats(
 
       const nfPrice = card.ownedNonFoil ? parsePrice(cached.prices.eur) : null;
       const foilPrice = card.ownedFoil ? parsePrice(cached.prices.eur_foil) : null;
-      const bestPrice = Math.max(nfPrice ?? 0, foilPrice ?? 0);
-      const isFoil = (foilPrice ?? 0) > (nfPrice ?? 0);
 
-      if (bestPrice > 0) {
-        valuableCards.push({
-          scryfallId: card.scryfallId,
-          name: card.name,
-          priceEur: bestPrice,
-          isFoil,
-        });
+      if (nfPrice && nfPrice > 0) {
+        valuableCards.push({ scryfallId: card.scryfallId, name: card.name, priceEur: nfPrice, isFoil: false });
+      }
+      if (foilPrice && foilPrice > 0) {
+        valuableCards.push({ scryfallId: card.scryfallId, name: card.name, priceEur: foilPrice, isFoil: true });
       }
     }
     const mostValuableCards = valuableCards
@@ -207,6 +226,7 @@ export function useHomeStats(
       rarityBreakdown,
       topFranchises,
       nearCompleteSets,
+      setProgress,
       recentCards,
       mostValuableCards,
     };

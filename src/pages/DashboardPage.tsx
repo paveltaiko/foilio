@@ -13,6 +13,7 @@ import { RarityBreakdownWidget } from '../components/dashboard/RarityBreakdownWi
 import { TopFranchisesWidget } from '../components/dashboard/TopFranchisesWidget';
 import { NearCompleteWidget } from '../components/dashboard/NearCompleteWidget';
 import { CardSpotlightWidget } from '../components/dashboard/CardSpotlightWidget';
+import { SetProgressWidget } from '../components/dashboard/SetProgressWidget';
 import { CardDetail } from '../components/cards/CardDetail';
 import type { ScryfallCard } from '../types/card';
 import type { CardVariant } from '../types/card';
@@ -98,6 +99,9 @@ export function DashboardPage() {
           <TopFranchisesWidget topFranchises={stats.topFranchises} />
           <NearCompleteWidget nearCompleteSets={stats.nearCompleteSets} />
         </div>
+
+        {/* Set Progress */}
+        <SetProgressWidget setProgress={stats.setProgress} />
 
       </div>
 

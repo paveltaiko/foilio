@@ -21,7 +21,7 @@ export function MostValuableWidget({ mostValuableCards }: MostValuableWidgetProp
     <WidgetCard title="Most Valuable">
       <div className="flex flex-col gap-2.5">
         {mostValuableCards.map((card) => (
-          <div key={card.scryfallId} className="flex items-center gap-2">
+          <div key={`${card.scryfallId}-${card.isFoil}`} className="flex items-center gap-2">
             <div className="flex-1 min-w-0 flex items-center gap-1.5">
               <div
                 className={`w-1.5 h-1.5 rounded-full shrink-0 ${card.isFoil ? 'bg-violet-500' : 'bg-neutral-300'}`}

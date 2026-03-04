@@ -24,7 +24,7 @@ export function FoilBreakdownWidget({
   ];
 
   return (
-    <WidgetCard title="Finish">
+    <WidgetCard title="Finish Type">
       <div className="flex flex-col gap-2">
         {rows.map((row) => (
           <div key={row.label} className="flex flex-col gap-1.5">
