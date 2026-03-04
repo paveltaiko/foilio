@@ -12,6 +12,7 @@ interface SegmentedControlProps<T extends string> {
   onChange: (value: T) => void;
   className?: string;
   fullWidth?: boolean;
+  disabled?: boolean;
 }
 
 export function SegmentedControl<T extends string>({
@@ -20,9 +21,10 @@ export function SegmentedControl<T extends string>({
   onChange,
   className = '',
   fullWidth = false,
+  disabled = false,
 }: SegmentedControlProps<T>) {
   return (
-    <div className={`flex text-sm ${className}`}>
+    <div className={`flex text-sm ${disabled ? 'opacity-50 pointer-events-none' : ''} ${className}`}>
       {options.map((option) => (
         <button
           key={option.id}
