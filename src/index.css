@@ -354,13 +354,3 @@ body {
 .overscroll-contain {
   overscroll-behavior: contain;
 }
-
-/* Prevent zoom on input focus (iOS) — use font-size: 16px on inputs without explicit size class */
-@media screen and (max-width: 640px) {
-
-  input:not([class*="text-"]),
-  select:not([class*="text-"]),
-  textarea:not([class*="text-"]) {
-    font-size: 16px;
-  }
-}
