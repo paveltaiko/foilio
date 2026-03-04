@@ -40,6 +40,8 @@ function AppContent() {
 
   useEffect(() => {
     mainRef.current?.scrollTo({ top: 0 });
+    document.body.scrollTo({ top: 0 });
+    document.documentElement.scrollTo({ top: 0 });
   }, [pathname]);
 
   const handleSearchClick = useCallback(() => {
