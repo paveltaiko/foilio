@@ -100,7 +100,7 @@ export function CollectionPage({ user, isSearchOpen, searchQuery }: CollectionPa
     selectedCard: ubSelectedCard, setSelectedCard: ubSetSelectedCard,
     groupBySet, setGroupBySet,
     currentCards: ubCurrentCards, isCardsLoading: ubIsCardsLoading,
-    cardCounts: ubCardCounts, sortedFilteredCards: ubSortedFilteredCards, visibleCards: ubVisibleCards,
+    cardCounts: ubCardCounts, ownedCountBySet: ubOwnedCountBySet, sortedFilteredCards: ubSortedFilteredCards, visibleCards: ubVisibleCards,
     hasBoosterData,
     isFetchingNextPage,
     hasNextPage,
@@ -123,7 +123,7 @@ export function CollectionPage({ user, isSearchOpen, searchQuery }: CollectionPa
     ownershipFilter: slOwnershipFilter, setOwnershipFilter: slSetOwnershipFilter,
     selectedCard: slSelectedCard, setSelectedCard: slSetSelectedCard,
     currentCards: slCurrentCards, isCardsLoading: slIsCardsLoading,
-    cardCounts: slCardCounts, sortedFilteredCards: slSortedFilteredCards, visibleCards: slVisibleCards,
+    cardCounts: slCardCounts, ownedCountByDrop: slOwnedCountByDrop, sortedFilteredCards: slSortedFilteredCards, visibleCards: slVisibleCards,
     hasNextPage: slHasNextPage, loadNextPage: slLoadNextPage,
     refreshCards: slRefreshCards,
   } = useSecretLairCollection({
@@ -191,22 +191,35 @@ export function CollectionPage({ user, isSearchOpen, searchQuery }: CollectionPa
     return merged;
   }, [ubCardCounts, slCardCounts, enabledDrops]);
 
+  // Sloučené owned counts pro lištu tabů
+  const mergedOwnedCounts = useMemo(() => {
+    const merged: Record<string, number> = { ...ubOwnedCountBySet };
+    for (const drop of enabledDrops) {
+      merged[drop.id] = slOwnedCountByDrop[drop.id] ?? 0;
+    }
+    const ubAll = Object.values(ubOwnedCountBySet).reduce((s, v) => s + v, 0);
+    const slAll = slOwnedCountByDrop['all'] ?? 0;
+    merged['all'] = ubAll + slAll;
+    return merged;
+  }, [ubOwnedCountBySet, slOwnedCountByDrop, enabledDrops]);
+
   // Sloučené taby
   const allTabs = useMemo(() => {
     const ubTabs = [
-      { id: 'all', label: 'Full Collection', count: mergedCardCounts['all'] },
+      { id: 'all', label: 'Full Collection', count: mergedCardCounts['all'], ownedCount: mergedOwnedCounts['all'] },
       ...(visibleSetIds ?? []).map((setId) => {
         const set = collectionSets.find((s) => s.id === setId);
-        return { id: setId, label: set?.name ?? setId, count: mergedCardCounts[setId] };
+        return { id: setId, label: set?.name ?? setId, count: mergedCardCounts[setId], ownedCount: mergedOwnedCounts[setId] };
       }),
     ];
     const slTabs = enabledDrops.map((drop) => ({
       id: drop.id,
       label: drop.name,
       count: mergedCardCounts[drop.id],
+      ownedCount: mergedOwnedCounts[drop.id],
     }));
     return [...ubTabs, ...slTabs];
-  }, [visibleSetIds, enabledDrops, mergedCardCounts]);
+  }, [visibleSetIds, enabledDrops, mergedCardCounts, mergedOwnedCounts]);
 
   // Reset booster filter when switching to a set that has no booster data
   useEffect(() => {

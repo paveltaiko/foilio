@@ -5,6 +5,7 @@ interface Tab {
   id: string;
   label: string;
   count?: number;
+  ownedCount?: number;
 }
 
 interface TabsProps {
@@ -57,7 +58,7 @@ function Dropdown({ tabs, activeTab, onChange, prefix }: TabsProps) {
             <span>{activeTabData?.label}</span>
             {activeTabData?.count !== undefined && (
               <span className="px-1.5 py-0.5 text-2xs font-medium bg-primary-50 text-primary-600 rounded-full">
-                {activeTabData.count}
+                {activeTabData.ownedCount !== undefined ? `${activeTabData.ownedCount} / ${activeTabData.count}` : activeTabData.count}
               </span>
             )}
           </span>
@@ -92,7 +93,7 @@ function Dropdown({ tabs, activeTab, onChange, prefix }: TabsProps) {
                     ? 'bg-primary-100 text-primary-700'
                     : 'bg-neutral-100 text-neutral-600'
                     }`}>
-                    {tab.count}
+                    {tab.ownedCount !== undefined ? `${tab.ownedCount} / ${tab.count}` : tab.count}
                   </span>
                 )}
               </button>
@@ -191,7 +192,7 @@ function DesktopTabs({ tabs, activeTab, onChange, prefix }: TabsProps) {
               {tab.label}
               {tab.count !== undefined && (
                 <span className="ml-2 px-1.5 py-0.5 text-2xs font-medium bg-neutral-100 text-neutral-600 rounded-full">
-                  {tab.count}
+                  {tab.ownedCount !== undefined ? `${tab.ownedCount} / ${tab.count}` : tab.count}
                 </span>
               )}
             </button>
@@ -238,7 +239,7 @@ function DesktopTabs({ tabs, activeTab, onChange, prefix }: TabsProps) {
                         ? 'bg-primary-100 text-primary-700'
                         : 'bg-neutral-100 text-neutral-600'
                       }`}>
-                        {tab.count}
+                        {tab.ownedCount !== undefined ? `${tab.ownedCount} / ${tab.count}` : tab.count}
                       </span>
                     )}
                   </button>

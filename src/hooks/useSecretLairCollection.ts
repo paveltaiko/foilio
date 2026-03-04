@@ -213,6 +213,19 @@ export function useSecretLairCollection({
     setRenderLimit(getBatchSize());
   }, [activeDrop, ownershipFilter, sortOption, searchQuery]);
 
+  const ownedCountByDrop = useMemo(() => {
+    const result: Record<string, number> = {};
+    for (const drop of drops) {
+      const cards = dropStates[drop.id]?.cards ?? [];
+      result[drop.id] = cards.filter((c) => {
+        const o = ownedCards.get(c.id);
+        return o && (o.ownedNonFoil || o.ownedFoil);
+      }).length;
+    }
+    result['all'] = drops.reduce((sum, drop) => sum + (result[drop.id] ?? 0), 0);
+    return result;
+  }, [drops, dropStates, ownedCards]);
+
   const stats = useCollectionStats(currentCards, ownedCards, 'all');
 
   const refreshCards = useCallback(() => {
@@ -237,6 +250,7 @@ export function useSecretLairCollection({
     visibleCards,
     isCardsLoading,
     cardCounts,
+    ownedCountByDrop,
     stats,
     sortedFilteredCards,
     hasNextPage,

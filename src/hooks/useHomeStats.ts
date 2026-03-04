@@ -42,6 +42,7 @@ export interface ValuableCard {
 export interface HomeStats {
   totalUniqueOwned: number;
   totalQuantityOwned: number;
+  totalCardsInCollection: number;
   totalValueEur: number;
   globalCompletionPct: number;
   nonFoilCount: number;
@@ -217,6 +218,7 @@ export function useHomeStats(
     return {
       totalUniqueOwned,
       totalQuantityOwned,
+      totalCardsInCollection: grandTotal,
       totalValueEur,
       globalCompletionPct,
       nonFoilCount,

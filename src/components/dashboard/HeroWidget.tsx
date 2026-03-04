@@ -1,39 +1,64 @@
-import { ProgressBar } from '../ui/ProgressBar';
 import { formatPrice } from '../../utils/formatPrice';
 import { WidgetCard } from './WidgetCard';
+import { SectionHeading } from '../ui/SectionHeading';
 
 interface HeroWidgetProps {
-  totalUniqueOwned: number;
   totalValueEur: number;
+  totalUniqueOwned: number;
+  totalCardsInCollection: number;
   globalCompletionPct: number;
 }
 
 export function HeroWidget({
-  totalUniqueOwned,
   totalValueEur,
+  totalUniqueOwned,
+  totalCardsInCollection,
   globalCompletionPct,
 }: HeroWidgetProps) {
+  const rows = [
+    {
+      label: 'Cards',
+      main: `${totalUniqueOwned}`,
+      suffix: totalCardsInCollection > 0 ? `/${totalCardsInCollection}` : null,
+      pct: totalCardsInCollection > 0 ? Math.round((totalUniqueOwned / totalCardsInCollection) * 100) : 0,
+    },
+    {
+      label: 'Complete',
+      main: `${globalCompletionPct}%`,
+      suffix: null,
+      pct: globalCompletionPct,
+    },
+  ];
+
   return (
     <WidgetCard title="My Collection">
-      <div className="flex flex-col items-center gap-8 py-1">
-        <div className="flex flex-col items-center gap-0.5">
-          <span className="text-3xl sm:text-4xl font-bold text-neutral-800 font-mono tracking-tight">
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col items-center gap-0.5 py-2 sm:py-0">
+          <span className="text-3xl sm:text-4xl text-neutral-800 font-mono tracking-tight" style={{ fontWeight: 800 }}>
             {totalValueEur > 0 ? formatPrice(totalValueEur) : '—'}
           </span>
-          <span className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-neutral-400">Total Value</span>
+          <SectionHeading className="text-neutral-500">Total Value</SectionHeading>
         </div>
-        <div className="flex items-center gap-2 w-full">
-          <div className="flex flex-1 flex-col items-center rounded-xl bg-neutral-50 border border-neutral-200 px-3 py-2.5">
-            <span className="text-lg sm:text-xl font-bold font-mono text-neutral-800 leading-tight">{totalUniqueOwned.toLocaleString()}</span>
-            <span className="text-xs font-semibold uppercase tracking-wider text-neutral-500 leading-tight mt-0.5">Cards</span>
-          </div>
-          <div className="flex flex-1 flex-col items-center rounded-xl bg-neutral-50 border border-neutral-200 px-3 py-2.5">
-            <span className="text-lg sm:text-xl font-bold font-mono text-neutral-800 leading-tight">{globalCompletionPct}%</span>
-            <span className="text-xs font-semibold uppercase tracking-wider text-neutral-500 leading-tight mt-0.5">Complete</span>
-          </div>
+        <div className="flex flex-col gap-2">
+          {rows.map((row) => (
+            <div key={row.label} className="flex flex-col gap-1.5">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-bold font-mono text-neutral-500">{row.label}</span>
+                <span className="text-sm font-mono font-bold text-neutral-600 shrink-0 whitespace-nowrap">
+                  {row.main}
+                  {row.suffix && <span className="font-normal text-neutral-400">{row.suffix}</span>}
+                </span>
+              </div>
+              <div className="h-2 bg-neutral-100 rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-500 bg-primary-500"
+                  style={{ width: `${row.pct}%`, minWidth: row.pct > 0 ? '4px' : '0' }}
+                />
+              </div>
+            </div>
+          ))}
         </div>
       </div>
-      <ProgressBar value={globalCompletionPct} />
     </WidgetCard>
   );
 }

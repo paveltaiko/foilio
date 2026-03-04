@@ -68,8 +68,9 @@ export function DashboardPage() {
 
         {/* Hero */}
         <HeroWidget
-          totalUniqueOwned={stats.totalUniqueOwned}
           totalValueEur={stats.totalValueEur}
+          totalUniqueOwned={stats.totalUniqueOwned}
+          totalCardsInCollection={stats.totalCardsInCollection}
           globalCompletionPct={stats.globalCompletionPct}
         />
 
