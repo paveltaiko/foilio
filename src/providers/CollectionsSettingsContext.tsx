@@ -33,7 +33,7 @@ export function CollectionsSettingsProvider({ userId, children }: CollectionsSet
       ? createDefaultCollectionSettings(franchises, collectionSets)
       : loadFromLocalStorage()
   );
-  // Firebase: čekáme na první odpověď z Firestore před tím, než zobrazíme empty state
+  // Firebase: wait for first Firestore response before showing empty state
   const [isLoading, setIsLoading] = useState(isFirebaseConfigured && !!userId);
 
   useEffect(() => {
@@ -42,12 +42,12 @@ export function CollectionsSettingsProvider({ userId, children }: CollectionsSet
     setIsLoading(true);
     const unsubscribe = subscribeToCollectionSettings(userId, (raw) => {
       if (raw === null) {
-        // Firestore nemá data — migruj z localStorage pokud existuje
+        // Firestore has no data — migrate from localStorage if available
         const localRaw = window.localStorage.getItem(STORAGE_KEY);
         if (localRaw) {
           const local = loadFromLocalStorage();
           saveCollectionSettings(userId, local as unknown as Record<string, unknown>).catch((err) => {
-            console.error('[CollectionsSettings] Migrace z localStorage selhala:', err);
+            console.error('[CollectionsSettings] localStorage migration failed:', err);
           });
           setSettings(local);
         } else {
@@ -63,11 +63,11 @@ export function CollectionsSettingsProvider({ userId, children }: CollectionsSet
   }, [userId]);
 
   const persist = useCallback((next: CollectionSettings) => {
-    setSettings(next); // okamžitá optimistická aktualizace
+    setSettings(next); // immediate optimistic update
 
     if (isFirebaseConfigured && userId) {
       saveCollectionSettings(userId, next as unknown as Record<string, unknown>).catch((err) => {
-        console.error('[CollectionsSettings] Uložení do Firestore selhalo:', err);
+        console.error('[CollectionsSettings] Failed to save to Firestore:', err);
       });
     } else {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));

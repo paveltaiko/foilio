@@ -25,34 +25,40 @@ export function mergeCards(existing: ScryfallCard[], incoming: ScryfallCard[]) {
 
 export interface FilterAndSortOptions {
   currentCards: ScryfallCard[];
-  scopedOwnedCards: ScryfallCard[];
   ownedCards: Map<string, OwnedCard>;
   ownershipFilter: OwnershipFilter;
-  boosterFilter: BoosterFilter;
-  boosterMap: BoosterMap | undefined;
   sortOption: SortOption;
   searchQuery: string;
-  shouldGroupBySet: boolean;
-  setOrder: string[];
+  // UB-specific (optional, unused in singleVariant mode)
+  scopedOwnedCards?: ScryfallCard[];
+  boosterFilter?: BoosterFilter;
+  boosterMap?: BoosterMap | undefined;
+  shouldGroupBySet?: boolean;
+  setOrder?: string[];
+  /** When true, each card produces a single CardWithVariant entry (SLD mode). */
+  singleVariant?: boolean;
 }
 
 /**
  * Pure function that filters, searches, and sorts cards based on the provided options.
  * Returns an array of CardWithVariant ready for rendering.
  */
-export function filterAndSortCards({
-  currentCards,
-  scopedOwnedCards,
-  ownedCards,
-  ownershipFilter,
-  boosterFilter,
-  boosterMap,
-  sortOption,
-  searchQuery,
-  shouldGroupBySet,
-  setOrder,
-}: FilterAndSortOptions): CardWithVariant[] {
-  let cards = ownershipFilter === 'owned'
+export function filterAndSortCards(options: FilterAndSortOptions): CardWithVariant[] {
+  const {
+    currentCards,
+    ownedCards,
+    ownershipFilter,
+    sortOption,
+    searchQuery,
+    scopedOwnedCards = [],
+    boosterFilter = 'all',
+    boosterMap,
+    shouldGroupBySet = false,
+    setOrder = [],
+    singleVariant = false,
+  } = options;
+
+  let cards = ownershipFilter === 'owned' && !singleVariant
     ? mergeCards(currentCards, scopedOwnedCards)
     : [...currentCards];
 
@@ -66,6 +72,11 @@ export function filterAndSortCards({
         ? c.collector_number.toLowerCase() === query
         : c.collector_number.toLowerCase().includes(query))
     );
+  }
+
+  // SLD single-variant path — one CardWithVariant entry per card
+  if (singleVariant) {
+    return filterAndSortSingleVariant(cards, ownedCards, ownershipFilter, sortOption);
   }
 
   // Booster variant resolver
@@ -157,4 +168,53 @@ export function filterAndSortCards({
   });
 
   return filtered;
+}
+
+/**
+ * SLD-style single-variant mode: one CardWithVariant entry per card
+ * with variant determined by available finishes.
+ */
+function filterAndSortSingleVariant(
+  cards: ScryfallCard[],
+  ownedCards: Map<string, OwnedCard>,
+  ownershipFilter: OwnershipFilter,
+  sortOption: SortOption,
+): CardWithVariant[] {
+  // Ownership filter
+  if (ownershipFilter === 'owned') {
+    cards = cards.filter((c) => isCardOwned(ownedCards.get(c.id)));
+  } else if (ownershipFilter === 'missing') {
+    cards = cards.filter((c) => !isCardOwned(ownedCards.get(c.id)));
+  }
+
+  // Expand into single variants based on available finishes
+  const withVariants: CardWithVariant[] = [];
+  for (const card of cards) {
+    const hasNonFoil = card.finishes.includes('nonfoil');
+    const hasFoil = card.finishes.includes('foil') || card.finishes.includes('etched');
+
+    if (hasNonFoil && hasFoil) {
+      withVariants.push({ card, variant: null, sortPrice: parsePrice(card.prices.eur) });
+    } else if (hasNonFoil) {
+      withVariants.push({ card, variant: 'nonfoil', sortPrice: parsePrice(card.prices.eur) });
+    } else if (hasFoil) {
+      withVariants.push({ card, variant: 'foil', sortPrice: parsePrice(card.prices.eur_foil) });
+    } else {
+      withVariants.push({ card, variant: null, sortPrice: null });
+    }
+  }
+
+  // Sort
+  withVariants.sort((a, b) => {
+    if (sortOption === 'price-asc' || sortOption === 'price-desc') {
+      const aPrice = a.sortPrice ?? -1;
+      const bPrice = b.sortPrice ?? -1;
+      return sortOption === 'price-asc' ? aPrice - bPrice : bPrice - aPrice;
+    }
+    const aNum = parseInt(a.card.collector_number, 10) || 0;
+    const bNum = parseInt(b.card.collector_number, 10) || 0;
+    return sortOption === 'number-asc' ? aNum - bNum : bNum - aNum;
+  });
+
+  return withVariants;
 }

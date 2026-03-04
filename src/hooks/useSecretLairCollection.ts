@@ -1,11 +1,11 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import type { ScryfallCard, SortOption, OwnershipFilter, OwnedCard, CardWithVariant } from '../types/card';
+import type { ScryfallCard, SortOption, OwnershipFilter, OwnedCard } from '../types/card';
 import type { SecretLairDrop } from '../config/secretLairDrops';
 import { isCardOwned } from '../utils/ownership';
 import { fetchCardsForSLDDrop } from '../services/scryfall';
 import { getCachedSLDDrop, setCachedSLDDrop, invalidateCachedSLDDrop } from '../utils/scryfallCache';
 import { useCollectionStats } from './useCollectionStats';
-import { parsePrice } from '../utils/formatPrice';
+import { filterAndSortCards } from '../utils/cardFiltering';
 import { getBatchSize } from '../utils/responsive';
 
 interface DropState {
@@ -147,55 +147,18 @@ export function useSecretLairCollection({
     return counts;
   }, [drops, dropStates, allCards]);
 
-  // Filtered + sorted cards
-  const sortedFilteredCards = useMemo((): CardWithVariant[] => {
-    let cards = currentCards;
-
-    // Search filter
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      cards = cards.filter((c) => c.name.toLowerCase().includes(q));
-    }
-
-    // Ownership filter
-    if (ownershipFilter !== 'all') {
-      cards = cards.filter((card) => {
-        const owned = isCardOwned(ownedCards.get(card.id));
-        return ownershipFilter === 'owned' ? owned : !owned;
-      });
-    }
-
-    // Expand into variants
-    const withVariants: CardWithVariant[] = [];
-    for (const card of cards) {
-      const hasNonFoil = card.finishes.includes('nonfoil');
-      const hasFoil = card.finishes.includes('foil') || card.finishes.includes('etched');
-
-      if (hasNonFoil && hasFoil) {
-        withVariants.push({ card, variant: null, sortPrice: parsePrice(card.prices.eur) });
-      } else if (hasNonFoil) {
-        withVariants.push({ card, variant: 'nonfoil', sortPrice: parsePrice(card.prices.eur) });
-      } else if (hasFoil) {
-        withVariants.push({ card, variant: 'foil', sortPrice: parsePrice(card.prices.eur_foil) });
-      } else {
-        withVariants.push({ card, variant: null, sortPrice: null });
-      }
-    }
-
-    // Sort
-    withVariants.sort((a, b) => {
-      if (sortOption === 'price-asc' || sortOption === 'price-desc') {
-        const aPrice = a.sortPrice ?? -1;
-        const bPrice = b.sortPrice ?? -1;
-        return sortOption === 'price-asc' ? aPrice - bPrice : bPrice - aPrice;
-      }
-      const aNum = parseInt(a.card.collector_number, 10);
-      const bNum = parseInt(b.card.collector_number, 10);
-      return sortOption === 'number-asc' ? aNum - bNum : bNum - aNum;
-    });
-
-    return withVariants;
-  }, [currentCards, searchQuery, ownershipFilter, ownedCards, sortOption]);
+  // Filtered + sorted cards (delegated to shared utility)
+  const sortedFilteredCards = useMemo(
+    () => filterAndSortCards({
+      currentCards,
+      ownedCards,
+      ownershipFilter,
+      sortOption,
+      searchQuery,
+      singleVariant: true,
+    }),
+    [currentCards, ownedCards, ownershipFilter, sortOption, searchQuery]
+  );
 
   const visibleCards = useMemo(
     () => sortedFilteredCards.slice(0, renderLimit),

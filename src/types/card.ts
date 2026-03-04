@@ -90,6 +90,6 @@ export interface CardProduct {
 
 export interface CardWithVariant {
   card: ScryfallCard;
-  variant: CardVariant; // null = zobrazit obě varianty, 'nonfoil'/'foil' = zobrazit jen jednu
-  sortPrice: number | null; // cena použitá pro řazení
+  variant: CardVariant; // null = show both variants, 'nonfoil'/'foil' = show only one
+  sortPrice: number | null; // price used for sorting
 }

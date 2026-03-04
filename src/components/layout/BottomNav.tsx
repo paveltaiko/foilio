@@ -47,14 +47,14 @@ export function BottomNav({ isLoggedIn, onSearchClick }: BottomNavProps) {
       <div className="flex justify-center px-3 pointer-events-none">
         <div className="pointer-events-auto flex items-center justify-between gap-2 bg-white rounded-full shadow-[0_6px_20px_rgba(0,0,0,0.08)] p-2 h-[60px] w-full max-w-sm">
 
-          {/* Navigační položky — seskupené vlevo */}
+          {/* Navigation items — grouped left */}
           <div className="flex items-center gap-2">
             <NavItem to="/dashboard" icon={Home} label="Home" />
             <NavItem to="/collection" icon={LayoutGrid} label="Collection" />
             <NavItem to="/settings" icon={Settings} label="Settings" iconSize="w-[21px] h-[21px]" />
           </div>
 
-          {/* Search — samostatné kulaté tlačítko vpravo */}
+          {/* Search — standalone round button on the right */}
           <button
             onClick={onSearchClick}
             disabled={!onSearchClick}
@@ -63,7 +63,7 @@ export function BottomNav({ isLoggedIn, onSearchClick }: BottomNavProps) {
                 ? 'bg-primary-50 text-primary-500 active:bg-primary-100 cursor-pointer'
                 : 'bg-neutral-200 text-neutral-400 cursor-default'
             }`}
-            aria-label="Hledat"
+            aria-label="Search"
           >
             <Search className="w-5 h-5" strokeWidth={2.5} />
           </button>

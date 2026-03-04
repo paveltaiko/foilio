@@ -42,18 +42,18 @@ const SKIP_MTGJSON_TYPES = new Set<SetType>(['tokens', 'promos', 'art-series', '
 export const skipsMtgjson = (set: CollectionSet): boolean => SKIP_MTGJSON_TYPES.has(set.type);
 
 export const franchises: Franchise[] = [
-  { id: 'warhammer-40k',         name: 'Warhammer 40,000' },                              // říjen 2022
-  { id: 'transformers',          name: 'Transformers' },                                   // listopad 2022
-  { id: 'lord-of-the-rings',     name: 'The Lord of the Rings' },                         // červen 2023
-  { id: 'doctor-who',            name: 'Doctor Who' },                                     // říjen 2023
-  { id: 'fallout',               name: 'Fallout' },                                         // březen 2024
-  { id: 'assassins-creed',       name: "Assassin's Creed" },                               // červenec 2024
-  { id: 'spider-man',            name: 'Spider-Man' },                                     // září 2025
-  { id: 'marvel-universe',       name: 'Marvel Universe' },                                // září 2025
-  { id: 'final-fantasy',         name: 'Final Fantasy' },                                  // červen 2025
-  { id: 'avatar-last-airbender', name: 'Avatar: The Last Airbender' },                    // listopad 2025
-  { id: 'tmnt',                  name: 'Teenage Mutant Ninja Turtles' },                  // březen 2026
-  { id: 'marvel-super-heroes',   name: 'Marvel Super Heroes' },                           // červen 2026
+  { id: 'warhammer-40k',         name: 'Warhammer 40,000' },                              // Oct 2022
+  { id: 'transformers',          name: 'Transformers' },                                   // Nov 2022
+  { id: 'lord-of-the-rings',     name: 'The Lord of the Rings' },                         // Jun 2023
+  { id: 'doctor-who',            name: 'Doctor Who' },                                     // Oct 2023
+  { id: 'fallout',               name: 'Fallout' },                                         // Mar 2024
+  { id: 'assassins-creed',       name: "Assassin's Creed" },                               // Jul 2024
+  { id: 'spider-man',            name: 'Spider-Man' },                                     // Sep 2025
+  { id: 'marvel-universe',       name: 'Marvel Universe' },                                // Sep 2025
+  { id: 'final-fantasy',         name: 'Final Fantasy' },                                  // Jun 2025
+  { id: 'avatar-last-airbender', name: 'Avatar: The Last Airbender' },                    // Nov 2025
+  { id: 'tmnt',                  name: 'Teenage Mutant Ninja Turtles' },                  // Mar 2026
+  { id: 'marvel-super-heroes',   name: 'Marvel Super Heroes' },                           // Jun 2026
   { id: 'edge-of-eternities',    name: 'Edge of Eternities' },
 ];
 

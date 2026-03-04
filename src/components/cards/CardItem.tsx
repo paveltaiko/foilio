@@ -8,7 +8,7 @@ import { OwnershipBadge } from './OwnershipBadge';
 interface CardItemProps {
   card: ScryfallCard;
   owned?: OwnedCard;
-  displayVariant?: CardVariant; // null = zobrazit obě, 'nonfoil'/'foil' = zobrazit jen jednu
+  displayVariant?: CardVariant; // null = show both, 'nonfoil'/'foil' = show only one
   onToggle: (cardId: string, variant: 'nonfoil' | 'foil') => void;
   onClick: (card: ScryfallCard, variant: CardVariant) => void;
   readOnly?: boolean;
@@ -18,7 +18,7 @@ export const CardItem = memo(function CardItem({ card, owned, displayVariant, on
   const isOwnedNonFoil = owned?.ownedNonFoil ?? false;
   const isOwnedFoil = owned?.ownedFoil ?? false;
 
-  // Při zobrazení jen jedné varianty, ownership status té varianty
+  // When displaying a single variant, ownership status of that variant
   const isOwned = displayVariant === 'foil'
     ? isOwnedFoil
     : displayVariant === 'nonfoil'
@@ -39,7 +39,7 @@ export const CardItem = memo(function CardItem({ card, owned, displayVariant, on
       ? (owned?.quantityNonFoil ?? 0)
       : (owned?.quantityNonFoil ?? 0) + (owned?.quantityFoil ?? 0);
 
-  // Zobrazit foil efekt na obrázku?
+  // Show foil effect on the image?
   const showFoilEffect = displayVariant === 'foil' || (displayVariant === null && isOwnedFoil);
 
   const handleToggle = useCallback(
@@ -105,7 +105,7 @@ export const CardItem = memo(function CardItem({ card, owned, displayVariant, on
               #{card.collector_number} · <span className={`${getRarityInfo(card.rarity).colorClass}`}>{getRarityInfo(card.rarity).short}</span>
             </span>
             <div className="flex items-baseline gap-0.5 sm:gap-1">
-              {/* Zobrazit pouze relevantní cenu podle varianty */}
+              {/* Show only the relevant price for the variant */}
               {displayVariant === 'foil' ? (
                 effectivePriceFoil !== null && (
                   <span className="text-2xs sm:text-xs font-mono font-semibold text-foil-purple">

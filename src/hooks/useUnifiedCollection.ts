@@ -95,7 +95,7 @@ export function useUnifiedCollection({ ownedCards, searchQuery }: UseUnifiedColl
   const setSelectedCard = isSLMode ? slSetSelectedCard : ubSetSelectedCard;
   const isCardsLoading = isSettingsLoading || (isSLMode ? slIsCardsLoading : ubIsCardsLoading || (isAllTab && slIsCardsLoading));
 
-  // Fade-in přechod
+  // Fade-in transition
   const prevLoadingRef = useRef(isCardsLoading);
   const [gridKey, setGridKey] = useState(0);
   useEffect(() => {

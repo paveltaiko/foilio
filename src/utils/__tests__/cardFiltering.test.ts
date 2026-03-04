@@ -233,3 +233,87 @@ describe('filterAndSortCards — booster filter', () => {
     expect(result[0].card.collector_number).toBe('1');
   });
 });
+
+// ---------------------------------------------------------------------------
+// filterAndSortCards — singleVariant (SLD mode)
+// ---------------------------------------------------------------------------
+describe('filterAndSortCards — singleVariant mode', () => {
+  const singleOpts = () => ({
+    ownedCards: new Map<string, OwnedCard>(),
+    ownershipFilter: 'all' as const,
+    sortOption: 'number-asc' as const,
+    searchQuery: '',
+    singleVariant: true,
+  });
+
+  it('produces one entry per card with variant based on finishes', () => {
+    const both = mockCard({ finishes: ['nonfoil', 'foil'] });
+    const nonfoilOnly = mockCard({ finishes: ['nonfoil'] });
+    const foilOnly = mockCard({ finishes: ['foil'] });
+    const etched = mockCard({ finishes: ['etched'] });
+
+    const result = filterAndSortCards({
+      ...singleOpts(),
+      currentCards: [both, nonfoilOnly, foilOnly, etched],
+    });
+
+    expect(result).toHaveLength(4);
+    expect(result[0].variant).toBeNull();       // both finishes → null
+    expect(result[1].variant).toBe('nonfoil');
+    expect(result[2].variant).toBe('foil');
+    expect(result[3].variant).toBe('foil');      // etched treated as foil
+  });
+
+  it('filters by ownership', () => {
+    const owned = mockCard({ id: 'sv-owned' });
+    const missing = mockCard({ id: 'sv-missing' });
+    const ownedMap = new Map<string, OwnedCard>([
+      ['sv-owned', mockOwned(owned, { ownedNonFoil: true })],
+    ]);
+
+    const result = filterAndSortCards({
+      ...singleOpts(),
+      currentCards: [owned, missing],
+      ownedCards: ownedMap,
+      ownershipFilter: 'owned',
+    });
+
+    expect(result).toHaveLength(1);
+    expect(result[0].card.id).toBe('sv-owned');
+  });
+
+  it('sorts by price descending', () => {
+    const cheap = mockCard({ prices: { eur: '2.00', eur_foil: null }, finishes: ['nonfoil'] });
+    const expensive = mockCard({ prices: { eur: '15.00', eur_foil: null }, finishes: ['nonfoil'] });
+
+    const result = filterAndSortCards({
+      ...singleOpts(),
+      currentCards: [cheap, expensive],
+      sortOption: 'price-desc',
+    });
+
+    expect(result[0].sortPrice).toBe(15);
+    expect(result[1].sortPrice).toBe(2);
+  });
+
+  it('searches by name and collector number', () => {
+    const bolt = mockCard({ name: 'Lightning Bolt', collector_number: '99' });
+    const giant = mockCard({ name: 'Giant Growth', collector_number: '42' });
+
+    const byName = filterAndSortCards({
+      ...singleOpts(),
+      currentCards: [bolt, giant],
+      searchQuery: 'bolt',
+    });
+    expect(byName).toHaveLength(1);
+    expect(byName[0].card.name).toBe('Lightning Bolt');
+
+    const byNum = filterAndSortCards({
+      ...singleOpts(),
+      currentCards: [bolt, giant],
+      searchQuery: '42',
+    });
+    expect(byNum).toHaveLength(1);
+    expect(byNum[0].card.collector_number).toBe('42');
+  });
+});

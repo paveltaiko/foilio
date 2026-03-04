@@ -9,7 +9,7 @@ interface SharedCollectionState {
   ownedCards: Map<string, OwnedCard>;
   profile: UserProfile | null;
   ownerUserId: string | null;
-  // undefined = ještě se načítá, string[] = načteno (může být prázdné)
+  // undefined = still loading, string[] = loaded (may be empty)
   visibleSetIds: string[] | undefined;
   loading: boolean;
   error: string | null;

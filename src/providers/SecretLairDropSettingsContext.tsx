@@ -48,11 +48,11 @@ export function SecretLairDropSettingsProvider({
 
     const unsubscribe = subscribeToSecretLairSettings(userId, (ids) => {
       if (ids === null) {
-        // Firestore nemá data — migruj z localStorage pokud existuje
+        // Firestore has no data — migrate from localStorage if available
         const local = loadFromLocalStorage();
         if (local.size > 0) {
           saveSecretLairSettings(userId, [...local]).catch((err) => {
-            console.error('[SecretLairSettings] Migrace z localStorage selhala:', err);
+            console.error('[SecretLairSettings] localStorage migration failed:', err);
           });
           setEnabledDropIds(local);
         } else {
@@ -70,7 +70,7 @@ export function SecretLairDropSettingsProvider({
     setEnabledDropIds(next);
     if (isFirebaseConfigured && userId) {
       saveSecretLairSettings(userId, [...next]).catch((err) => {
-        console.error('[SecretLairSettings] Uložení do Firestore selhalo:', err);
+        console.error('[SecretLairSettings] Failed to save to Firestore:', err);
       });
     } else {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify([...next]));

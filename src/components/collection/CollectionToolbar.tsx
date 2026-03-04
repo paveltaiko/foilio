@@ -77,7 +77,7 @@ export function CollectionToolbar({
   return (
     <div className="pt-3 pb-4 md:pt-8 md:pb-10">
       <div className="flex items-center justify-between gap-2">
-        {/* Levá strana: filtry */}
+        {/* Left side: filters */}
         <div className="flex items-center gap-2">
           {/* Mobile: drawer button */}
           <button
@@ -112,7 +112,7 @@ export function CollectionToolbar({
             </IconButton>
           )}
         </div>
-        {/* Pravá strana: akce */}
+        {/* Right side: actions */}
         <div className="flex items-center gap-2">
           {showGroupBySet && (
             <IconButton

@@ -57,7 +57,7 @@ export function SearchInput({ value, onChange, isOpen, onClose, inputRef, placeh
           transition-colors duration-150
           ${numericMode ? 'bg-primary-50 text-primary-500' : 'bg-neutral-100 text-neutral-500'}
         `}
-        aria-label="Přepnout klávesnici"
+        aria-label="Toggle keyboard"
       >
         {numericMode ? 'ABC' : '123'}
       </button>

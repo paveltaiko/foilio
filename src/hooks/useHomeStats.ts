@@ -78,7 +78,7 @@ export function useHomeStats(
     let foilValue = 0;
     const rarityBreakdown: Record<string, number> = {};
 
-    // Sety a franchizy – owned per setCode (sloučeno s hlavní smyčkou)
+    // Sets & franchises — owned per setCode (merged with main loop)
     const ownedBySetCode: Record<string, number> = {};
 
     for (const card of cards) {
@@ -87,7 +87,7 @@ export function useHomeStats(
       nonFoilCount += card.quantityNonFoil;
       foilCount += card.quantityFoil;
 
-      // Ceny a raritu načteme z Scryfall cache
+      // Load prices and rarity from Scryfall cache
       const cached = getCachedCardById(card.scryfallId);
       if (cached) {
         const val = calculateOwnedCardValue(card, cached.prices);
@@ -109,10 +109,10 @@ export function useHomeStats(
       }
     }
 
-    // Visible sets z settings
+    // Visible sets from settings
     const visibleSets = getVisibleSets(settings, collectionSets);
 
-    // Owned per franchise (jen visible, jen main/commander/eternal)
+    // Owned per franchise (visible only, main/commander/eternal only)
     const COUNTED_TYPES = new Set(['main', 'commander', 'eternal']);
     const franchiseOwned: Record<string, number> = {};
     const franchiseTotal: Record<string, number> = {};
@@ -143,12 +143,12 @@ export function useHomeStats(
       })
       .sort((a, b) => b.pct - a.pct);
 
-    // Celkové % dokončení přes všechny visible sety
+    // Overall completion % across all visible sets
     const totalOwned = Object.values(franchiseOwned).reduce((a, b) => a + b, 0);
     const grandTotal = Object.values(franchiseTotal).reduce((a, b) => a + b, 0);
     const globalCompletionPct = grandTotal > 0 ? Math.round((totalOwned / grandTotal) * 100) : 0;
 
-    // Progress všech visible setů (vše kromě tokenů)
+    // Progress of all visible sets (everything except tokens)
     const setProgress: SetProgressStat[] = visibleSets
       .filter((set) => set.type !== 'tokens')
       .map((set) => {
@@ -162,7 +162,7 @@ export function useHomeStats(
       .filter((s): s is SetProgressStat => s !== null)
       .sort((a, b) => b.pct - a.pct);
 
-    // Sety blízko dokončení (≥70% ale ne 100%)
+    // Sets near completion (≥70% but not 100%)
     const nearCompleteSets: NearCompleteSet[] = visibleSets
       .filter((set) => COUNTED_TYPES.has(set.type))
       .map((set) => {
@@ -178,13 +178,13 @@ export function useHomeStats(
       .sort((a, b) => b.pct - a.pct)
       .slice(0, 5);
 
-    // Nedávná aktivita – top 5 dle updatedAt
+    // Recent activity — top 5 by updatedAt
     const recentCards = [...cards]
       .filter(isCardOwned)
       .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
       .slice(0, 5);
 
-    // Nejcennější karty
+    // Most valuable cards
     const valuableCards: ValuableCard[] = [];
     for (const card of cards) {
       const cached = getCachedCardById(card.scryfallId);
