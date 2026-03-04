@@ -263,19 +263,10 @@ body {
 .skeleton {
   background-color: #E5E5E5;
   border-radius: 6px;
-  animation: pulse 2s ease-in-out infinite;
 }
 
-@keyframes pulse {
-
-  0%,
-  100% {
-    opacity: 1;
-  }
-
-  50% {
-    opacity: 0.5;
-  }
+@utility skeleton {
+  animation: var(--animate-pulse);
 }
 
 /* Foil text shimmer */
@@ -344,10 +335,6 @@ body {
 /* Touch action for better scroll performance */
 .touch-pan-y {
   touch-action: pan-y;
-}
-
-.touch-pan-x {
-  touch-action: pan-x;
 }
 
 /* Overscroll behavior */

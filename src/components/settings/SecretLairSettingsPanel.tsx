@@ -18,7 +18,10 @@ export function SecretLairSettingsPanel({
       <section key={drop.id} className="flex flex-col rounded-xl border border-neutral-200 overflow-hidden">
         <div
           className={`flex items-center justify-between gap-3 pl-4 pr-3 py-4 cursor-pointer transition-colors ${enabled ? 'bg-neutral-100' : 'bg-neutral-50'}`}
+          role="button"
+          tabIndex={0}
           onClick={() => onToggle(drop.id, !enabled)}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle(drop.id, !enabled); } }}
         >
           <div>
             <h3 className="text-sm font-semibold text-neutral-900">{drop.name}</h3>

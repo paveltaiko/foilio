@@ -41,7 +41,10 @@ export function CollectionsSettingsPanel({
                 <div
                   key={set.id}
                   className="flex cursor-pointer items-center justify-between pl-4 pr-3 py-2.5 text-sm"
+                  role="button"
+                  tabIndex={0}
                   onClick={() => onSetToggle(franchise.id, set.id, !checked)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSetToggle(franchise.id, set.id, !checked); } }}
                 >
                   <span className="text-neutral-700">
                     {set.name}

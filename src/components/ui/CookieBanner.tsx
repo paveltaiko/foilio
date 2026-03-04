@@ -18,7 +18,7 @@ export function CookieBanner() {
   };
 
   return (
-    <Modal isOpen={open} onClose={() => {}}>
+    <Modal isOpen={open} onClose={handleReject}>
       <div className="space-y-5">
         {/* Header */}
         <div>
