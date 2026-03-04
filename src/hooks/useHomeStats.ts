@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import type { OwnedCard } from '../types/card';
+import { isCardOwned } from '../utils/ownership';
 import { getCachedCardById } from '../utils/scryfallCache';
 import { calculateOwnedCardValue } from '../utils/calculateValue';
 import { parsePrice } from '../utils/formatPrice';
@@ -68,7 +69,7 @@ export function useHomeStats(
     const cards = Array.from(ownedCards.values());
 
     // Basic counts
-    const totalUniqueOwned = cards.filter((c) => c.ownedNonFoil || c.ownedFoil).length;
+    const totalUniqueOwned = cards.filter(isCardOwned).length;
     let totalQuantityOwned = 0;
     let nonFoilCount = 0;
     let foilCount = 0;
@@ -102,7 +103,7 @@ export function useHomeStats(
       }
 
       // Owned per setCode
-      if (card.ownedNonFoil || card.ownedFoil) {
+      if (isCardOwned(card)) {
         const code = card.set.toLowerCase();
         ownedBySetCode[code] = (ownedBySetCode[code] ?? 0) + 1;
       }
@@ -179,7 +180,7 @@ export function useHomeStats(
 
     // Nedávná aktivita – top 5 dle updatedAt
     const recentCards = [...cards]
-      .filter((c) => c.ownedNonFoil || c.ownedFoil)
+      .filter(isCardOwned)
       .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
       .slice(0, 5);
 

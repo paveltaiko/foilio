@@ -8,6 +8,7 @@ import type {
 } from '../types/card';
 import type { BoosterMap } from '../services/mtgjson';
 import { parsePrice } from './formatPrice';
+import { isCardOwned } from './ownership';
 
 /** Merge card arrays by id, avoiding duplicates. */
 export function mergeCards(existing: ScryfallCard[], incoming: ScryfallCard[]) {
@@ -86,15 +87,9 @@ export function filterAndSortCards({
   if (!isPriceSorting) {
     // Ownership filter for number-based sorts
     if (ownershipFilter === 'owned') {
-      cards = cards.filter((c) => {
-        const o = ownedCards.get(c.id);
-        return o && (o.ownedNonFoil || o.ownedFoil);
-      });
+      cards = cards.filter((c) => isCardOwned(ownedCards.get(c.id)));
     } else if (ownershipFilter === 'missing') {
-      cards = cards.filter((c) => {
-        const o = ownedCards.get(c.id);
-        return !o || (!o.ownedNonFoil && !o.ownedFoil);
-      });
+      cards = cards.filter((c) => !isCardOwned(ownedCards.get(c.id)));
     }
   }
 

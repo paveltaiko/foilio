@@ -6,6 +6,7 @@ import { useBoosterMap } from './useBoosterMap';
 import { filterAndSortCards } from '../utils/cardFiltering';
 import { fetchCardsByIds } from '../services/scryfall';
 import { calculateOwnedCardValue } from '../utils/calculateValue';
+import { isCardOwned } from '../utils/ownership';
 import type {
   ScryfallCard,
   SetCode,
@@ -76,7 +77,7 @@ export function useCardCollection({ ownedCards, searchQuery = '', visibleSetIds,
   const ownedCountBySet = useMemo(() => {
     const result: Record<string, number> = {};
     for (const owned of ownedCards.values()) {
-      if (!owned.ownedNonFoil && !owned.ownedFoil) continue;
+      if (!isCardOwned(owned)) continue;
       result[owned.set] = (result[owned.set] ?? 0) + 1;
     }
     return result;
@@ -86,7 +87,7 @@ export function useCardCollection({ ownedCards, searchQuery = '', visibleSetIds,
   const scopedOwnedCardIds = useMemo(() => {
     const ids: string[] = [];
     for (const [cardId, owned] of ownedCards.entries()) {
-      if (!owned.ownedNonFoil && !owned.ownedFoil) continue;
+      if (!isCardOwned(owned)) continue;
       if (activeSet !== 'all' && owned.set !== activeSet) continue;
       if (activeSet === 'all' && visibleSetIds && !visibleSetIds.includes(owned.set)) continue;
       ids.push(cardId);

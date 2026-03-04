@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import type { ScryfallCard, SortOption, OwnershipFilter, OwnedCard, CardWithVariant } from '../types/card';
 import type { SecretLairDrop } from '../config/secretLairDrops';
+import { isCardOwned } from '../utils/ownership';
 import { fetchCardsForSLDDrop } from '../services/scryfall';
 import { getCachedSLDDrop, setCachedSLDDrop, invalidateCachedSLDDrop } from '../utils/scryfallCache';
 import { useCollectionStats } from './useCollectionStats';
@@ -159,9 +160,8 @@ export function useSecretLairCollection({
     // Ownership filter
     if (ownershipFilter !== 'all') {
       cards = cards.filter((card) => {
-        const owned = ownedCards.get(card.id);
-        const isOwned = owned ? owned.ownedNonFoil || owned.ownedFoil : false;
-        return ownershipFilter === 'owned' ? isOwned : !isOwned;
+        const owned = isCardOwned(ownedCards.get(card.id));
+        return ownershipFilter === 'owned' ? owned : !owned;
       });
     }
 
@@ -217,10 +217,7 @@ export function useSecretLairCollection({
     const result: Record<string, number> = {};
     for (const drop of drops) {
       const cards = dropStates[drop.id]?.cards ?? [];
-      result[drop.id] = cards.filter((c) => {
-        const o = ownedCards.get(c.id);
-        return o && (o.ownedNonFoil || o.ownedFoil);
-      }).length;
+      result[drop.id] = cards.filter((c) => isCardOwned(ownedCards.get(c.id))).length;
     }
     result['all'] = drops.reduce((sum, drop) => sum + (result[drop.id] ?? 0), 0);
     return result;
