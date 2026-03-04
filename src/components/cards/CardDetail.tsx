@@ -1,18 +1,12 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { createPortal } from 'react-dom';
 import { Modal } from '../ui/Modal';
-import { LinkButton } from '../ui/Button';
 import type { ScryfallCard, OwnedCard, CardWithVariant, CardVariant } from '../../types/card';
 import { getCardImage } from '../../services/scryfall';
-import { formatPrice, parsePrice } from '../../utils/formatPrice';
 import { getRarityInfo } from '../../utils/rarity';
 import { CardProductsTooltip } from './CardProductsTooltip';
-import { OwnershipBadge } from './OwnershipBadge';
-
-const DEFAULT_SWIPE_VIEWPORT_WIDTH = 400;
-const DEFAULT_SWIPE_TRACK_WIDTH = 300;
-const SWIPE_EXIT_PADDING = 24;
-const DEFAULT_EXIT_DISTANCE_PX = Math.ceil((DEFAULT_SWIPE_VIEWPORT_WIDTH + DEFAULT_SWIPE_TRACK_WIDTH) / 2 + SWIPE_EXIT_PADDING);
+import { CardDetailContent } from './CardDetailContent';
+import { CardImageZoom } from './CardImageZoom';
+import { useCardDetailNavigation } from './useCardDetailNavigation';
+import { useImageZoom } from './useImageZoom';
 
 interface CardDetailProps {
   card: ScryfallCard | null;
@@ -27,275 +21,23 @@ interface CardDetailProps {
 }
 
 export function CardDetail({ card, selectedVariant = null, owned, onClose, onToggle, onQuantityChange, cards, onNavigate, readOnly }: CardDetailProps) {
-  const [touchStartX, setTouchStartX] = useState<number | null>(null);
-  const [touchStartY, setTouchStartY] = useState<number | null>(null);
-  const [swipeOffset, setSwipeOffset] = useState(0);
-  // null = not yet decided, 'horizontal' = card swipe, 'vertical' = ignore (modal close)
-  const swipeDirectionLock = useRef<'horizontal' | 'vertical' | null>(null);
-  const [zoomedImageKey, setZoomedImageKey] = useState<string | null>(null);
-  const [zoomDragY, setZoomDragY] = useState(0);
-  const zoomDragStartY = useRef<number | null>(null);
-  // 'css' = fade+scale out, 'swipe' = inline transition following drag, false = not closing
-  const [zoomClosingMode, setZoomClosingMode] = useState<'css' | 'swipe' | false>(false);
-  const [zoomSwipeExitY, setZoomSwipeExitY] = useState(0);
-  const [zoomOverlayOpacity, setZoomOverlayOpacity] = useState(1);
-  const [isDraggingZoom, setIsDraggingZoom] = useState(false);
-  const zoomCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const resetZoomState = () => {
-    setZoomDragY(0);
-    setZoomSwipeExitY(0);
-    setZoomOverlayOpacity(1);
-    setIsDraggingZoom(false);
-    setZoomClosingMode(false);
-    zoomDragStartY.current = null;
-  };
-
-  const triggerZoomCssClose = () => {
-    if (zoomClosingMode) return;
-    setZoomClosingMode('css');
-    // bg-color transitions to 0 via inline style, scale-out animation plays
-    zoomCloseTimerRef.current = setTimeout(() => {
-      setZoomedImageKey(null);
-      resetZoomState();
-    }, 250);
-  };
-
-  const triggerZoomSwipeClose = (fromY: number) => {
-    if (zoomClosingMode) return;
-    // fromY > 0 = swipe down, fromY < 0 = swipe up
-    const exitY = fromY > 0
-      ? fromY + window.innerHeight
-      : fromY - window.innerHeight;
-    setZoomClosingMode('swipe');
-    setZoomSwipeExitY(fromY);
-    setZoomOverlayOpacity(1);
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        setZoomSwipeExitY(exitY);
-        setZoomOverlayOpacity(0);
-      });
-    });
-    zoomCloseTimerRef.current = setTimeout(() => {
-      setZoomedImageKey(null);
-      resetZoomState();
-    }, 300);
-  };
-
-  // Animation state machine: 'idle' | 'exiting' | 'repositioning' | 'entering'
-  const [animPhase, setAnimPhase] = useState<'idle' | 'exiting' | 'repositioning' | 'entering'>('idle');
-  const [animDirection, setAnimDirection] = useState<'prev' | 'next'>('next');
-  const [lockedHeight, setLockedHeight] = useState<number | null>(null);
-  const [exitDistancePx, setExitDistancePx] = useState(DEFAULT_EXIT_DISTANCE_PX);
-  const pendingNavigate = useRef<{ card: ScryfallCard; variant: CardVariant } | null>(null);
-  const imageWrapperRef = useRef<HTMLDivElement>(null);
-  const swipeViewportRef = useRef<HTMLDivElement>(null);
-  const swipeTrackRef = useRef<HTMLDivElement>(null);
-
-  const isAnimating = animPhase !== 'idle';
-
-  // Navigation logic
-  let currentIndex = -1;
-  if (cards && card) {
-    currentIndex = cards.findIndex((c) => c.card.id === card.id && c.variant === selectedVariant);
-    if (currentIndex === -1) {
-      currentIndex = cards.findIndex((c) => c.card.id === card.id);
-    }
-  }
-  const canGoPrev = currentIndex > 0;
-  const canGoNext = currentIndex < (cards?.length ?? 0) - 1;
-  const totalCards = cards?.length ?? 0;
-
-  // Preload adjacent card images
-  useEffect(() => {
-    if (!cards || currentIndex < 0) return;
-
-    if (currentIndex > 0) {
-      const img = new Image();
-      img.src = getCardImage(cards[currentIndex - 1].card, 'large');
-    }
-    if (currentIndex < cards.length - 1) {
-      const img = new Image();
-      img.src = getCardImage(cards[currentIndex + 1].card, 'large');
-    }
-  }, [cards, currentIndex]);
-
-  // State-driven animation
-  const animateNavigation = useCallback((direction: 'prev' | 'next') => {
-    if (!cards || !onNavigate || isAnimating) return;
-    if (direction === 'prev' && !canGoPrev) return;
-    if (direction === 'next' && !canGoNext) return;
-
-    const nextIndex = direction === 'prev' ? currentIndex - 1 : currentIndex + 1;
-    pendingNavigate.current = {
-      card: cards[nextIndex].card,
-      variant: cards[nextIndex].variant,
-    };
-    // Lock container height to prevent vertical shift during card swap
-    if (imageWrapperRef.current) {
-      setLockedHeight(imageWrapperRef.current.getBoundingClientRect().height);
-    }
-    setAnimDirection(direction);
-    setAnimPhase('exiting');
-  }, [cards, onNavigate, isAnimating, canGoPrev, canGoNext, currentIndex]);
-
-  // Handle transition end events — only for our container's own transform
-  const handleTransitionEnd = useCallback((e: React.TransitionEvent) => {
-    if (e.target !== e.currentTarget) return;
-    if (e.propertyName !== 'transform') return;
-    if (animPhase === 'exiting') {
-      // Card has slid out — switch card and reposition off-screen on opposite side
-      if (pendingNavigate.current && onNavigate) {
-        onNavigate(pendingNavigate.current.card, pendingNavigate.current.variant);
-        pendingNavigate.current = null;
-      }
-      setAnimPhase('repositioning');
-    } else if (animPhase === 'entering') {
-      setLockedHeight(null);
-      setAnimPhase('idle');
-    }
-  }, [animPhase, onNavigate]);
-
-  // When repositioning, wait for paint then start entering
-  useEffect(() => {
-    if (animPhase !== 'repositioning') return;
-    let id2 = 0;
-    // Double rAF ensures the browser has painted the repositioned element
-    const id1 = requestAnimationFrame(() => {
-      id2 = requestAnimationFrame(() => {
-        setAnimPhase('entering');
-      });
-    });
-    return () => {
-      cancelAnimationFrame(id1);
-      cancelAnimationFrame(id2);
-    };
-  }, [animPhase]);
-
-  const goToPrev = useCallback(() => animateNavigation('prev'), [animateNavigation]);
-  const goToNext = useCallback(() => animateNavigation('next'), [animateNavigation]);
-
-  // Keyboard navigation
-  useEffect(() => {
-    if (!card) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowLeft') {
-        e.preventDefault();
-        goToPrev();
-      } else if (e.key === 'ArrowRight') {
-        e.preventDefault();
-        goToNext();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [card, goToPrev, goToNext]);
-
-  useEffect(() => {
-    if (!card) return;
-
-    const updateExitDistance = () => {
-      const viewportWidth = swipeViewportRef.current?.getBoundingClientRect().width ?? DEFAULT_SWIPE_VIEWPORT_WIDTH;
-      const trackWidth = swipeTrackRef.current?.getBoundingClientRect().width ?? DEFAULT_SWIPE_TRACK_WIDTH;
-      const nextDistance = Math.ceil((viewportWidth + trackWidth) / 2 + SWIPE_EXIT_PADDING);
-      setExitDistancePx((prev) => (prev === nextDistance ? prev : nextDistance));
-    };
-
-    updateExitDistance();
-
-    if (typeof ResizeObserver !== 'undefined') {
-      const resizeObserver = new ResizeObserver(updateExitDistance);
-
-      if (swipeViewportRef.current) {
-        resizeObserver.observe(swipeViewportRef.current);
-      }
-      if (swipeTrackRef.current) {
-        resizeObserver.observe(swipeTrackRef.current);
-      }
-
-      return () => resizeObserver.disconnect();
-    }
-
-    window.addEventListener('resize', updateExitDistance);
-    return () => window.removeEventListener('resize', updateExitDistance);
-  }, [card, selectedVariant]);
-
-  // Swipe handlers
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (isAnimating) return;
-    setTouchStartX(e.touches[0].clientX);
-    setTouchStartY(e.touches[0].clientY);
-    swipeDirectionLock.current = null;
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (touchStartX === null || touchStartY === null || isAnimating) return;
-
-    const deltaX = e.touches[0].clientX - touchStartX;
-    const deltaY = e.touches[0].clientY - touchStartY;
-
-    // Wait until we have enough movement to determine direction
-    if (swipeDirectionLock.current === null) {
-      if (Math.max(Math.abs(deltaX), Math.abs(deltaY)) < 10) return;
-      swipeDirectionLock.current = Math.abs(deltaX) > Math.abs(deltaY) ? 'horizontal' : 'vertical';
-    }
-
-    // Vertical swipe — leave it to Modal, do nothing
-    if (swipeDirectionLock.current === 'vertical') return;
-
-    // Apply resistance at edges when can't navigate
-    const resistance = 0.2;
-    let offset = deltaX;
-    if ((deltaX > 0 && !canGoPrev) || (deltaX < 0 && !canGoNext)) {
-      offset = deltaX * resistance;
-    }
-    setSwipeOffset(offset);
-  };
-
-  const handleTouchEnd = () => {
-    if (touchStartX === null || isAnimating) return;
-
-    const threshold = 80;
-
-    if (swipeDirectionLock.current === 'horizontal') {
-      if (swipeOffset > threshold && canGoPrev) {
-        setSwipeOffset(0);
-        goToPrev();
-      } else if (swipeOffset < -threshold && canGoNext) {
-        setSwipeOffset(0);
-        goToNext();
-      } else {
-        setSwipeOffset(0);
-      }
-    }
-
-    swipeDirectionLock.current = null;
-    setTouchStartX(null);
-    setTouchStartY(null);
-  };
+  const nav = useCardDetailNavigation({ card, selectedVariant, cards, onNavigate });
+  const zoom = useImageZoom();
 
   if (!card) return null;
 
   const imageUrl = getCardImage(card, 'large');
-  const isOwnedNonFoil = owned?.ownedNonFoil ?? false;
   const isOwnedFoil = owned?.ownedFoil ?? false;
   const showFoilEffect = selectedVariant === 'foil' || (selectedVariant === null && isOwnedFoil);
-  const hasNonFoil = card.finishes.includes('nonfoil');
-  const hasFoil = card.finishes.includes('foil');
   const currentImageKey = `${card.id}:${selectedVariant ?? 'default'}`;
-  const isImageZoomed = zoomedImageKey === currentImageKey;
-
-  const scryfallPriceEur = parsePrice(card.prices.eur);
-  const scryfallPriceFoil = parsePrice(card.prices.eur_foil);
+  const isImageZoomed = zoom.zoomedImageKey === currentImageKey;
 
   return (
     <Modal isOpen={!!card} onClose={onClose}>
       <div
-        ref={imageWrapperRef}
+        ref={nav.imageWrapperRef}
         className="space-y-5"
-        style={{ height: lockedHeight ?? undefined }}
+        style={{ height: nav.lockedHeight ?? undefined }}
       >
         {/* Header */}
         <div className="flex items-start justify-between gap-2">
@@ -324,13 +66,13 @@ export function CardDetail({ card, selectedVariant = null, owned, onClose, onTog
           {/* Previous button - desktop only */}
           {cards && cards.length > 1 && (
             <button
-              onClick={goToPrev}
-              disabled={!canGoPrev}
+              onClick={nav.goToPrev}
+              disabled={!nav.canGoPrev}
               className={`
                 hidden sm:flex absolute left-0 top-1/2 -translate-y-1/2 -translate-x-3 z-20
                 w-9 h-9 items-center justify-center rounded-full
                 transition-all duration-200 cursor-pointer
-                ${canGoPrev
+                ${nav.canGoPrev
                   ? 'bg-neutral-800 text-white hover:bg-neutral-900 hover:scale-110'
                   : 'bg-neutral-200 text-neutral-400 opacity-40 cursor-not-allowed'
                 }
@@ -344,40 +86,23 @@ export function CardDetail({ card, selectedVariant = null, owned, onClose, onTog
 
           {/* Card image container with swipe */}
           <div
-            ref={swipeViewportRef}
+            ref={nav.swipeViewportRef}
             className="w-[calc(100%+2rem)] sm:w-[calc(100%+3rem)] -mx-4 sm:-mx-6 overflow-x-hidden flex justify-center z-10"
           >
             <div
-              ref={swipeTrackRef}
+              ref={nav.swipeTrackRef}
               className="relative inline-block touch-pan-y overflow-visible"
-              onTouchStart={handleTouchStart}
-              onTouchMove={handleTouchMove}
-              onTouchEnd={handleTouchEnd}
-              onTransitionEnd={handleTransitionEnd}
-              style={{
-                transform: animPhase === 'exiting'
-                  ? `translateX(${animDirection === 'next' ? -exitDistancePx : exitDistancePx}px)`
-                  : animPhase === 'repositioning'
-                  ? `translateX(${animDirection === 'next' ? exitDistancePx : -exitDistancePx}px)`
-                  : swipeOffset !== 0
-                  ? `translateX(${swipeOffset}px)`
-                  : 'translateX(0px)',
-                transition: animPhase === 'exiting'
-                  ? 'transform 0.28s ease-in'
-                  : animPhase === 'repositioning'
-                  ? 'none'
-                  : animPhase === 'entering'
-                  ? 'transform 0.28s ease-out'
-                  : swipeOffset !== 0
-                  ? 'none'
-                  : 'none',
-              }}
+              onTouchStart={nav.handleTouchStart}
+              onTouchMove={nav.handleTouchMove}
+              onTouchEnd={nav.handleTouchEnd}
+              onTransitionEnd={nav.handleTransitionEnd}
+              style={nav.swipeTrackStyle}
             >
               {imageUrl && (
                 <div className="relative overflow-hidden rounded-lg">
                   <button
                     type="button"
-                    onClick={() => setZoomedImageKey(currentImageKey)}
+                    onClick={() => zoom.openZoom(currentImageKey)}
                     className="block cursor-zoom-in leading-none"
                     aria-label={`Open enlarged image for ${card.name}`}
                   >
@@ -397,13 +122,13 @@ export function CardDetail({ card, selectedVariant = null, owned, onClose, onTog
           {/* Next button - desktop only */}
           {cards && cards.length > 1 && (
             <button
-              onClick={goToNext}
-              disabled={!canGoNext}
+              onClick={nav.goToNext}
+              disabled={!nav.canGoNext}
               className={`
                 hidden sm:flex absolute right-0 top-1/2 -translate-y-1/2 translate-x-3 z-20
                 w-9 h-9 items-center justify-center rounded-full
                 transition-all duration-200 cursor-pointer
-                ${canGoNext
+                ${nav.canGoNext
                   ? 'bg-neutral-800 text-white hover:bg-neutral-900 hover:scale-110'
                   : 'bg-neutral-200 text-neutral-400 opacity-40 cursor-not-allowed'
                 }
@@ -419,194 +144,26 @@ export function CardDetail({ card, selectedVariant = null, owned, onClose, onTog
         {/* Position indicator */}
         {cards && cards.length > 1 && (
           <div className="text-center text-xs text-neutral-400 -mt-2">
-            {currentIndex + 1} / {totalCards}
+            {nav.currentIndex + 1} / {nav.totalCards}
           </div>
         )}
 
-        {/* Ownership toggles with quantity */}
-        <div className={`grid gap-2 ${hasNonFoil && hasFoil ? 'grid-cols-2' : 'grid-cols-1'}`}>
-          {hasNonFoil && (
-            <OwnershipBadge
-              className="h-11 text-base"
-              variant="nonfoil"
-              isOwned={isOwnedNonFoil}
-              label={isOwnedNonFoil && readOnly ? `${owned?.quantityNonFoil || 1}× Non-Foil` : 'Non-Foil'}
-              onClick={readOnly || isOwnedNonFoil ? undefined : () => onToggle(card.id, 'nonfoil')}
-              readOnly={readOnly}
-            >
-              {!readOnly && isOwnedNonFoil && onQuantityChange ? (
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={(e) => { e.stopPropagation(); onQuantityChange(card.id, 'nonfoil', Math.max(0, (owned?.quantityNonFoil || 1) - 1)); }}
-                    className="w-6 h-6 flex items-center justify-center rounded bg-emerald-500 text-white hover:bg-emerald-600 transition-colors cursor-pointer"
-                  >
-                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
-                    </svg>
-                  </button>
-                  <span className="w-5 text-center font-semibold text-owned">
-                    {owned?.quantityNonFoil || 1}
-                  </span>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); onQuantityChange(card.id, 'nonfoil', (owned?.quantityNonFoil || 1) + 1); }}
-                    className="w-6 h-6 flex items-center justify-center rounded bg-emerald-500 text-white hover:bg-emerald-600 transition-colors cursor-pointer"
-                  >
-                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                    </svg>
-                  </button>
-                </div>
-              ) : undefined}
-            </OwnershipBadge>
-          )}
-          {hasFoil && (
-            <OwnershipBadge
-              className="h-11 text-base"
-              variant="foil"
-              isOwned={isOwnedFoil}
-              label={isOwnedFoil && readOnly ? `${owned?.quantityFoil || 1}× Foil` : 'Foil'}
-              onClick={readOnly || isOwnedFoil ? undefined : () => onToggle(card.id, 'foil')}
-              readOnly={readOnly}
-            >
-              {!readOnly && isOwnedFoil && onQuantityChange ? (
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={(e) => { e.stopPropagation(); onQuantityChange(card.id, 'foil', Math.max(0, (owned?.quantityFoil || 1) - 1)); }}
-                    className="w-6 h-6 flex items-center justify-center rounded bg-purple-400 text-white hover:bg-purple-500 transition-colors cursor-pointer"
-                  >
-                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
-                    </svg>
-                  </button>
-                  <span className="w-5 text-center font-semibold text-foil-purple">
-                    {owned?.quantityFoil || 1}
-                  </span>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); onQuantityChange(card.id, 'foil', (owned?.quantityFoil || 1) + 1); }}
-                    className="w-6 h-6 flex items-center justify-center rounded bg-purple-400 text-white hover:bg-purple-500 transition-colors cursor-pointer"
-                  >
-                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                    </svg>
-                  </button>
-                </div>
-              ) : undefined}
-            </OwnershipBadge>
-          )}
-        </div>
-
-        {/* Prices section */}
-        <div className={`grid gap-2 -mt-3 ${hasNonFoil && hasFoil ? 'grid-cols-2' : 'grid-cols-1'}`}>
-          {hasNonFoil && (
-            <div className="bg-neutral-100 rounded-lg px-3 text-center flex items-center justify-center h-11">
-              <p className="text-base font-semibold text-neutral-800">
-                {formatPrice(scryfallPriceEur)}
-              </p>
-            </div>
-          )}
-
-          {hasFoil && (
-            <div className="bg-purple-100 rounded-lg px-3 text-center flex items-center justify-center h-11">
-              <p className="text-base font-semibold text-foil-purple">
-                {formatPrice(scryfallPriceFoil)}
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* Cardmarket link */}
-        {card.purchase_uris?.cardmarket && (
-          <LinkButton
-            href={card.purchase_uris.cardmarket}
-            target="_blank"
-            rel="noopener noreferrer"
-            variant="secondary"
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-            </svg>
-            View on Cardmarket
-          </LinkButton>
-        )}
+        <CardDetailContent
+          card={card}
+          owned={owned}
+          onToggle={onToggle}
+          onQuantityChange={onQuantityChange}
+          readOnly={readOnly}
+        />
       </div>
-      {(isImageZoomed || zoomClosingMode) && imageUrl && createPortal(
-        <div
-          className="fixed inset-0 z-[90] flex items-center justify-center p-3 sm:p-6"
-          style={{
-            backgroundColor: `rgba(0,0,0,${
-              zoomClosingMode === 'swipe'
-                ? zoomOverlayOpacity * 0.85
-                : isDraggingZoom
-                  ? Math.max(0.1, (1 - Math.abs(zoomDragY) / 400) * 0.85)
-                  : 0.85
-            })`,
-            transition: zoomClosingMode === 'swipe'
-              ? 'background-color 300ms cubic-bezier(0.4,0,1,1)'
-              : zoomClosingMode === 'css'
-                ? 'background-color 250ms ease'
-                : undefined,
-          }}
-          onClick={triggerZoomCssClose}
-        >
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); triggerZoomCssClose(); }}
-            className="absolute top-3 right-3 sm:top-5 sm:right-5 rounded-full bg-white/15 p-2 text-white hover:bg-white/25 transition-colors cursor-pointer"
-            aria-label="Close enlarged card image"
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-          <div
-            className={`relative inline-block overflow-hidden rounded-xl ${zoomClosingMode === 'css' ? 'animate-scale-out' : zoomClosingMode === false && !isDraggingZoom ? 'animate-scale-in' : ''}`}
-            style={{
-              transform: zoomClosingMode === 'swipe'
-                ? `translateY(${zoomSwipeExitY}px)`
-                : zoomDragY !== 0
-                  ? `translateY(${zoomDragY}px) scale(${Math.max(0.88, 1 - Math.abs(zoomDragY) / 1200)})`
-                  : undefined,
-              transition: zoomClosingMode === 'swipe'
-                ? 'transform 300ms cubic-bezier(0.4,0,1,1)'
-                : isDraggingZoom
-                  ? 'none'
-                  : zoomDragY !== 0
-                    ? 'transform 0.25s cubic-bezier(0.34,1.56,0.64,1)'
-                    : undefined,
-            }}
-            onClick={(e) => e.stopPropagation()}
-            onTouchStart={(e) => {
-              e.stopPropagation();
-              zoomDragStartY.current = e.touches[0].clientY;
-              setIsDraggingZoom(true);
-            }}
-            onTouchMove={(e) => {
-              e.stopPropagation();
-              if (zoomDragStartY.current === null) return;
-              const diff = e.touches[0].clientY - zoomDragStartY.current;
-              setZoomDragY(diff);
-            }}
-            onTouchEnd={(e) => {
-              e.stopPropagation();
-              setIsDraggingZoom(false);
-              zoomDragStartY.current = null;
-              if (Math.abs(zoomDragY) > 80) {
-                triggerZoomSwipeClose(zoomDragY);
-              } else {
-                setZoomDragY(0);
-              }
-            }}
-          >
-            <img
-              src={imageUrl}
-              alt={card.name}
-              className={`block max-w-[95vw] max-h-[94vh] w-auto h-auto object-contain shadow-2xl select-none ${showFoilEffect ? 'foil-image' : ''}`}
-              draggable={false}
-            />
-            {showFoilEffect && <div className="foil-overlay" />}
-          </div>
-        </div>,
-        document.body
+
+      {(isImageZoomed || zoom.zoomClosingMode) && imageUrl && (
+        <CardImageZoom
+          imageUrl={imageUrl}
+          cardName={card.name}
+          showFoilEffect={showFoilEffect}
+          zoom={zoom}
+        />
       )}
     </Modal>
   );
