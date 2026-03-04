@@ -8,13 +8,15 @@ import { BottomNav } from './components/layout/BottomNav';
 import { AuthGuard } from './components/auth/AuthGuard';
 import { CollectionPage } from './pages/CollectionPage';
 import { SharedCollectionPage } from './pages/SharedCollectionPage';
-import { CollectionsSettingsPage } from './pages/CollectionsSettingsPage';
 import { CollectionsSettingsProvider } from './providers/CollectionsSettingsContext';
 import { SecretLairDropSettingsProvider } from './providers/SecretLairDropSettingsContext';
 import { DashboardPage } from './pages/DashboardPage';
 import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
 import { TermsOfServicePage } from './pages/TermsOfServicePage';
-import { SupportPage } from './pages/SupportPage';
+import { SettingsPage } from './pages/settings/SettingsPage';
+import { CollectionsSettingsPage } from './pages/settings/CollectionsSettingsPage';
+import { SettingsSupportPage } from './pages/settings/SettingsSupportPage';
+import { SettingsAboutPage } from './pages/settings/SettingsAboutPage';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { CookieBanner } from './components/ui/CookieBanner';
 import { SearchInput } from './components/filters/SearchInput';
@@ -74,7 +76,7 @@ function AppContent() {
           onOpenSettings={handleOpenSettings}
           isLoggedIn={!!user}
           onSearchClick={isStandalone ? undefined : handleSearchClick}
-          onMobileBack={pathname === '/settings' ? handleBack : undefined}
+          onMobileBack={pathname.startsWith('/settings') && pathname !== '/settings' ? handleBack : undefined}
         />
         <main className={`flex-1 overflow-y-auto pt-3 sm:pb-8 ${user ? 'pb-nav' : 'pb-8'}`} style={{ scrollbarGutter: 'stable' }}>
           <ErrorBoundary>
@@ -102,7 +104,23 @@ function AppContent() {
             />
             <Route
               path="/settings"
+              element={<SettingsPage />}
+            />
+            <Route
+              path="/settings/collections"
               element={<CollectionsSettingsPage />}
+            />
+            <Route
+              path="/settings/secret-lair"
+              element={<CollectionsSettingsPage />}
+            />
+            <Route
+              path="/settings/support"
+              element={<SettingsSupportPage />}
+            />
+            <Route
+              path="/settings/about"
+              element={<SettingsAboutPage />}
             />
             <Route
               path="/privacy"
@@ -114,7 +132,7 @@ function AppContent() {
             />
             <Route
               path="/support"
-              element={<SupportPage />}
+              element={<Navigate to="/settings/support" replace />}
             />
           </Routes>
           </ErrorBoundary>

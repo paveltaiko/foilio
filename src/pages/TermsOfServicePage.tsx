@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router';
 import { SegmentedControl } from '../components/ui/SegmentedControl';
 
 type Lang = 'cs' | 'en';
@@ -246,6 +248,7 @@ function getSections(lang: Lang): Section[] {
 
 export function TermsOfServicePage() {
   const [lang, setLang] = useState<Lang>('en');
+  const navigate = useNavigate();
   const sections = getSections(lang);
 
   const title = lang === 'cs' ? 'Podmínky použití' : 'Terms of Service';
@@ -253,6 +256,16 @@ export function TermsOfServicePage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 pb-16 sm:py-12">
+      {/* Back button */}
+      <button
+        type="button"
+        onClick={() => navigate(-1)}
+        className="mb-4 inline-flex items-center gap-1.5 text-sm text-neutral-500 hover:text-neutral-800 transition-colors cursor-pointer"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back
+      </button>
+
       {/* Header with lang switcher */}
       <SegmentedControl
         options={[

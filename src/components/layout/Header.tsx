@@ -22,7 +22,7 @@ export function Header({ userName, userPhoto, onLogin, onLogout, onOpenSettings,
           <button
             type="button"
             onClick={onMobileBack}
-            className="sm:hidden inline-flex h-11 w-11 items-center justify-center rounded-lg text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-700 cursor-pointer"
+            className="sm:hidden inline-flex h-11 w-11 items-center justify-center rounded-lg text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-700 cursor-pointer"
             aria-label="Go back"
             title="Back"
           >

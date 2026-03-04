@@ -23,7 +23,7 @@ export function Footer() {
             <Link to="/terms" className="hover:text-primary-500 underline underline-offset-2 transition-colors">
               Terms of Service
             </Link>
-            <Link to="/support" className="hover:text-primary-500 underline underline-offset-2 transition-colors">
+            <Link to="/settings/support" className="hover:text-primary-500 underline underline-offset-2 transition-colors">
               Support
             </Link>
           </div>
