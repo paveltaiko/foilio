@@ -3,6 +3,7 @@ import { collection, doc, getDoc, getDocs } from 'firebase/firestore';
 import { db, isFirebaseConfigured } from '../config/firebase';
 import type { OwnedCard } from '../types/card';
 import type { UserProfile } from '../types/user';
+import { deserializeOwnedCard } from '../utils/deserializeOwnedCard';
 
 interface SharedCollectionState {
   ownedCards: Map<string, OwnedCard>;
@@ -76,19 +77,7 @@ export function useSharedCollection(token: string | undefined) {
 
         const cards = new Map<string, OwnedCard>();
         snapshot.forEach((docSnap) => {
-          const data = docSnap.data();
-          cards.set(docSnap.id, {
-            scryfallId: docSnap.id,
-            set: data.set,
-            collectorNumber: data.collectorNumber,
-            name: data.name,
-            ownedNonFoil: data.ownedNonFoil ?? false,
-            ownedFoil: data.ownedFoil ?? false,
-            quantityNonFoil: data.quantityNonFoil ?? (data.ownedNonFoil ? 1 : 0),
-            quantityFoil: data.quantityFoil ?? (data.ownedFoil ? 1 : 0),
-            addedAt: data.addedAt?.toDate?.() ?? new Date(),
-            updatedAt: data.updatedAt?.toDate?.() ?? new Date(),
-          });
+          cards.set(docSnap.id, deserializeOwnedCard(docSnap.id, docSnap.data() as Record<string, unknown>));
         });
 
         setState({

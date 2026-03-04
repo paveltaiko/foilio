@@ -10,6 +10,7 @@ import {
 import type { OwnedCard } from '../types/card';
 import { mirrorOwnedCardToShared, removeMirroredOwnedCard } from './sharing';
 import { getDb } from './db';
+import { deserializeOwnedCard } from '../utils/deserializeOwnedCard';
 
 function ownedCardsCollection(userId: string) {
   return collection(getDb(), 'users', userId, 'ownedCards');
@@ -24,19 +25,7 @@ export function subscribeToOwnedCards(
   return onSnapshot(ref, (snapshot) => {
     const cards = new Map<string, OwnedCard>();
     snapshot.forEach((doc) => {
-      const data = doc.data();
-      cards.set(doc.id, {
-        scryfallId: doc.id,
-        set: data.set,
-        collectorNumber: data.collectorNumber,
-        name: data.name,
-        ownedNonFoil: data.ownedNonFoil ?? false,
-        ownedFoil: data.ownedFoil ?? false,
-        quantityNonFoil: data.quantityNonFoil ?? (data.ownedNonFoil ? 1 : 0),
-        quantityFoil: data.quantityFoil ?? (data.ownedFoil ? 1 : 0),
-        addedAt: data.addedAt?.toDate?.() ?? new Date(),
-        updatedAt: data.updatedAt?.toDate?.() ?? new Date(),
-      });
+      cards.set(doc.id, deserializeOwnedCard(doc.id, doc.data() as Record<string, unknown>));
     });
     callback(cards);
   });

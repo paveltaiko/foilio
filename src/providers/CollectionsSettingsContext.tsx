@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { franchises, collectionSets } from '../config/collections';
 import { isFirebaseConfigured } from '../config/firebase';
 import { subscribeToCollectionSettings, saveCollectionSettings } from '../services/firestore';
@@ -62,7 +62,7 @@ export function CollectionsSettingsProvider({ userId, children }: CollectionsSet
     return unsubscribe;
   }, [userId]);
 
-  const persist = (next: CollectionSettings) => {
+  const persist = useCallback((next: CollectionSettings) => {
     setSettings(next); // okamžitá optimistická aktualizace
 
     if (isFirebaseConfigured && userId) {
@@ -72,7 +72,7 @@ export function CollectionsSettingsProvider({ userId, children }: CollectionsSet
     } else {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
     }
-  };
+  }, [userId]);
 
   const value = useMemo<CollectionsSettingsContextValue>(() => ({
     settings,
@@ -106,8 +106,7 @@ export function CollectionsSettingsProvider({ userId, children }: CollectionsSet
       };
       persist(next);
     },
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [settings, isLoading, userId]);
+  }), [settings, isLoading, persist]);
 
   return (
     <CollectionsSettingsContext.Provider value={value}>

@@ -2,7 +2,7 @@ import { FileText, Shield } from 'lucide-react';
 import { SettingsLayout } from '../../components/settings/SettingsLayout';
 import { SettingsMenuItem } from '../../components/settings/SettingsMenuItem';
 
-const APP_VERSION = '1.0.0';
+const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.1.0';
 
 export function SettingsAboutPage() {
   const currentYear = new Date().getFullYear();

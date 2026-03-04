@@ -5,7 +5,7 @@ import { useCollectionStats } from './useCollectionStats';
 import { useBoosterMap } from './useBoosterMap';
 import { filterAndSortCards } from '../utils/cardFiltering';
 import { fetchCardsByIds } from '../services/scryfall';
-import { parsePrice } from '../utils/formatPrice';
+import { calculateOwnedCardValue } from '../utils/calculateValue';
 import type {
   ScryfallCard,
   SetCode,
@@ -161,17 +161,7 @@ export function useCardCollection({ ownedCards, searchQuery = '', visibleSetIds,
       if (!owned) continue;
       const card = loadedCardsById[cardId] ?? ownedCardDetails[cardId];
       if (!card) continue;
-
-      if (owned.ownedNonFoil) {
-        const price = parsePrice(card.prices.eur);
-        const qty = owned.quantityNonFoil || 1;
-        if (price !== null) sum += price * qty;
-      }
-      if (owned.ownedFoil) {
-        const price = parsePrice(card.prices.eur_foil);
-        const qty = owned.quantityFoil || 1;
-        if (price !== null) sum += price * qty;
-      }
+      sum += calculateOwnedCardValue(owned, card.prices).total;
     }
     return sum;
   }, [scopedOwnedCardIds, ownedCards, loadedCardsById, ownedCardDetails]);

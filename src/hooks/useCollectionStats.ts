@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import type { ScryfallCard, OwnedCard, SetCode } from '../types/card';
-import { parsePrice } from '../utils/formatPrice';
+import { calculateOwnedCardValue } from '../utils/calculateValue';
 
 interface CollectionStats {
   totalCards: number;
@@ -27,19 +27,7 @@ export function useCollectionStats(
       const isOwned = owned.ownedNonFoil || owned.ownedFoil;
       if (isOwned) ownedCount++;
 
-      // Non-foil value (multiplied by quantity)
-      if (owned.ownedNonFoil) {
-        const price = parsePrice(card.prices.eur);
-        const qty = owned.quantityNonFoil || 1;
-        if (price !== null) totalValue += price * qty;
-      }
-
-      // Foil value (multiplied by quantity)
-      if (owned.ownedFoil) {
-        const price = parsePrice(card.prices.eur_foil);
-        const qty = owned.quantityFoil || 1;
-        if (price !== null) totalValue += price * qty;
-      }
+      totalValue += calculateOwnedCardValue(owned, card.prices).total;
     }
 
     return {

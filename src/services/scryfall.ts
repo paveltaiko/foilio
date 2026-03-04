@@ -35,16 +35,23 @@ function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export async function fetchCardsForSet(setCode: SetCode): Promise<ScryfallCard[]> {
+async function fetchAllPages(initialUrl: string): Promise<ScryfallCard[]> {
   const allCards: ScryfallCard[] = [];
-  let url: string | null = `${BASE_URL}/cards/search?q=set:${setCode}&order=set&unique=prints`;
+  let url: string | null = initialUrl;
 
   while (url) {
-    const page = await fetchCardsPageForSet(setCode, url);
-    allCards.push(...page.cards);
+    const response = await fetch(url);
 
-    if (page.hasMore && page.nextPage) {
-      url = page.nextPage;
+    if (!response.ok) {
+      if (response.status === 404) break;
+      throw new Error(`Scryfall API error: ${response.status}`);
+    }
+
+    const data: ScryfallSearchResponse = await response.json();
+    allCards.push(...data.data);
+
+    if (data.has_more && data.next_page) {
+      url = data.next_page;
       await delay(RATE_LIMIT_MS);
     } else {
       url = null;
@@ -52,6 +59,10 @@ export async function fetchCardsForSet(setCode: SetCode): Promise<ScryfallCard[]
   }
 
   return allCards;
+}
+
+export function fetchCardsForSet(setCode: SetCode): Promise<ScryfallCard[]> {
+  return fetchAllPages(`${BASE_URL}/cards/search?q=set:${setCode}&order=set&unique=prints`);
 }
 
 export async function fetchCardsPageForSet(setCode: SetCode, pageUrl?: string | null): Promise<ScryfallCardsPage> {
@@ -194,31 +205,10 @@ export async function fetchCardsByCollectorNumbers(
   return data.data ?? [];
 }
 
-export async function fetchCardsForSLDDrop(releasedAt: string): Promise<ScryfallCard[]> {
-  const allCards: ScryfallCard[] = [];
-  let url: string | null =
-    `${BASE_URL}/cards/search?q=set:sld+date=${releasedAt}&order=set&unique=prints`;
-
-  while (url) {
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      if (response.status === 404) break;
-      throw new Error(`Scryfall API error: ${response.status}`);
-    }
-
-    const data: ScryfallSearchResponse = await response.json();
-    allCards.push(...data.data);
-
-    if (data.has_more && data.next_page) {
-      url = data.next_page;
-      await delay(RATE_LIMIT_MS);
-    } else {
-      url = null;
-    }
-  }
-
-  return allCards;
+export function fetchCardsForSLDDrop(releasedAt: string): Promise<ScryfallCard[]> {
+  return fetchAllPages(
+    `${BASE_URL}/cards/search?q=set:sld+date=${releasedAt}&order=set&unique=prints`,
+  );
 }
 
 export function getCardImage(card: ScryfallCard, size: 'small' | 'normal' | 'large' | 'png' = 'large'): string {

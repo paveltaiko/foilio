@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Share, Check } from 'lucide-react';
 import type { User } from 'firebase/auth';
 import { getOrCreateShareToken } from '../../services/sharing';
@@ -47,6 +47,11 @@ function isMobileDevice(): boolean {
 export function ShareCollectionButton({ user, onTokenReady, onFeedback }: ShareCollectionButtonProps) {
   const [succeeded, setSucceeded] = useState(false);
   const [loading, setLoading] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+
+  useEffect(() => {
+    return () => { clearTimeout(timeoutRef.current); };
+  }, []);
 
   const handleShare = async () => {
     if (loading) return;
@@ -76,7 +81,7 @@ export function ShareCollectionButton({ user, onTokenReady, onFeedback }: ShareC
         onFeedback('Link copied', 'success');
       }
       setSucceeded(true);
-      setTimeout(() => setSucceeded(false), 2000);
+      timeoutRef.current = setTimeout(() => setSucceeded(false), 2000);
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') {
         return;

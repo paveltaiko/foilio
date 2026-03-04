@@ -1,4 +1,4 @@
-import { createContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { isFirebaseConfigured } from '../config/firebase';
 import { subscribeToSecretLairSettings, saveSecretLairSettings } from '../services/firestore';
 
@@ -66,7 +66,7 @@ export function SecretLairDropSettingsProvider({
     return unsubscribe;
   }, [userId]);
 
-  const persist = (next: Set<string>) => {
+  const persist = useCallback((next: Set<string>) => {
     setEnabledDropIds(next);
     if (isFirebaseConfigured && userId) {
       saveSecretLairSettings(userId, [...next]).catch((err) => {
@@ -75,7 +75,7 @@ export function SecretLairDropSettingsProvider({
     } else {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify([...next]));
     }
-  };
+  }, [userId]);
 
   const value = useMemo<SecretLairDropSettingsContextValue>(
     () => ({
@@ -87,8 +87,7 @@ export function SecretLairDropSettingsProvider({
         persist(next);
       },
     }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [enabledDropIds, userId]
+    [enabledDropIds, persist]
   );
 
   return (

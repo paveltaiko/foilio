@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import type { OwnedCard } from '../types/card';
 import { getCachedCardById } from '../utils/scryfallCache';
+import { calculateOwnedCardValue } from '../utils/calculateValue';
 import { parsePrice } from '../utils/formatPrice';
 import { franchises, collectionSets } from '../config/collections';
 import type { CollectionSettings } from '../utils/collectionsSettings';
@@ -88,23 +89,10 @@ export function useHomeStats(
       // Ceny a raritu načteme z Scryfall cache
       const cached = getCachedCardById(card.scryfallId);
       if (cached) {
-        // Hodnota
-        if (card.quantityNonFoil > 0) {
-          const price = parsePrice(cached.prices.eur);
-          if (price !== null) {
-            const val = price * card.quantityNonFoil;
-            totalValueEur += val;
-            nonFoilValue += val;
-          }
-        }
-        if (card.quantityFoil > 0) {
-          const price = parsePrice(cached.prices.eur_foil);
-          if (price !== null) {
-            const val = price * card.quantityFoil;
-            totalValueEur += val;
-            foilValue += val;
-          }
-        }
+        const val = calculateOwnedCardValue(card, cached.prices);
+        totalValueEur += val.total;
+        nonFoilValue += val.nonFoil;
+        foilValue += val.foil;
 
         // Rarita
         const rarity = cached.rarity;

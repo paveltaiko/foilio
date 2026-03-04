@@ -27,3 +27,10 @@ if (isFirebaseConfigured) {
 }
 
 export { app, auth, db, googleProvider };
+
+// Validate configuration in development
+if (import.meta.env.DEV && !isFirebaseConfigured) {
+  console.warn(
+    '[Foilio] Firebase is not configured. Set VITE_FIREBASE_API_KEY and other VITE_FIREBASE_* env variables in .env.local. Running in offline mode.',
+  );
+}
