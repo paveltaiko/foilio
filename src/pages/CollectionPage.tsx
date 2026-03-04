@@ -1,27 +1,17 @@
-import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
-import { Settings } from 'lucide-react';
-import { Link } from 'react-router';
 import type { User } from 'firebase/auth';
 import { useOwnedCards } from '../hooks/useOwnedCards';
-import { useCardCollection } from '../hooks/useCardCollection';
-import { useSecretLairCollection } from '../hooks/useSecretLairCollection';
-import { useSecretLairDropSettings } from '../hooks/useSecretLairDropSettings';
-import { useCollectionsSettings } from '../hooks/useCollectionsSettings';
-import { getVisibleSets } from '../utils/collectionsSettings';
+import { useUnifiedCollection } from '../hooks/useUnifiedCollection';
+import { useShareCollection } from '../hooks/useShareCollection';
+import { useCardOwnershipHandlers } from '../hooks/useCardOwnershipHandlers';
 import { collectionSets } from '../config/collections';
-import { secretLairDrops } from '../config/secretLairDrops';
-import { isFirebaseConfigured } from '../config/firebase';
-import { toggleCardOwnership, updateCardQuantity } from '../services/firestore';
-import { getExistingShareToken, syncVisibleSetsToShared } from '../services/sharing';
 import { FilterDrawer } from '../components/filters/FilterDrawer';
 import { CardGrid, CardGridSkeleton } from '../components/cards/CardGrid';
 import { CardDetail } from '../components/cards/CardDetail';
 import { PullToRefresh } from '../components/ui/PullToRefresh';
 import { Tabs } from '../components/ui/Tabs';
 import { CollectionToolbar } from '../components/collection/CollectionToolbar';
+import { CollectionEmptyState } from '../components/collection/CollectionEmptyState';
 import { ShareFeedbackToast } from '../components/collection/ShareFeedbackToast';
-import type { ShareToastType } from '../components/collection/ShareCollectionButton';
-import type { CardVariant } from '../types/card';
 
 interface CollectionPageProps {
   user: User;
@@ -30,311 +20,33 @@ interface CollectionPageProps {
 }
 
 export function CollectionPage({ user, isSearchOpen, searchQuery }: CollectionPageProps) {
-  const [shareToken, setShareToken] = useState<string | null>(null);
-  const [shareToastMessage, setShareToastMessage] = useState<string | null>(null);
-  const [shareToastType, setShareToastType] = useState<ShareToastType>('success');
-  const [selectedVariant, setSelectedVariant] = useState<CardVariant>(null);
-  const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
-  // Unified active tab — buď UB set ID nebo SLD drop ID
-  const [activeTab, setActiveTab] = useState<string>('all');
   const { ownedCards, updateLocal } = useOwnedCards(user.uid);
 
-  useEffect(() => {
-    if (!shareToastMessage) return;
-    const timeoutId = window.setTimeout(() => {
-      setShareToastMessage(null);
-    }, 2200);
-    return () => window.clearTimeout(timeoutId);
-  }, [shareToastMessage]);
-
-  useEffect(() => {
-    if (!isFirebaseConfigured) return;
-    let cancelled = false;
-    getExistingShareToken(user.uid)
-      .then((token) => {
-        if (!cancelled) {
-          setShareToken(token);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setShareToken(null);
-        }
-      });
-    return () => { cancelled = true; };
-  }, [user.uid]);
-
-  // UB settings
-  const { settings: collectionSettings, isLoading: isSettingsLoading } = useCollectionsSettings();
-  const visibleCollectionSets = getVisibleSets(collectionSettings, collectionSets);
-  const settingsInitialized = Object.keys(collectionSettings.collections).length > 0;
-  const visibleSetIds: string[] | undefined = settingsInitialized
-    ? visibleCollectionSets.map((s) => s.id)
-    : undefined;
-
-  // Sync visible sets to shared collection when settings change
-  useEffect(() => {
-    if (!shareToken || !isFirebaseConfigured || visibleSetIds === undefined) return;
-    void syncVisibleSetsToShared(shareToken, visibleSetIds);
-  }, [shareToken, visibleSetIds]);
-
-  // SL drop settings
-  const { enabledDropIds } = useSecretLairDropSettings();
-  const enabledDrops = useMemo(
-    () => secretLairDrops.filter((d) => enabledDropIds.has(d.id)),
-    [enabledDropIds]
-  );
-  const enabledDropIdSet = useMemo(() => new Set(enabledDrops.map((d) => d.id)), [enabledDrops]);
-
-  // Aktivní mode — odvozeno z activeTab
-  const isSLMode = activeTab !== 'all' && enabledDropIdSet.has(activeTab);
-
-  // UB hook — vždy volaný, ale pro tab předáváme správnou hodnotu
-  const ubActiveSet = isSLMode ? 'all' : activeTab;
-  const {
-    setActiveSet: ubSetActiveSet,
-    sortOption, setSortOption,
-    ownershipFilter, setOwnershipFilter,
-    boosterFilter, setBoosterFilter,
-    boosterMapLoading,
-    selectedCard: ubSelectedCard, setSelectedCard: ubSetSelectedCard,
-    groupBySet, setGroupBySet,
-    currentCards: ubCurrentCards, isCardsLoading: ubIsCardsLoading,
-    cardCounts: ubCardCounts, ownedCountBySet: ubOwnedCountBySet, sortedFilteredCards: ubSortedFilteredCards, visibleCards: ubVisibleCards,
-    hasBoosterData,
-    isFetchingNextPage,
-    hasNextPage,
-    loadNextPage,
-    loadMoreError,
-    isCompletingSearch,
-    isComputingTotalValue,
-    refreshCards,
-  } = useCardCollection({ ownedCards, searchQuery, visibleSetIds, sets: collectionSets });
-
-  // Sync ubActiveSet do hooku
-  useEffect(() => {
-    ubSetActiveSet(ubActiveSet);
-  }, [ubActiveSet, ubSetActiveSet]);
-
-  // SL hook
-  const {
-    setActiveDrop,
-    sortOption: slSortOption, setSortOption: slSetSortOption,
-    ownershipFilter: slOwnershipFilter, setOwnershipFilter: slSetOwnershipFilter,
-    selectedCard: slSelectedCard, setSelectedCard: slSetSelectedCard,
-    currentCards: slCurrentCards, isCardsLoading: slIsCardsLoading,
-    cardCounts: slCardCounts, ownedCountByDrop: slOwnedCountByDrop, sortedFilteredCards: slSortedFilteredCards, visibleCards: slVisibleCards,
-    hasNextPage: slHasNextPage, loadNextPage: slLoadNextPage,
-    refreshCards: slRefreshCards,
-  } = useSecretLairCollection({
+  const collection = useUnifiedCollection({ ownedCards, searchQuery });
+  const share = useShareCollection(user.uid, collection.visibleSetIds);
+  const { handleToggle, handleQuantityChange } = useCardOwnershipHandlers({
+    userId: user.uid,
+    currentCards: collection.currentCards,
     ownedCards,
-    searchQuery,
-    drops: enabledDrops,
-    active: enabledDrops.length > 0, // vždy aktivní pokud jsou povolené dropy — potřebné pro Full Collection
+    shareToken: share.shareToken,
+    updateLocal,
   });
 
-  // Sync SL activeDrop
-  useEffect(() => {
-    if (isSLMode) {
-      setActiveDrop(activeTab);
-    }
-  }, [isSLMode, activeTab, setActiveDrop]);
-
-  // Aliases
-  const isAllTab = activeTab === 'all';
-  const selectedCard = isSLMode ? slSelectedCard : ubSelectedCard;
-  const setSelectedCard = isSLMode ? slSetSelectedCard : ubSetSelectedCard;
-  const isCardsLoading = isSettingsLoading || (isSLMode ? slIsCardsLoading : ubIsCardsLoading || (isAllTab && slIsCardsLoading));
-
-  // Fade-in přechod: inkrementuje se pokaždé když loading přejde true → false
-  const prevLoadingRef = useRef(isCardsLoading);
-  const [gridKey, setGridKey] = useState(0);
-  useEffect(() => {
-    if (prevLoadingRef.current && !isCardsLoading) {
-      setGridKey((k) => k + 1);
-    }
-    prevLoadingRef.current = isCardsLoading;
-  }, [isCardsLoading]);
-
-  const activeSortOption = isSLMode ? slSortOption : sortOption;
-  const setActiveSortOption = isSLMode ? slSetSortOption : setSortOption;
-  const activeOwnershipFilter = isSLMode ? slOwnershipFilter : ownershipFilter;
-  const setActiveOwnershipFilter = isSLMode ? slSetOwnershipFilter : setOwnershipFilter;
-
-  // Pro Full Collection tab sloučíme UB + SL karty a stats
-  const currentCards = useMemo(() => {
-    if (isSLMode) return slCurrentCards;
-    if (isAllTab) return [...ubCurrentCards, ...slSortedFilteredCards.map((c) => c.card)];
-    return ubCurrentCards;
-  }, [isSLMode, isAllTab, ubCurrentCards, slCurrentCards, slSortedFilteredCards]);
-
-  const sortedFilteredCards = useMemo(() => {
-    if (isSLMode) return slSortedFilteredCards;
-    if (isAllTab) return [...ubSortedFilteredCards, ...slSortedFilteredCards];
-    return ubSortedFilteredCards;
-  }, [isSLMode, isAllTab, ubSortedFilteredCards, slSortedFilteredCards]);
-
-  const visibleCards = useMemo(() => {
-    if (isSLMode) return slVisibleCards;
-    if (isAllTab) return [...ubVisibleCards, ...slVisibleCards];
-    return ubVisibleCards;
-  }, [isSLMode, isAllTab, ubVisibleCards, slVisibleCards]);
-
-  //Sloučené card counts pro lištu tabů
-  const mergedCardCounts = useMemo(() => {
-    const merged: Record<string, number> = { ...ubCardCounts };
-    for (const drop of enabledDrops) {
-      merged[drop.id] = slCardCounts[drop.id] ?? 0;
-    }
-    // 'all' count = UB + SL celkem
-    merged['all'] = (ubCardCounts['all'] ?? 0) + (slCardCounts['all'] ?? 0);
-    return merged;
-  }, [ubCardCounts, slCardCounts, enabledDrops]);
-
-  // Sloučené owned counts pro lištu tabů
-  const mergedOwnedCounts = useMemo(() => {
-    const merged: Record<string, number> = { ...ubOwnedCountBySet };
-    for (const drop of enabledDrops) {
-      merged[drop.id] = slOwnedCountByDrop[drop.id] ?? 0;
-    }
-    const ubAll = Object.values(ubOwnedCountBySet).reduce((s, v) => s + v, 0);
-    const slAll = slOwnedCountByDrop['all'] ?? 0;
-    merged['all'] = ubAll + slAll;
-    return merged;
-  }, [ubOwnedCountBySet, slOwnedCountByDrop, enabledDrops]);
-
-  // Sloučené taby
-  const allTabs = useMemo(() => {
-    const ubTabs = [
-      { id: 'all', label: 'Full Collection', count: mergedCardCounts['all'], ownedCount: mergedOwnedCounts['all'] },
-      ...(visibleSetIds ?? []).map((setId) => {
-        const set = collectionSets.find((s) => s.id === setId);
-        return { id: setId, label: set?.name ?? setId, count: mergedCardCounts[setId], ownedCount: mergedOwnedCounts[setId] };
-      }),
-    ];
-    const slTabs = enabledDrops.map((drop) => ({
-      id: drop.id,
-      label: drop.name,
-      count: mergedCardCounts[drop.id],
-      ownedCount: mergedOwnedCounts[drop.id],
-    }));
-    return [...ubTabs, ...slTabs];
-  }, [visibleSetIds, enabledDrops, mergedCardCounts, mergedOwnedCounts]);
-
-  // Reset booster filter when switching to a set that has no booster data
-  useEffect(() => {
-    if (!hasBoosterData && boosterFilter !== 'all') {
-      setBoosterFilter('all');
-    }
-  }, [hasBoosterData, boosterFilter, setBoosterFilter]);
-
-  const activeFilterCount = (boosterFilter !== 'all' && hasBoosterData && !isSLMode ? 1 : 0) + (activeOwnershipFilter !== 'all' ? 1 : 0);
-  const hasActiveFilters = (boosterFilter !== 'all' && hasBoosterData && !isSLMode) || activeOwnershipFilter !== 'all' || activeSortOption !== 'number-asc' || (!isSLMode && !groupBySet);
-
-  const handleResetFilters = useCallback(() => {
-    if (!isSLMode) {
-      setBoosterFilter('all');
-      setOwnershipFilter('all');
-      setSortOption('number-asc');
-      setGroupBySet(true);
-    } else {
-      slSetOwnershipFilter('all');
-      slSetSortOption('number-asc');
-    }
-  }, [isSLMode, setBoosterFilter, setOwnershipFilter, setSortOption, setGroupBySet, slSetOwnershipFilter, slSetSortOption]);
-
-  // Handlers
-  const handleToggle = useCallback(
-    (cardId: string, variant: 'nonfoil' | 'foil') => {
-      const card = currentCards.find((c) => c.id === cardId);
-      if (!card) return;
-
-      if (isFirebaseConfigured) {
-        void toggleCardOwnership(user.uid, cardId, {
-          set: card.set,
-          collectorNumber: card.collector_number,
-          name: card.name,
-        }, variant, ownedCards.get(cardId), shareToken ?? undefined);
-      } else {
-        // localStorage mode
-        updateLocal((prev) => {
-          const next = new Map(prev);
-          const existing = next.get(cardId);
-          const isNowOwned = variant === 'nonfoil'
-            ? !(existing?.ownedNonFoil ?? false)
-            : !(existing?.ownedFoil ?? false);
-
-          const newNonFoil = variant === 'nonfoil' ? isNowOwned : (existing?.ownedNonFoil ?? false);
-          const newFoil = variant === 'foil' ? isNowOwned : (existing?.ownedFoil ?? false);
-          const newQtyNonFoil = variant === 'nonfoil' ? (isNowOwned ? 1 : 0) : (existing?.quantityNonFoil ?? 0);
-          const newQtyFoil = variant === 'foil' ? (isNowOwned ? 1 : 0) : (existing?.quantityFoil ?? 0);
-
-          if (!newNonFoil && !newFoil) {
-            next.delete(cardId);
-          } else {
-            next.set(cardId, {
-              scryfallId: cardId,
-              set: card.set,
-              collectorNumber: card.collector_number,
-              name: card.name,
-              ownedNonFoil: newNonFoil,
-              ownedFoil: newFoil,
-              quantityNonFoil: newQtyNonFoil,
-              quantityFoil: newQtyFoil,
-              addedAt: existing?.addedAt ?? new Date(),
-              updatedAt: new Date(),
-            });
-          }
-          return next;
-        });
-      }
-    },
-    [user.uid, currentCards, ownedCards, shareToken, updateLocal]
-  );
-
-  // Handler for quantity change
-  const handleQuantityChange = useCallback(
-    (cardId: string, variant: 'nonfoil' | 'foil', quantity: number) => {
-      const card = currentCards.find((c) => c.id === cardId);
-      const existing = ownedCards.get(cardId);
-      if (!card || !existing) return;
-
-      if (isFirebaseConfigured) {
-        void updateCardQuantity(user.uid, cardId, variant, quantity, existing, shareToken ?? undefined);
-      } else {
-        // localStorage mode
-        updateLocal((prev) => {
-          const next = new Map(prev);
-          const newQtyNonFoil = variant === 'nonfoil' ? quantity : existing.quantityNonFoil;
-          const newQtyFoil = variant === 'foil' ? quantity : existing.quantityFoil;
-          const newOwnedNonFoil = variant === 'nonfoil' ? quantity > 0 : existing.ownedNonFoil;
-          const newOwnedFoil = variant === 'foil' ? quantity > 0 : existing.ownedFoil;
-
-          if (!newOwnedNonFoil && !newOwnedFoil) {
-            next.delete(cardId);
-          } else {
-            next.set(cardId, {
-              ...existing,
-              ownedNonFoil: newOwnedNonFoil,
-              ownedFoil: newOwnedFoil,
-              quantityNonFoil: newQtyNonFoil,
-              quantityFoil: newQtyFoil,
-              updatedAt: new Date(),
-            });
-          }
-          return next;
-        });
-      }
-    },
-    [user.uid, currentCards, ownedCards, shareToken, updateLocal]
-  );
-
-  const handleRefresh = useCallback(async () => {
-    if (!isSLMode) refreshCards();
-    else slRefreshCards();
-  }, [isSLMode, refreshCards, slRefreshCards]);
-
-  const noUBCollectionSelected = !isSLMode && !isSettingsLoading && settingsInitialized && visibleSetIds !== undefined && visibleSetIds.length === 0;
+  const {
+    activeTab, setActiveTab, isSLMode, isAllTab,
+    selectedCard, setSelectedCard, selectedVariant, setSelectedVariant,
+    isFilterDrawerOpen, setIsFilterDrawerOpen,
+    activeSortOption, setActiveSortOption,
+    activeOwnershipFilter, setActiveOwnershipFilter,
+    boosterFilter, setBoosterFilter, boosterMapLoading, hasBoosterData,
+    groupBySet, setGroupBySet,
+    activeFilterCount, hasActiveFilters, handleResetFilters,
+    currentCards, sortedFilteredCards, visibleCards, isCardsLoading, gridKey,
+    allTabs,
+    hasNextPage, loadNextPage, isFetchingNextPage, loadMoreError,
+    isCompletingSearch, isComputingTotalValue,
+    handleRefresh, noCollectionSelected,
+  } = collection;
 
   return (
     <>
@@ -361,38 +73,20 @@ export function CollectionPage({ user, isSearchOpen, searchQuery }: CollectionPa
             boosterMapLoading={boosterMapLoading}
             hasBoosterData={hasBoosterData}
             groupBySet={groupBySet}
-            onGroupBySetToggle={() => setGroupBySet(!groupBySet)}
+            onGroupBySetToggle={setGroupBySet}
             activeFilterCount={activeFilterCount}
             hasActiveFilters={hasActiveFilters}
             onReset={handleResetFilters}
             onFilterDrawerOpen={() => setIsFilterDrawerOpen(true)}
-            onTokenReady={setShareToken}
-            onShareFeedback={(message, type) => {
-              setShareToastType(type);
-              setShareToastMessage(message);
-            }}
+            onTokenReady={share.setShareToken}
+            onShareFeedback={share.showShareToast}
           />
 
           {/* Card grid */}
           {isCardsLoading ? (
             <CardGridSkeleton />
-          ) : noUBCollectionSelected ? (
-            <div key={gridKey} className="animate-fade-in flex flex-col items-center justify-center py-20 px-6 text-center">
-              <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-neutral-100 mb-4">
-                <Settings className="w-7 h-7 text-neutral-400" />
-              </div>
-              <h2 className="text-base font-semibold text-neutral-800 mb-1">No collection selected</h2>
-              <p className="text-sm text-neutral-500 max-w-xs mb-5">
-                Enable a collection in Settings to start tracking your cards.
-              </p>
-              <Link
-                to="/settings"
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-500 text-white text-sm font-semibold hover:bg-primary-600 transition-colors"
-              >
-                <Settings className="w-4 h-4" />
-                Open Settings
-              </Link>
-            </div>
+          ) : noCollectionSelected ? (
+            <CollectionEmptyState gridKey={gridKey} />
           ) : (
             <div key={gridKey} className="animate-fade-in space-y-3">
               {!isSLMode && (isCompletingSearch || isFetchingNextPage || isComputingTotalValue) && (
@@ -412,12 +106,12 @@ export function CollectionPage({ user, isSearchOpen, searchQuery }: CollectionPa
                   setSelectedCard(card);
                   setSelectedVariant(variant);
                 }}
-                groupBySet={!isSLMode && activeTab === 'all' && groupBySet && searchQuery.trim().length === 0}
+                groupBySet={!isSLMode && isAllTab && groupBySet && searchQuery.trim().length === 0}
                 sets={collectionSets}
-                onLoadMore={!isSLMode ? loadNextPage : slLoadNextPage}
-                hasMore={!isSLMode ? hasNextPage : slHasNextPage}
-                isLoadingMore={!isSLMode ? isFetchingNextPage : false}
-                loadMoreError={!isSLMode ? loadMoreError : null}
+                onLoadMore={loadNextPage}
+                hasMore={hasNextPage}
+                isLoadingMore={isFetchingNextPage}
+                loadMoreError={loadMoreError}
               />
             </div>
           )}
@@ -458,7 +152,7 @@ export function CollectionPage({ user, isSearchOpen, searchQuery }: CollectionPa
         }}
       />
 
-      <ShareFeedbackToast message={shareToastMessage} type={shareToastType} />
+      <ShareFeedbackToast message={share.shareToastMessage} type={share.shareToastType} />
     </>
   );
 }
