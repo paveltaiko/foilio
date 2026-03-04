@@ -18,6 +18,7 @@ import { SupportPage } from './pages/SupportPage';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { CookieBanner } from './components/ui/CookieBanner';
 import { SearchInput } from './components/filters/SearchInput';
+import { Analytics } from '@vercel/analytics/react';
 
 const queryClient = new QueryClient();
 const isStandalone = window.matchMedia('(display-mode: standalone)').matches
@@ -136,6 +137,7 @@ function AppContent() {
         />
         {!isStandalone && <Footer />}
         <CookieBanner />
+        <Analytics />
       </div>
     </CollectionsSettingsProvider>
     </SecretLairDropSettingsProvider>
