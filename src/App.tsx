@@ -37,6 +37,10 @@ function AppContent() {
     if (isSearchOpen) searchInputRef.current?.focus();
   }, [isSearchOpen]);
 
+  useEffect(() => {
+    document.querySelector('main')?.scrollTo({ top: 0 });
+  }, [pathname]);
+
   const handleSearchClick = useCallback(() => {
     if (pathname !== '/collection') navigate('/collection');
     setIsSearchOpen(true);
