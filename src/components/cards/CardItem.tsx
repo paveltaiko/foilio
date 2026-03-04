@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { memo, useCallback } from 'react';
 import type { ScryfallCard, OwnedCard, CardVariant } from '../../types/card';
 import { getCardImage } from '../../services/scryfall';
 import { formatPrice, parsePrice } from '../../utils/formatPrice';
@@ -14,7 +14,7 @@ interface CardItemProps {
   readOnly?: boolean;
 }
 
-export function CardItem({ card, owned, displayVariant, onToggle, onClick, readOnly }: CardItemProps) {
+export const CardItem = memo(function CardItem({ card, owned, displayVariant, onToggle, onClick, readOnly }: CardItemProps) {
   const isOwnedNonFoil = owned?.ownedNonFoil ?? false;
   const isOwnedFoil = owned?.ownedFoil ?? false;
 
@@ -183,4 +183,4 @@ export function CardItem({ card, owned, displayVariant, onToggle, onClick, readO
       </div>
     </div>
   );
-}
+});

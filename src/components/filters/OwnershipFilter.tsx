@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import type { OwnershipFilter as OwnershipFilterType } from '../../types/card';
 import { SegmentedControl } from '../ui/SegmentedControl';
 
@@ -12,6 +13,6 @@ const OPTIONS: { id: OwnershipFilterType; label: string; title: string }[] = [
   { id: 'missing', label: 'Missing', title: 'Show only missing cards' },
 ];
 
-export function OwnershipFilter({ value, onChange }: OwnershipFilterProps) {
+export const OwnershipFilter = memo(function OwnershipFilter({ value, onChange }: OwnershipFilterProps) {
   return <SegmentedControl options={OPTIONS} value={value} onChange={onChange} />;
-}
+});

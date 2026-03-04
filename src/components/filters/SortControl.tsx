@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import type { SortOption } from '../../types/card';
 import { SegmentedControl } from '../ui/SegmentedControl';
 
@@ -8,7 +9,7 @@ interface SortControlProps {
 
 type SortGroup = 'number' | 'price';
 
-export function SortControl({ value, onChange }: SortControlProps) {
+export const SortControl = memo(function SortControl({ value, onChange }: SortControlProps) {
   const handleClick = (group: SortGroup) => {
     if (group === 'number') {
       if (value === 'number-asc') onChange('number-desc');
@@ -37,4 +38,4 @@ export function SortControl({ value, onChange }: SortControlProps) {
       onChange={handleClick}
     />
   );
-}
+});

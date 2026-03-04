@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Check } from 'lucide-react';
 
 export interface OwnershipBadgeProps {
@@ -10,7 +11,7 @@ export interface OwnershipBadgeProps {
   readOnly?: boolean;
 }
 
-export function OwnershipBadge({ variant, isOwned, label, onClick, children, className = '', readOnly = false }: OwnershipBadgeProps) {
+export const OwnershipBadge = memo(function OwnershipBadge({ variant, isOwned, label, onClick, children, className = '', readOnly = false }: OwnershipBadgeProps) {
   const baseClass = `flex flex-1 items-center justify-center gap-0.5 leading-none font-semibold rounded-image-sm transition-all duration-200 ${className}`;
 
   const colorClass = variant === 'foil'
@@ -41,4 +42,4 @@ export function OwnershipBadge({ variant, isOwned, label, onClick, children, cla
       {content}
     </div>
   );
-}
+});

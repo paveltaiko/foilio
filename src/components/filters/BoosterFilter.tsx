@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import type { BoosterFilter as BoosterFilterType } from '../../types/card';
 import { SegmentedControl } from '../ui/SegmentedControl';
 
@@ -13,10 +14,10 @@ const OPTIONS: { id: BoosterFilterType; label: string; title: string }[] = [
   { id: 'collector', label: 'Collector', title: 'Show only Collector Booster cards' },
 ];
 
-export function BoosterFilter({ value, onChange, isLoading }: BoosterFilterProps) {
+export const BoosterFilter = memo(function BoosterFilter({ value, onChange, isLoading }: BoosterFilterProps) {
   return (
     <div className={isLoading ? 'opacity-50 pointer-events-none' : undefined}>
       <SegmentedControl options={OPTIONS} value={value} onChange={onChange} />
     </div>
   );
-}
+});
