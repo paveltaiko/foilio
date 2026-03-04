@@ -32,13 +32,14 @@ function AppContent() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const mainRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     if (isSearchOpen) searchInputRef.current?.focus();
   }, [isSearchOpen]);
 
   useEffect(() => {
-    document.querySelector('main')?.scrollTo({ top: 0 });
+    mainRef.current?.scrollTo({ top: 0 });
   }, [pathname]);
 
   const handleSearchClick = useCallback(() => {
@@ -82,7 +83,7 @@ function AppContent() {
           onSearchClick={isStandalone ? undefined : handleSearchClick}
           onMobileBack={pathname.startsWith('/settings') && pathname !== '/settings' ? handleBack : undefined}
         />
-        <main className={`flex-1 overflow-y-auto pt-3 sm:pb-8 ${user ? 'pb-nav' : 'pb-8'}`} style={{ scrollbarGutter: 'stable' }}>
+        <main ref={mainRef} className={`flex-1 overflow-y-auto pt-3 sm:pb-8 ${user ? 'pb-nav' : 'pb-8'}`} style={{ scrollbarGutter: 'stable' }}>
           <ErrorBoundary>
           <Routes>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
