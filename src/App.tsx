@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuth } from './hooks/useAuth';
+import { useIsStandalone } from './hooks/useIsStandalone';
 import { Header } from './components/layout/Header';
 import { Footer } from './components/layout/Footer';
 import { BottomNav } from './components/layout/BottomNav';
@@ -23,11 +24,12 @@ import { SearchInput } from './components/filters/SearchInput';
 import { Analytics } from '@vercel/analytics/react';
 
 const queryClient = new QueryClient();
-const isStandalone = window.matchMedia('(display-mode: standalone)').matches
 
 function AppContent() {
+  const isStandalone = useIsStandalone();
   const { user, loading, error, login, logout } = useAuth();
   const navigate = useNavigate();
+
   const { pathname } = useLocation();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');

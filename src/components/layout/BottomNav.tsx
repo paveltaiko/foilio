@@ -1,6 +1,7 @@
 import { LayoutGrid, Search, Settings, Home } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { NavLink } from 'react-router';
+import { useIsStandalone } from '../../hooks/useIsStandalone';
 
 interface BottomNavProps {
   isLoggedIn: boolean;
@@ -13,8 +14,6 @@ interface NavItemProps {
   label: string;
   iconSize?: string;
 }
-
-const isStandalone = window.matchMedia('(display-mode: standalone)').matches
 
 function NavItem({ to, icon: Icon, label, iconSize = 'w-5 h-5' }: NavItemProps) {
   return (
@@ -35,6 +34,7 @@ function NavItem({ to, icon: Icon, label, iconSize = 'w-5 h-5' }: NavItemProps) 
 }
 
 export function BottomNav({ isLoggedIn, onSearchClick }: BottomNavProps) {
+  const isStandalone = useIsStandalone();
   if (!isLoggedIn || !isStandalone) return null;
 
   return (
