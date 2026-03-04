@@ -41,7 +41,7 @@ export function CollectionPage({ user, isSearchOpen, searchQuery }: CollectionPa
     boosterFilter, setBoosterFilter, boosterMapLoading, hasBoosterData,
     groupBySet, setGroupBySet,
     activeFilterCount, hasActiveFilters, handleResetFilters,
-    currentCards, sortedFilteredCards, visibleCards, isCardsLoading, gridKey,
+    sortedFilteredCards, visibleCards, isCardsLoading, gridKey,
     allTabs,
     hasNextPage, loadNextPage, isFetchingNextPage, loadMoreError,
     isCompletingSearch, isComputingTotalValue,

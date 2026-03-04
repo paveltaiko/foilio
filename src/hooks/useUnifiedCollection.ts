@@ -6,7 +6,7 @@ import { useCollectionsSettings } from './useCollectionsSettings';
 import { getVisibleSets } from '../utils/collectionsSettings';
 import { collectionSets } from '../config/collections';
 import { secretLairDrops } from '../config/secretLairDrops';
-import type { OwnedCard, ScryfallCard, CardVariant, CardWithVariant, SortOption, OwnershipFilter, BoosterFilter } from '../types/card';
+import type { OwnedCard, CardVariant } from '../types/card';
 
 interface UseUnifiedCollectionOptions {
   ownedCards: Map<string, OwnedCard>;
