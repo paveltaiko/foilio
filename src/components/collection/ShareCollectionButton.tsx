@@ -47,7 +47,7 @@ function isMobileDevice(): boolean {
 export function ShareCollectionButton({ user, onTokenReady, onFeedback }: ShareCollectionButtonProps) {
   const [succeeded, setSucceeded] = useState(false);
   const [loading, setLoading] = useState(false);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
     return () => { clearTimeout(timeoutRef.current); };
