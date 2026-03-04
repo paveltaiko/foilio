@@ -1,4 +1,5 @@
 import type { SecretLairDrop } from '../../config/secretLairDrops';
+import { Toggle } from '../ui/Toggle';
 
 interface SecretLairSettingsPanelProps {
   drops: SecretLairDrop[];
@@ -23,21 +24,12 @@ export function SecretLairSettingsPanel({
             <h3 className="text-sm font-semibold text-neutral-900">{drop.name}</h3>
             <p className="text-xs text-neutral-400 mt-0.5">{drop.ip}</p>
           </div>
-          <button
-            type="button"
-            aria-pressed={enabled}
-            onClick={(e) => { e.stopPropagation(); onToggle(drop.id, !enabled); }}
-            className={`relative h-5 w-9 shrink-0 cursor-pointer rounded-full transition-colors ${
-              enabled ? 'bg-primary-500' : 'bg-neutral-300'
-            }`}
-          >
-            <span
-              className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${
-                enabled ? 'translate-x-4' : 'translate-x-0'
-              }`}
-            />
-            <span className="sr-only">Toggle {drop.name}</span>
-          </button>
+          <Toggle
+            checked={enabled}
+            onChange={(val) => onToggle(drop.id, val)}
+            label={`Toggle ${drop.name}`}
+            stopPropagation
+          />
         </div>
       </section>
     );
