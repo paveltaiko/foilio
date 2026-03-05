@@ -1,6 +1,8 @@
-import { Layers, LifeBuoy, Info } from 'lucide-react';
+import { Layers, LifeBuoy, Info, LogOut } from 'lucide-react';
+import { useNavigate } from 'react-router';
 import { franchises } from '../../config/collections';
 import { useCollectionsSettings } from '../../hooks/useCollectionsSettings';
+import { useAuth } from '../../hooks/useAuth';
 import { SettingsMenuItem } from '../../components/settings/SettingsMenuItem';
 import { SectionHeading } from '../../components/ui/SectionHeading';
 
@@ -33,6 +35,13 @@ const GENERAL_SECTIONS = [
 
 export function SettingsPage() {
   const { settings } = useCollectionsSettings();
+  const { user, logout, isFirebaseConfigured } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/dashboard');
+  };
 
   const ubActiveCount = franchises.filter((f) => settings.collections[f.id]?.enabled).length;
 
@@ -79,6 +88,27 @@ export function SettingsPage() {
             ))}
           </div>
         </section>
+
+        {isFirebaseConfigured && user && (
+          <section>
+            <SectionHeading className="mb-2 px-1">Account</SectionHeading>
+            <div className="rounded-2xl bg-white overflow-hidden border border-surface-border">
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="flex w-full items-center gap-3.5 px-4 py-3.5 transition-colors hover:bg-neutral-50 active:bg-neutral-100 cursor-pointer"
+              >
+                <div className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full bg-red-50 text-primary-500">
+                  <LogOut className="h-5 w-5" strokeWidth={2.5} />
+                </div>
+                <div className="min-w-0 flex-1 text-left">
+                  <p className="text-sm font-medium text-neutral-900">Sign Out</p>
+                  {user.email && <p className="mt-0.5 text-xs text-neutral-400 leading-snug">{user.email}</p>}
+                </div>
+              </button>
+            </div>
+          </section>
+        )}
       </div>
     </div>
   );

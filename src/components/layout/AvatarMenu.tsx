@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Home, LayoutGrid, LogOut, Settings, UserCircle2, X } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router';
+import { useIsStandalone } from '../../hooks/useIsStandalone';
 
 interface AvatarMenuProps {
   userName?: string | null;
@@ -11,6 +12,7 @@ interface AvatarMenuProps {
 
 export function AvatarMenu({ userName, userPhoto, onOpenSettings, onLogout }: AvatarMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const isStandalone = useIsStandalone();
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const wrapperRef = useRef<HTMLDivElement | null>(null);
@@ -34,6 +36,23 @@ export function AvatarMenu({ userName, userPhoto, onOpenSettings, onLogout }: Av
       document.removeEventListener('keydown', handleEscape);
     };
   }, []);
+
+  if (isStandalone) {
+    return (
+      <div className="flex h-[44px] w-[44px] items-center justify-center rounded-full">
+        {userPhoto ? (
+          <img
+            src={userPhoto}
+            alt={userName ?? 'Avatar'}
+            className="h-[44px] w-[44px] rounded-full"
+            referrerPolicy="no-referrer"
+          />
+        ) : (
+          <UserCircle2 className="h-6 w-6 text-neutral-500" />
+        )}
+      </div>
+    );
+  }
 
   return (
     <div ref={wrapperRef} className="relative">
