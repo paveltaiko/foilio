@@ -24,7 +24,7 @@ export function FoilBreakdownWidget({
   ];
 
   return (
-    <WidgetCard title="Finish Type">
+    <WidgetCard title="Finish">
       <div className="flex flex-col gap-2">
         {rows.map((row) => (
           <div key={row.label} className="flex flex-col gap-1.5">
@@ -35,7 +35,7 @@ export function FoilBreakdownWidget({
               <span className="text-sm font-mono font-bold text-neutral-600 whitespace-nowrap">
                 {row.count}
                 {row.value > 0 && (
-                  <span className="font-normal text-neutral-400"> / {formatPrice(row.value)}</span>
+                  <span className="font-normal text-neutral-400">/{formatPrice(row.value)}</span>
                 )}
               </span>
             </div>

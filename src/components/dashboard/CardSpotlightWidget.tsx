@@ -6,6 +6,7 @@ import type { ScryfallCard } from '../../types/card';
 import type { ValuableCard } from '../../hooks/useHomeStats';
 import type { OwnedCard } from '../../types/card';
 import { formatRelativeTime } from '../../utils/formatTime';
+import { WidgetCard } from './WidgetCard';
 
 interface CardSpotlightWidgetProps {
   mostValuableCards: ValuableCard[];
@@ -51,13 +52,9 @@ export function CardSpotlightWidget({ mostValuableCards, recentCards, onCardClic
   }
 
   return (
-    <div className="bg-surface-primary border border-surface-border rounded-2xl overflow-hidden">
-      {/* Title */}
-      <p className="text-xs font-semibold uppercase tracking-wider text-neutral-600 px-4 pt-3 sm:px-4 sm:pt-4">Cards</p>
-
-      <div className="px-3 pb-8 sm:px-4 sm:pb-4">
+    <WidgetCard title="Cards">
         {/* Tab header */}
-        <div className="flex gap-0 border-b border-surface-border mt-4 mb-8">
+        <div className="flex gap-0 border-b border-surface-border mb-5">
           {TABS.map((tab) => (
             <button
               key={tab.id}
@@ -134,7 +131,6 @@ export function CardSpotlightWidget({ mostValuableCards, recentCards, onCardClic
             </div>
           </div>
         )}
-      </div>
-    </div>
+    </WidgetCard>
   );
 }
