@@ -23,13 +23,15 @@ export function DashboardPage() {
   const { ownedCards, loading: isOwnedCardsLoading } = useOwnedCards(user?.uid ?? null);
   const { settings, isLoading: isSettingsLoading } = useCollectionsSettings();
   const [refreshKey, setRefreshKey] = useState(0);
-  const handleRefresh = useCallback(() => {
-    setRefreshKey((k) => k + 1);
-  }, []);
   const handleRefreshConsumed = useCallback(() => {
     setRefreshKey(0);
   }, []);
-  const { cacheVersion } = useDashboardCardLoader(ownedCards, settings, isOwnedCardsLoading, isSettingsLoading, refreshKey, handleRefreshConsumed);
+  const { cacheVersion, getRefreshPromise } = useDashboardCardLoader(ownedCards, settings, isOwnedCardsLoading, isSettingsLoading, refreshKey, handleRefreshConsumed);
+  const handleRefresh = useCallback(async () => {
+    const done = getRefreshPromise();
+    setRefreshKey((k) => k + 1);
+    await done;
+  }, [getRefreshPromise]);
   const stats = useHomeStats(ownedCards, settings, cacheVersion);
 
   const [selectedCard, setSelectedCard] = useState<ScryfallCard | null>(null);

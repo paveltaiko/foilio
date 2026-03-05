@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { getCachedCardById, getCachedSetCount, setCachedSetCount } from '../utils/scryfallCache';
 import { fetchCardsByIds, fetchSetCardCount } from '../services/scryfall';
 import { collectionSets } from '../config/collections';
@@ -13,6 +13,9 @@ import { getVisibleSets } from '../utils/collectionsSettings';
  *
  * Waits for both ownedCards and settings to finish loading from Firestore
  * before starting the fetch, to avoid race conditions with stale data.
+ *
+ * Uses refs for ownedCards/settings so that unstable Firestore Map references
+ * don't re-trigger the effect and abort in-flight fetches.
  */
 export function useDashboardCardLoader(
   ownedCards: Map<string, OwnedCard>,
@@ -21,15 +24,33 @@ export function useDashboardCardLoader(
   isSettingsLoading: boolean,
   refreshKey: number = 0,
   onRefreshConsumed?: () => void,
-): { isLoading: boolean; cacheVersion: number } {
+): { isLoading: boolean; cacheVersion: number; getRefreshPromise: () => Promise<void> } {
   const [isLoading, setIsLoading] = useState(false);
   const [cacheVersion, setCacheVersion] = useState(0);
-  const abortRef = useRef<AbortController | null>(null);
+  const loadingRef = useRef(false);
+
+  // Refs for data – read inside effect but don't trigger it
+  const ownedCardsRef = useRef(ownedCards);
+  ownedCardsRef.current = ownedCards;
+  const settingsRef = useRef(settings);
+  settingsRef.current = settings;
+
+  // Stable trigger – changes only when cards are actually added/removed
+  const ownedCardsSize = ownedCards.size;
+
+  // Pull-to-refresh promise support
+  const refreshResolveRef = useRef<(() => void) | null>(null);
+
+  const getRefreshPromise = useCallback((): Promise<void> => {
+    return new Promise((resolve) => {
+      refreshResolveRef.current = resolve;
+    });
+  }, []);
 
   useEffect(() => {
     // Wait for stable Firestore data before starting any fetch
     if (isOwnedCardsLoading || isSettingsLoading) return;
-    if (ownedCards.size === 0) return;
+    if (ownedCardsRef.current.size === 0) return;
 
     const forceRefresh = refreshKey > 0;
 
@@ -37,11 +58,17 @@ export function useDashboardCardLoader(
     // don't trigger another force-refresh while the fetch is still in flight.
     if (forceRefresh) onRefreshConsumed?.();
 
-    const missingCardIds = Array.from(ownedCards.keys()).filter(
+    // Skip if a fetch is already running (unless user explicitly pulled to refresh)
+    if (loadingRef.current && !forceRefresh) return;
+
+    const currentCards = ownedCardsRef.current;
+    const currentSettings = settingsRef.current;
+
+    const missingCardIds = Array.from(currentCards.keys()).filter(
       (id) => forceRefresh || !getCachedCardById(id)
     );
 
-    const visibleSets = getVisibleSets(settings, collectionSets);
+    const visibleSets = getVisibleSets(currentSettings, collectionSets);
     const COUNTED_TYPES = new Set(['main', 'commander', 'eternal']);
     const missingSets = visibleSets
       .filter((s) => COUNTED_TYPES.has(s.type) && (forceRefresh || getCachedSetCount(s.code) === null))
@@ -49,11 +76,8 @@ export function useDashboardCardLoader(
 
     if (!forceRefresh && missingCardIds.length === 0 && missingSets.length === 0) return;
 
-    // Cancel any previous in-flight fetch (e.g. settings changed mid-fetch)
-    abortRef.current?.abort();
-    const controller = new AbortController();
-    abortRef.current = controller;
-
+    let cancelled = false;
+    loadingRef.current = true;
     setIsLoading(true);
 
     const load = async () => {
@@ -63,26 +87,34 @@ export function useDashboardCardLoader(
           await fetchCardsByIds(missingCardIds);
         }
 
-        // Load missing set counts
-        for (const code of missingSets) {
-          if (controller.signal.aborted) return;
-          const count = await fetchSetCardCount(code);
-          if (count !== null) {
-            setCachedSetCount(code, count);
+        // Load missing set counts in parallel batches
+        const BATCH_SIZE = 5;
+        for (let i = 0; i < missingSets.length; i += BATCH_SIZE) {
+          if (cancelled) return;
+          const batch = missingSets.slice(i, i + BATCH_SIZE);
+          const results = await Promise.all(batch.map((code) => fetchSetCardCount(code)));
+          for (let j = 0; j < batch.length; j++) {
+            if (results[j] !== null) {
+              setCachedSetCount(batch[j], results[j]!);
+            }
           }
         }
 
         // Trigger re-computation in useHomeStats
-        if (!controller.signal.aborted) {
+        if (!cancelled) {
           setCacheVersion((v) => v + 1);
         }
       } catch {
         // Partial data is fine – dashboard degrades gracefully
-        if (!controller.signal.aborted) {
+        if (!cancelled) {
           setCacheVersion((v) => v + 1);
         }
       } finally {
-        if (!controller.signal.aborted) {
+        loadingRef.current = false;
+        // Resolve pull-to-refresh promise so PullToRefresh spinner can stop
+        refreshResolveRef.current?.();
+        refreshResolveRef.current = null;
+        if (!cancelled) {
           setIsLoading(false);
         }
       }
@@ -90,12 +122,10 @@ export function useDashboardCardLoader(
 
     void load();
 
-    // Cleanup: cancel fetch on unmount or when dependencies change
     return () => {
-      controller.abort();
-      setIsLoading(false);
+      cancelled = true;
     };
-  }, [ownedCards, settings, isOwnedCardsLoading, isSettingsLoading, refreshKey]);
+  }, [ownedCardsSize, isOwnedCardsLoading, isSettingsLoading, refreshKey]);
 
-  return { isLoading, cacheVersion };
+  return { isLoading, cacheVersion, getRefreshPromise };
 }
