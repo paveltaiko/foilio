@@ -5,7 +5,6 @@ import type { ScryfallCard, OwnedCard } from '../types/card';
 
 interface UseCardOwnershipHandlersOptions {
   userId: string;
-  currentCards: ScryfallCard[];
   ownedCards: Map<string, OwnedCard>;
   shareToken: string | null;
   updateLocal: (updater: (prev: Map<string, OwnedCard>) => Map<string, OwnedCard>) => void;
@@ -13,15 +12,13 @@ interface UseCardOwnershipHandlersOptions {
 
 export function useCardOwnershipHandlers({
   userId,
-  currentCards,
   ownedCards,
   shareToken,
   updateLocal,
 }: UseCardOwnershipHandlersOptions) {
   const handleToggle = useCallback(
-    (cardId: string, variant: 'nonfoil' | 'foil') => {
-      const card = currentCards.find((c) => c.id === cardId);
-      if (!card) return;
+    (card: ScryfallCard, variant: 'nonfoil' | 'foil') => {
+      const cardId = card.id;
 
       if (isFirebaseConfigured) {
         void toggleCardOwnership(userId, cardId, {
@@ -62,14 +59,14 @@ export function useCardOwnershipHandlers({
         });
       }
     },
-    [userId, currentCards, ownedCards, shareToken, updateLocal]
+    [userId, ownedCards, shareToken, updateLocal]
   );
 
   const handleQuantityChange = useCallback(
-    (cardId: string, variant: 'nonfoil' | 'foil', quantity: number) => {
-      const card = currentCards.find((c) => c.id === cardId);
+    (card: ScryfallCard, variant: 'nonfoil' | 'foil', quantity: number) => {
+      const cardId = card.id;
       const existing = ownedCards.get(cardId);
-      if (!card || !existing) return;
+      if (!existing) return;
 
       if (isFirebaseConfigured) {
         void updateCardQuantity(userId, cardId, variant, quantity, existing, shareToken ?? undefined);
@@ -97,7 +94,7 @@ export function useCardOwnershipHandlers({
         });
       }
     },
-    [userId, currentCards, ownedCards, shareToken, updateLocal]
+    [userId, ownedCards, shareToken, updateLocal]
   );
 
   return { handleToggle, handleQuantityChange };

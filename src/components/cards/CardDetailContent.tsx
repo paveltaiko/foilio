@@ -6,8 +6,8 @@ import { OwnershipBadge } from './OwnershipBadge';
 interface CardDetailContentProps {
   card: ScryfallCard;
   owned?: OwnedCard;
-  onToggle: (cardId: string, variant: 'nonfoil' | 'foil') => void;
-  onQuantityChange?: (cardId: string, variant: 'nonfoil' | 'foil', quantity: number) => void;
+  onToggle: (card: ScryfallCard, variant: 'nonfoil' | 'foil') => void;
+  onQuantityChange?: (card: ScryfallCard, variant: 'nonfoil' | 'foil', quantity: number) => void;
   readOnly?: boolean;
 }
 
@@ -30,13 +30,13 @@ export function CardDetailContent({ card, owned, onToggle, onQuantityChange, rea
             variant="nonfoil"
             isOwned={isOwnedNonFoil}
             label={isOwnedNonFoil && readOnly ? `${owned?.quantityNonFoil || 1}× Non-Foil` : 'Non-Foil'}
-            onClick={readOnly || isOwnedNonFoil ? undefined : () => onToggle(card.id, 'nonfoil')}
+            onClick={readOnly || isOwnedNonFoil ? undefined : () => onToggle(card, 'nonfoil')}
             readOnly={readOnly}
           >
             {!readOnly && isOwnedNonFoil && onQuantityChange ? (
               <div className="flex items-center gap-1">
                 <button
-                  onClick={(e) => { e.stopPropagation(); onQuantityChange(card.id, 'nonfoil', Math.max(0, (owned?.quantityNonFoil || 1) - 1)); }}
+                  onClick={(e) => { e.stopPropagation(); onQuantityChange(card, 'nonfoil', Math.max(0, (owned?.quantityNonFoil || 1) - 1)); }}
                   className="w-6 h-6 flex items-center justify-center rounded bg-emerald-500 text-white hover:bg-emerald-600 transition-colors cursor-pointer"
                 >
                   <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
@@ -47,7 +47,7 @@ export function CardDetailContent({ card, owned, onToggle, onQuantityChange, rea
                   {owned?.quantityNonFoil || 1}
                 </span>
                 <button
-                  onClick={(e) => { e.stopPropagation(); onQuantityChange(card.id, 'nonfoil', (owned?.quantityNonFoil || 1) + 1); }}
+                  onClick={(e) => { e.stopPropagation(); onQuantityChange(card, 'nonfoil', (owned?.quantityNonFoil || 1) + 1); }}
                   className="w-6 h-6 flex items-center justify-center rounded bg-emerald-500 text-white hover:bg-emerald-600 transition-colors cursor-pointer"
                 >
                   <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
@@ -64,13 +64,13 @@ export function CardDetailContent({ card, owned, onToggle, onQuantityChange, rea
             variant="foil"
             isOwned={isOwnedFoil}
             label={isOwnedFoil && readOnly ? `${owned?.quantityFoil || 1}× Foil` : 'Foil'}
-            onClick={readOnly || isOwnedFoil ? undefined : () => onToggle(card.id, 'foil')}
+            onClick={readOnly || isOwnedFoil ? undefined : () => onToggle(card, 'foil')}
             readOnly={readOnly}
           >
             {!readOnly && isOwnedFoil && onQuantityChange ? (
               <div className="flex items-center gap-1">
                 <button
-                  onClick={(e) => { e.stopPropagation(); onQuantityChange(card.id, 'foil', Math.max(0, (owned?.quantityFoil || 1) - 1)); }}
+                  onClick={(e) => { e.stopPropagation(); onQuantityChange(card, 'foil', Math.max(0, (owned?.quantityFoil || 1) - 1)); }}
                   className="w-6 h-6 flex items-center justify-center rounded bg-purple-400 text-white hover:bg-purple-500 transition-colors cursor-pointer"
                 >
                   <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
@@ -81,7 +81,7 @@ export function CardDetailContent({ card, owned, onToggle, onQuantityChange, rea
                   {owned?.quantityFoil || 1}
                 </span>
                 <button
-                  onClick={(e) => { e.stopPropagation(); onQuantityChange(card.id, 'foil', (owned?.quantityFoil || 1) + 1); }}
+                  onClick={(e) => { e.stopPropagation(); onQuantityChange(card, 'foil', (owned?.quantityFoil || 1) + 1); }}
                   className="w-6 h-6 flex items-center justify-center rounded bg-purple-400 text-white hover:bg-purple-500 transition-colors cursor-pointer"
                 >
                   <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>

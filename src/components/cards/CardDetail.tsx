@@ -13,8 +13,8 @@ interface CardDetailProps {
   selectedVariant?: CardVariant;
   owned?: OwnedCard;
   onClose: () => void;
-  onToggle: (cardId: string, variant: 'nonfoil' | 'foil') => void;
-  onQuantityChange?: (cardId: string, variant: 'nonfoil' | 'foil', quantity: number) => void;
+  onToggle: (card: ScryfallCard, variant: 'nonfoil' | 'foil') => void;
+  onQuantityChange?: (card: ScryfallCard, variant: 'nonfoil' | 'foil', quantity: number) => void;
   cards?: CardWithVariant[];
   onNavigate?: (card: ScryfallCard, variant: CardVariant) => void;
   readOnly?: boolean;

@@ -8,7 +8,7 @@ import { Button } from '../ui/Button';
 interface CardGridProps {
   cards: CardWithVariant[];
   ownedCards: Map<string, OwnedCard>;
-  onToggle: (cardId: string, variant: 'nonfoil' | 'foil') => void;
+  onToggle: (card: ScryfallCard, variant: 'nonfoil' | 'foil') => void;
   onCardClick: (card: ScryfallCard, variant: CardVariant) => void;
   readOnly?: boolean;
   groupBySet?: boolean;

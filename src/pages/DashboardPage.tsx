@@ -38,29 +38,27 @@ export function DashboardPage() {
   const [selectedVariant, setSelectedVariant] = useState<CardVariant>(null);
 
   const handleToggle = useCallback(
-    (cardId: string, variant: 'nonfoil' | 'foil') => {
-      if (!selectedCard || selectedCard.id !== cardId) return;
+    (card: ScryfallCard, variant: 'nonfoil' | 'foil') => {
       if (isFirebaseConfigured) {
-        void toggleCardOwnership(user?.uid ?? '', cardId, {
-          set: selectedCard.set,
-          collectorNumber: selectedCard.collector_number,
-          name: selectedCard.name,
-        }, variant, ownedCards.get(cardId));
+        void toggleCardOwnership(user?.uid ?? '', card.id, {
+          set: card.set,
+          collectorNumber: card.collector_number,
+          name: card.name,
+        }, variant, ownedCards.get(card.id));
       }
     },
-    [selectedCard, ownedCards, user?.uid]
+    [ownedCards, user?.uid]
   );
 
   const handleQuantityChange = useCallback(
-    (cardId: string, variant: 'nonfoil' | 'foil', quantity: number) => {
-      if (!selectedCard || selectedCard.id !== cardId) return;
-      const existing = ownedCards.get(cardId);
+    (card: ScryfallCard, variant: 'nonfoil' | 'foil', quantity: number) => {
+      const existing = ownedCards.get(card.id);
       if (!existing) return;
       if (isFirebaseConfigured) {
-        void updateCardQuantity(user?.uid ?? '', cardId, variant, quantity, existing);
+        void updateCardQuantity(user?.uid ?? '', card.id, variant, quantity, existing);
       }
     },
-    [selectedCard, ownedCards, user?.uid]
+    [ownedCards, user?.uid]
   );
 
   return (

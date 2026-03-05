@@ -26,7 +26,6 @@ export function CollectionPage({ user, isSearchOpen, searchQuery }: CollectionPa
   const share = useShareCollection(user.uid, collection.visibleSetIds);
   const { handleToggle, handleQuantityChange } = useCardOwnershipHandlers({
     userId: user.uid,
-    currentCards: collection.currentCards,
     ownedCards,
     shareToken: share.shareToken,
     updateLocal,

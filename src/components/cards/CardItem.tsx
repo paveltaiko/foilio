@@ -9,7 +9,7 @@ interface CardItemProps {
   card: ScryfallCard;
   owned?: OwnedCard;
   displayVariant?: CardVariant; // null = show both, 'nonfoil'/'foil' = show only one
-  onToggle: (cardId: string, variant: 'nonfoil' | 'foil') => void;
+  onToggle: (card: ScryfallCard, variant: 'nonfoil' | 'foil') => void;
   onClick: (card: ScryfallCard, variant: CardVariant) => void;
   readOnly?: boolean;
 }
@@ -45,9 +45,9 @@ export const CardItem = memo(function CardItem({ card, owned, displayVariant, on
   const handleToggle = useCallback(
     (e: React.MouseEvent, variant: 'nonfoil' | 'foil') => {
       e.stopPropagation();
-      onToggle(card.id, variant);
+      onToggle(card, variant);
     },
-    [card.id, onToggle]
+    [card, onToggle]
   );
 
   // Border color based on ownership and displayed variant
