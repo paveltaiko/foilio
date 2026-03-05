@@ -1,5 +1,4 @@
 import { WidgetCard } from './WidgetCard';
-import { formatPrice } from '../../utils/formatPrice';
 
 interface FoilBreakdownWidgetProps {
   nonFoilCount: number;
