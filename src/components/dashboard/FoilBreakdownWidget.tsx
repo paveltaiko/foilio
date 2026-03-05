@@ -35,7 +35,7 @@ export function FoilBreakdownWidget({
               <span className="text-sm font-mono font-bold text-neutral-600 whitespace-nowrap">
                 {row.count}
                 {row.value > 0 && (
-                  <span className="font-normal text-neutral-400">/{formatPrice(row.value)}</span>
+                  <span className="font-normal text-neutral-400">/€{Math.round(row.value)}</span>
                 )}
               </span>
             </div>
